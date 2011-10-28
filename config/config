@@ -28,7 +28,7 @@ Hemisferio=N
 # Fecha desde la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
 # Ejemeplo: FechaDesde=20050101
-FechaDesde=20100101
+FechaDesde=0
 
 # Fecha hasta la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta hasta esta fecha

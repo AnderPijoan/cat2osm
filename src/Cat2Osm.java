@@ -842,7 +842,7 @@ public class Cat2Osm {
 		// TODO Mirar landuses
 		switch (codigo.charAt(0)){
 		case 'A':{
-			String[] s = {"Almacen-Estacionamiento","Almacen-Estacionamiento"};
+			String[] s = {"landuse","farmyard"};
 			return s;
 			}
 		case 'V':{
@@ -882,7 +882,7 @@ public class Cat2Osm {
 			return s;
 		}
 		case 'R':{
-			String[] s = {"landuse","religious"};
+			String[] s = {"landuse","place_of_worship"};
 			return s;
 		}
 		case 'M':{
