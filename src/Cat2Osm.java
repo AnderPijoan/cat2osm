@@ -819,7 +819,7 @@ public class Cat2Osm {
 		else if (codigo.equals("PZ   "))
 			return "Plaza";
 		else if (codigo.equals("CR   "))
-			return "CR";
+			return "Carretera";
 		else if (codigo.equals("PJ   "))
 			return "PJ";
 		else if (codigo.equals("RD   "))
@@ -829,12 +829,12 @@ public class Cat2Osm {
 		else if (codigo.equals("ER   "))
 			return "ER";
 		else if (codigo.equals("CM   "))
-			return "CM";
+			return "Camino";
 		else if (codigo.equals("CJ   "))
 			return "CJ";
 		else if (codigo.equals("GR   "))
 			return "GR";
-		return "";
+		return codigo;
 	}
 
 	public static String[] usoInmueblesParser(String codigo){
