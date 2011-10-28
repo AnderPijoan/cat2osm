@@ -1,0 +1,47 @@
+# Ruta donde se guardaran los resultados
+resultPath=result
+
+# Ruta al archivo con los datos Shapefile de Catastro (PARCELA.SHP)
+ParcelaSHPFile=files\\ALMODOVAR\\PARCELA\\PARCELA.SHP
+
+# Ruta al archivo con los datos Shapefile de Catastro (CONSTRU.SHP)
+ConstruSHPFile=files\\ALMODOVAR\\CONSTRU\\CONSTRU.SHP
+
+# Ruta al archivo con los datos Shapefile de Catastro (ELEMTEX.SHP)
+# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
+# .cat, no les anyade nada.
+ElemtexSHPFile=files\\ALMODOVAR\\ELEMTEX\\ELEMTEX.SHP
+
+# Ruta al archivo con los datos Shapefile de Catastro (EJES.SHP)
+# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
+# .cat, no les anyade nada.
+EjesSHPFile=files\\ALMODOVAR\\EJES\\EJES.SHP
+
+# Ruta al archivo con los datos Cat de Catastro (.CAT)
+CATFile=files\\13_900_U_2011-05-08.CAT
+
+# Huso geografico en el que se encuentra la cartografia
+# Ejemplo: Ciudad Real Huso "30 N" por tanto getHuso=30 y getHemisferio=N
+Huso=30
+Hemisferio=N
+
+# Fecha desde la cual coger los datos (Formato AAAAMMDD)
+# Tomara los shapes que se han dado de alta a partir de esta fecha
+# Ejemeplo: FechaDesde=20050101
+FechaDesde=20100101
+
+# Fecha hasta la cual coger los datos (Formato AAAAMMDD)
+# Tomara los shapes que se han dado de alta hasta esta fecha
+# Ejemeplo: FechaHasta=20060101
+FechaHasta=99999999
+
+# Tipo de Registro de catastro a usar (0 = todos)
+TipoRegistro=0
+
+# Hacer simplificacion de Nodos de un shape que se crean sobre Ways de otro shape
+# No=0 / Si=1 (Ralentiza el proceso)
+FixNodesOnWays=0
+
+# Valor para el calculo de si un nodo se encuentra sobre un way
+# Para eliminar casos
+ValorNodeWay=0.0000000001
