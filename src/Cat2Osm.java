@@ -741,7 +741,7 @@ public class Cat2Osm {
 			c.setFechaAlta(Long.parseLong(line.substring(371,375)+"0101")); 
 			c.setFechaBaja(fechaHasta);
 			//c.addAttribute("CLAVE DE GRUPO DE LOS BIENES INMUEBLES DE CARAC ESPECIALES",line.substring(427,428));
-			c.addAttribute("addr:postcode",line.substring(427,428));
+			c.addAttribute(usoInmueblesParser(line.substring(427,428))[0],usoInmueblesParser(line.substring(427,428))[1]);
 			//c.addAttribute("SUPERFICIE DEL ELEMENTO O ELEMENTOS CONSTRUCTIVOS ASOCIADOS AL INMUEBLE",line.substring(441,451));
 			//c.addAttribute("SUPERFICIE ASOCIADA AL INMUEBLE",line.substring(451,461));
 			//c.addAttribute("COEFICIENTE DE PROPIEDAD (3ent y 6deci)",line.substring(461,470));
@@ -837,42 +837,77 @@ public class Cat2Osm {
 		return "";
 	}
 
-	public static String usoInmueblesParser(char codigo){
-		switch (codigo){
-		case 'A':
-			return "Almacen-Estacionamiento";
-		case 'V':
-			return "Residencial";
-		case 'I':
-			return "Industrial";
-		case 'O':
-			return "Oficinas";
-		case 'C':
-			return "Comercial";
-		case 'K':
-			return "Deportivo";
-		case 'T':
-			return "Espectaculos";
-		case 'G':
-			return "Ocio y Hosteleria";
-		case 'Y':
-			return "Sanidad y Beneficiencia";
-		case 'E':
-			return "Cultural";
-		case 'R':
-			return "Religioso";
-		case 'M':
-			return "Obras de urbanizacion y jardineria, suelos sin edificar";
-		case 'P':
-			return "Edificio singular";
-		case 'B':
-			return "Almacen Agrario";
-		case 'J':
-			return "Industrial Agrario";
-		case 'Z':
-			return "Agrario";
+	public static String[] usoInmueblesParser(String codigo){
+		
+		// TODO Mirar landuses
+		switch (codigo.charAt(0)){
+		case 'A':{
+			String[] s = {"Almacen-Estacionamiento","Almacen-Estacionamiento"};
+			return s;
+			}
+		case 'V':{
+			String[] s = {"landuse","residential"};
+			return s;
+		}
+		case 'I':{
+			String[] s = {"landuse","industrial"};
+			return s;
+		}
+		case 'O':{
+			String[] s = {"landuse","retail"};
+			return s;
+		}
+		case 'C':{
+			String[] s = {"landuse","commercial"};
+			return s;
+		}
+		case 'K':{
+			String[] s = {"landuse","recreation_ground"};
+			return s;
+		}
+		case 'T':{
+			String[] s = {"landuse","recreation_ground"};
+			return s;
+		}
+		case 'G':{
+			String[] s = {"landuse","retail"};
+			return s;
+		}
+		case 'Y':{
+			String[] s = {"landuse","health"};
+			return s;
+		}
+		case 'E':{
+			String[] s = {"landuse","recreation_ground"};
+			return s;
+		}
+		case 'R':{
+			String[] s = {"landuse","religious"};
+			return s;
+		}
+		case 'M':{
+			String[] s = {"landuse","allotments"};
+			return s;
+			}
+		case 'P':{
+			String[] s = {"landuse","singular"};
+			return s;
+		}
+		case 'B':{
+			String[] s = {"landuse","orchard"};
+			return s;
+		}
+		case 'J':{
+			String[] s = {"landuse","orchard"};
+			return s;
+		}
+		case 'Z':{
+			String[] s = {"landuse","orchard"};
+			return s;
+		}
 		default:
-			return codigo+"";
+			String[] s = {codigo,codigo};
+			return s;
 		}
 	}
 	

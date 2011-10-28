@@ -2,20 +2,20 @@
 resultPath=result
 
 # Ruta al archivo con los datos Shapefile de Catastro (PARCELA.SHP)
-ParcelaSHPFile=files\\ALMODOVAR\\PARCELA\\PARCELA.SHP
+ParcelaSHPFile=files\\PARCELA\\PARCELA.SHP
 
 # Ruta al archivo con los datos Shapefile de Catastro (CONSTRU.SHP)
-ConstruSHPFile=files\\ALMODOVAR\\CONSTRU\\CONSTRU.SHP
+ConstruSHPFile=files\\CONSTRU\\CONSTRU.SHP
 
 # Ruta al archivo con los datos Shapefile de Catastro (ELEMTEX.SHP)
 # NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
 # .cat, no les anyade nada.
-ElemtexSHPFile=files\\ALMODOVAR\\ELEMTEX\\ELEMTEX.SHP
+ElemtexSHPFile=files\\ELEMTEX\\ELEMTEX.SHP
 
 # Ruta al archivo con los datos Shapefile de Catastro (EJES.SHP)
 # NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
 # .cat, no les anyade nada.
-EjesSHPFile=files\\ALMODOVAR\\EJES\\EJES.SHP
+EjesSHPFile=files\\EJES\\EJES.SHP
 
 # Ruta al archivo con los datos Cat de Catastro (.CAT)
 CATFile=files\\13_900_U_2011-05-08.CAT
