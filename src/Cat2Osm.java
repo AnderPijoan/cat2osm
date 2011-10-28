@@ -836,10 +836,8 @@ public class Cat2Osm {
 			return "GR";
 		return "";
 	}
-	
-public static String usoInmueblesParser(char codigo){
-		
-		// TODO Descifrar codigos
+
+	public static String usoInmueblesParser(char codigo){
 		switch (codigo){
 		case 'A':
 			return "Almacen-Estacionamiento";
@@ -871,8 +869,8 @@ public static String usoInmueblesParser(char codigo){
 			return "Almacen Agrario";
 		case 'J':
 			return "Industrial Agrario";
-		case 'P':
-			return "Edificio singular";
+		case 'Z':
+			return "Agrario";
 		default:
 			return codigo+"";
 		}
