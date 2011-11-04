@@ -5,7 +5,8 @@ import java.util.List;
 public class Cat {
 
 	int tipoRegistro;
-	String refCatastral;
+	String refCatastral; // Referencia Catastral
+	String subparce; // Codigo Subparcela
 	List<String[]> atributos;
 	long fechaAlta; // Formato AAAAMMDD
 	long fechaBaja;
@@ -16,7 +17,6 @@ public class Cat {
 	public Cat(int r){
 
 		tipoRegistro = r;
-		refCatastral = "-1";
 		atributos = new ArrayList<String[]>();
 		fechaAlta = 00000101;
 		fechaBaja = 99999999;
@@ -30,8 +30,16 @@ public class Cat {
 		refCatastral = r;
 	}
 	
+	public void setSubparce(String r){
+		subparce = r;
+	}
+	
 	public String getRefCatastral(){
 		return refCatastral;
+	}
+	
+	public String getSubparce(){
+		return subparce;
 	}
 	
 	public void setFechaAlta(long l){

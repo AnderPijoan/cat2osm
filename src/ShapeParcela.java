@@ -49,7 +49,7 @@ public class ShapeParcela extends Shape {
 			}
 		}
 		else {
-			System.out.println("Formato geométrico desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
 		}
 
 		this.nodos = new ArrayList<Long>();

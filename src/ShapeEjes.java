@@ -13,6 +13,7 @@ public class ShapeEjes extends Shape {
 	private List<Long> nodes;
 	private List<Long> ways;
 	private Long relation; // Relacion de sus ways
+	private Long via; // Numero de via, solo en Ejes.shp, para enlazar con Carvia
 	private List<ShapeAttribute> atributos;
 	
 	public ShapeEjes(SimpleFeature f) {
@@ -26,8 +27,23 @@ public class ShapeEjes extends Shape {
 
 		}
 		else {
-			System.out.println("Formato "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
 		}
+		
+		
+		if (f.getAttribute("VIA") instanceof Double){
+			double v = (Double) f.getAttribute("VIA");
+			via = (long) v;
+		}
+		else if (f.getAttribute("VIA") instanceof Long){
+			via = (Long) f.getAttribute("VIA");
+		}
+		else if (f.getAttribute("VIA") instanceof Integer){
+			int v = (Integer) f.getAttribute("VIA");
+			via = (long) v;
+		}
+		else System.out.println("No se encuentra el tipo de VIA "+ f.getAttribute("VIA").getClass().getName() );	
+		
 		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -42,6 +58,7 @@ public class ShapeEjes extends Shape {
 	@Override
 	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
 		
 		//String[] s = new String[2];
 		//s = new String[2];
@@ -51,6 +68,12 @@ public class ShapeEjes extends Shape {
 		//s = new String[2];
 		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
 		//l.add(s);
+		
+		if (via != null){
+			s = new String[2];
+			s[0] = "via"; s[1] = via.toString();
+			l.add(s);
+			}
 		
 		return l;
 	}

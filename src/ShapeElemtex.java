@@ -13,6 +13,7 @@ public class ShapeElemtex extends Shape {
 	private Coordinate coor;
 	private Long nodo;
 	private String rotulo; // Campo Rotulo solo en Elemtex.shp
+	private String ttggss; // Campo TTGGSS en Elemtex.shp
 	private List<ShapeAttribute> atributos;
 
 	public ShapeElemtex(SimpleFeature f) {
@@ -27,15 +28,16 @@ public class ShapeElemtex extends Shape {
 			coor = line.getEnvelopeInternal().centre();
 		}
 		else {
-			System.out.println("Formato geométrico desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
-
 		rotulo = new String();
 		String r = (String) f.getAttribute("ROTULO");
 		for (int x = 0; x < r.length(); x++)
 			if (r.charAt(x) != '"') rotulo += r.charAt(x);
+		
+		ttggss = (String) f.getAttribute("TTGGSS");
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -73,6 +75,12 @@ public class ShapeElemtex extends Shape {
 			s[0] = "addr:housenumber"; s[1] = rotulo;
 			l.add(s);
 		}
+		
+		if (ttggss != null){
+			s = new String[2];
+			s[0] = "ttggss"; s[1] = ttggss;
+			l.add(s);
+			}
 
 		//s = new String[2];
 		//s[0] = "FECHAALTA"; s[1] = String.valueOf(fechaAlta);

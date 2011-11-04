@@ -50,14 +50,36 @@ public class Cat2Osm {
 		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 
 		// Creamos el shape dependiendo de su tipo
-		if (f.equals(new File(Config.get("ParcelaSHPFile"))))
+		if (f.equals(new File(Config.get("MasaSHPFile"))))
+
+			// Shapes del archivo MASA.SHP
+			while (reader.hasNext()) {
+				Shape shape = new ShapeMasa(reader.next());
+
+				// Si cumple estar entre las fechas
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+					// Anadimos el shape creado a la lista
+					shapeList.add(mPolygonShapeParser(shape));
+			}
+		else if (f.equals(new File(Config.get("ParcelaSHPFile"))))
 
 			// Shapes del archivo PARCELA.SHP
 			while (reader.hasNext()) {
 				Shape shape = new ShapeParcela(reader.next());
 
 				// Si cumple estar entre las fechas
-				if (shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+					// Anadimos el shape creado a la lista
+					shapeList.add(mPolygonShapeParser(shape));
+			}
+		else if (f.equals(new File(Config.get("SubparceSHPFile"))))
+
+			// Shapes del archivo SUBPARCE.SHP
+			while (reader.hasNext()) {
+				Shape shape = new ShapeSubparce(reader.next());
+
+				// Si cumple estar entre las fechas
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
 					// Anadimos el shape creado a la lista
 					shapeList.add(mPolygonShapeParser(shape));
 			}
@@ -68,7 +90,7 @@ public class Cat2Osm {
 				Shape shape = new ShapeConstru(reader.next());
 
 				// Si cumple estar entre las fechas
-				if (shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
 					// Anadimos el shape creado a la lista
 					shapeList.add(mPolygonShapeParser(shape));
 			}
@@ -79,9 +101,31 @@ public class Cat2Osm {
 				Shape shape = new ShapeElemtex(reader.next());
 
 				// Si cumple estar entre las fechas
-				if (shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
 					// Anadimos el shape creado a la lista
 					shapeList.add(pointShapeParser(shape));
+			}
+		else if (f.equals(new File(Config.get("ElempunSHPFile"))))
+
+			// Shapes del archivo ELEMPUN.SHP
+			while (reader.hasNext()) {
+				Shape shape = new ShapeElempun(reader.next());
+
+				// Si cumple estar entre las fechas
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+					// Anadimos el shape creado a la lista
+					shapeList.add(pointShapeParser(shape));
+			}
+		else if (f.equals(new File(Config.get("ElemlinSHPFile"))))
+
+			// Shapes del archivo ELEMLIN.SHP
+			while (reader.hasNext()) {
+				Shape shape = new ShapeElemlin(reader.next());
+
+				// Si cumple estar entre las fechas
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+					// Anadimos el shape creado a la lista
+					shapeList.add(mLineStringShapeParser(shape));
 			}
 		else if (f.equals(new File(Config.get("EjesSHPFile"))))
 
@@ -90,7 +134,7 @@ public class Cat2Osm {
 				Shape shape = new ShapeEjes(reader.next());
 
 				// Si cumple estar entre las fechas
-				if (shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
 					// Anadimos el shape creado a la lista
 					shapeList.add(mLineStringShapeParser(shape));
 			}
@@ -103,7 +147,7 @@ public class Cat2Osm {
 
 	
 	/** Metodo para parsear los shapes cuyas geografias vienen dadas como
-	 * MultiPolygon, como PARCELA.SHP y CONSTRU.SHP
+	 * MultiPolygon, como MASA.SHP, PARCELA.SHP y CONSTRU.SHP
 	 * Asigna los valores al shape, sus nodos, sus ways y relation
 	 * @param shape Shape creado pero sin los valores de los nodos, ways o relation
 	 * @return Shape con todos los valores asignados
@@ -152,15 +196,15 @@ public class Cat2Osm {
 	}
 	
 	
-	/** Metodo para parsear los shapes cuyas geografias vienen dadas como
-	 * MultiLineString pero queremos solo un punto, como ELEMTEX.SHP
-	 * Asigna los valores al shape y solo su nodo
+	/** Metodo para parsear los shapes cuyas geografias vienen dadas como Point
+	 * o MultiLineString pero queremos solo un punto, como ELEMPUN.SHP y ELEMTEX.SHP
+	 * Asigna los valores al shape y su unico nodo
 	 * @param shape Shape creado pero sin el valor del nodo
 	 * @return Shape con todos los valores asignados
 	 */
 	private Shape pointShapeParser(Shape shape){
 		
-		// Anadimos solo un nodo que es lo que queremos
+		// Anadimos solo un nodo
 		shape.addNode(utils.getNodeId(shape.getCoor(), shape.getAttributes()));
 		
 		return shape;
@@ -168,7 +212,7 @@ public class Cat2Osm {
 	
 	
 	/** Metodo para parsear los shapes cuyas geografias vienen dadas como
-	 * MultiLineString, como EJES.SHP
+	 * MultiLineString, como ELEMLIN.SHP y EJES.SHP
 	 * Asigna los valores al shape, sus nodos, sus ways y relation
 	 * @param shape Shape creado pero sin los valores de los nodos, ways o relation
 	 * @return Shape con todos los valores asignados
@@ -212,6 +256,22 @@ public class Cat2Osm {
 
 		for(Shape shape : shapes) 
 			if (shape.getRefCat().equals(ref)) shapeList.add(shape);
+
+		return shapeList;
+	}
+	
+	
+	/** Busca en la lista de shapes los que coincidan con el codigo de subparce
+	 * @param subparce codigo de subparcela a buscar
+	 * @returns List<Shape> lista de shapes que coinciden                    
+	 */
+	private static List<Shape> findSubparce(List<Shape> shapes, String subparce){
+		List<Shape> shapeList = new ArrayList<Shape>();
+
+		for(Shape shape : shapes) 
+			if (shape instanceof ShapeSubparce)
+				if (((ShapeSubparce) shape).getSubparce().equals(subparce))
+					shapeList.add(shape);
 
 		return shapeList;
 	}
@@ -469,6 +529,11 @@ public class Cat2Osm {
 				// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
 				List <Shape> matches = findRefCat(shapesTotales, c.getRefCatastral());
 
+				// Para los tipos de registro de subparcelas, buscamos la subparcela concreta para
+				// anadirle los atributos
+				if (c.getTipoRegistro() == 17)
+					matches = findSubparce(matches, c.getSubparce());
+				
 				// Puede que no haya shapes para esa refCatastral
 				if (!matches.isEmpty()){
 
@@ -534,7 +599,6 @@ public class Cat2Osm {
 				fA = s.getFechaAlta();
 			}
 		}
-
 		return s;
 	}
 
@@ -598,7 +662,7 @@ public class Cat2Osm {
 			//c.addAttribute("SEGUNDO NUMERO DE POLICIA",line.substring(193,197));
 			//c.addAttribute("SEGUNDA LETRA (CARACTER DE DUPLICADO)",line.substring(197,198));
 			//c.addAttribute("KILOMETRO (3enteros y 2decimales)",line.substring(198,203));
-			c.addAttribute("BLOQUE",line.substring(203,207));
+			//c.addAttribute("BLOQUE",line.substring(203,207));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(215,240));
 			//c.addAttribute("CODIGO POSTAL",line.substring(240,245));
 			c.addAttribute("addr:postcode",line.substring(240,245));
@@ -628,10 +692,10 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DE MUNICIPIO",line.substring(25,28));
-			c.addAttribute("CLASE DE LA UNIDAD CONSTRUCTIVA",line.substring(28,30));
+			//c.addAttribute("CLASE DE LA UNIDAD CONSTRUCTIVA",line.substring(28,30));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
-			c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA",line.substring(44,48)); 
+			//c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA",line.substring(44,48)); 
 			//c.addAttribute("CODIGO DE PROVINCIA",line.substring(50,52));
 			//c.addAttribute("NOMBRE PROVINCIA",line.substring(52,77));
 			//c.addAttribute("CODIGO DEL MUNICIPIO DGC",line.substring(77,80));
@@ -643,7 +707,7 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE VIA O SIBLA PUBLICA",line.substring(158,163));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
 			c.addAttribute("addr:street",tipoViaParser(line.substring(158,163))+ " " +line.substring(163,188));
-			c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
+			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
 			//c.addAttribute("PRIMERA LETRA (CARACTER DE DUPLICADO)",line.substring(192,193));
 			//c.addAttribute("SEGUNDO NUMERO DE POLICIA",line.substring(193,197));
 			//c.addAttribute("SEGUNDA LETRA (CARACTER DE DUPLICADO)",line.substring(197,198));
@@ -654,7 +718,7 @@ public class Cat2Osm {
 			c.setFechaBaja(fechaHasta);
 			//c.addAttribute("INDICADOR DE EXACTITUD DEL ANO DE CONTRUCCION",line.substring(299,300));
 			//c.addAttribute("SUPERFICIE DE SUELO OCUPADA POR LA UNIDAD CONSTRUCTIVA",line.substring(300,307));
-			c.addAttribute("LONGITUD DE FACHADA",line.substring(307,312));
+			//c.addAttribute("LONGITUD DE FACHADA",line.substring(307,312));
 			//c.addAttribute("CODIGO DE UNIDAD CONSTRUCTIVA MATRIZ",line.substring(409,413));
 
 			c.addAttribute("source", "Catastro");
@@ -670,22 +734,22 @@ public class Cat2Osm {
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("NUMERO DE ORDEN DEL ELEMENTO DE CONSTRUCCION",line.substring(44,48));
 			//c.addAttribute("NUMERO DE ORDEN DEL BIEN INMUEBLE FISCAL",line.substring(50,54));
-			c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA A LA QUE ESTA ASOCIADO EL LOCAL",line.substring(54,58));
-			c.addAttribute("BLOQUE",line.substring(58,62));
-			c.addAttribute("ESCALERA",line.substring(62,64));
-			c.addAttribute("PLANTA",line.substring(64,67));
-			c.addAttribute("PUERTA",line.substring(67,70));
+			//c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA A LA QUE ESTA ASOCIADO EL LOCAL",line.substring(54,58));
+			//c.addAttribute("BLOQUE",line.substring(58,62));
+			//c.addAttribute("ESCALERA",line.substring(62,64));
+			//c.addAttribute("PLANTA",line.substring(64,67));
+			//c.addAttribute("PUERTA",line.substring(67,70));
 			//c.addAttribute("CODIGO DE DESTINO SEGUN CODIFICACION DGC",line.substring(70,73));
 			//c.addAttribute("INDICADOR DEL TIPO DE REFORMA O REHABILITACION",line.substring(73,74));
-			c.addAttribute("ANO DE REFORMA EN CASO DE EXISTIR",line.substring(74,78));
+			//c.addAttribute("ANO DE REFORMA EN CASO DE EXISTIR",line.substring(74,78));
 			c.addAttribute("ANO DE ANTIGUEDAD EFECTIVA EN CATASTRO",line.substring(78,82)); 
 			c.setFechaAlta(Long.parseLong(line.substring(78,82)+"0101")); 
 			c.setFechaBaja(fechaHasta);
-			c.addAttribute("INDICADOR DE LOCAL INTERIOR (S/N)",line.substring(82,83));
+			//c.addAttribute("INDICADOR DE LOCAL INTERIOR (S/N)",line.substring(82,83));
 			//c.addAttribute("SUPERFICIE TOTAL DEL LOCAL A EFECTOS DE CATASTRO",line.substring(83,90));
 			//c.addAttribute("SUPERFICIA DE PORCHES Y TERRAZAS DEL LOCAL",line.substring(90,97));
 			//c.addAttribute("SUPERFICIE IMPUTABLE AL LOCAL SITUADA EN OTRAS PLANTAS",line.substring(97,104));
-			c.addAttribute("TIPOLOGIA CONSTRUCTIVA SEGUN NORMAS TECNICAS DE VALORACION",line.substring(104,109));
+			//c.addAttribute("TIPOLOGIA CONSTRUCTIVA SEGUN NORMAS TECNICAS DE VALORACION",line.substring(104,109));
 			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(111,114));
 
 			c.addAttribute("source", "Catastro");
@@ -697,13 +761,13 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DEL MUNICIPIO",line.substring(25,28));
-			c.addAttribute("CLASE DE BIEN INMUEBLE (UR, RU, BI)",line.substring(28,30));
+			//c.addAttribute("CLASE DE BIEN INMUEBLE (UR, RU, BI)",line.substring(28,30));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
-			c.addAttribute("NUMERO SECUENCIAL DEL BIEN INMUEBLE DENTRO DE LA PARCELA",line.substring(44,48));
+			//c.addAttribute("NUMERO SECUENCIAL DEL BIEN INMUEBLE DENTRO DE LA PARCELA",line.substring(44,48));
 			//c.addAttribute("PRIMER CARACTER DE CONTROL",line.substring(48,49));
 			//c.addAttribute("SEGUNDO CARACTER DE CONTROL",line.substring(49,50));
-			c.addAttribute("NUMERO FIJO DEL BIEN INMUEBLE",line.substring(50,58));
+			//c.addAttribute("NUMERO FIJO DEL BIEN INMUEBLE",line.substring(50,58));
 			//c.addAttribute("CAMPO PARA LA IDENTIFICACION DEL BIEN INMUEBLE ASIGNADO POR EL AYTO",line.substring(58,73));
 			//c.addAttribute("NUMERO DE FINCA REGISTRAL",line.substring(73,92));
 			//c.addAttribute("CODIGO DE PROVINCIA",line.substring(92,94));
@@ -722,10 +786,10 @@ public class Cat2Osm {
 			//c.addAttribute("SEGUNDO NUMERO DE POLICIA",line.substring(235,239));
 			//c.addAttribute("SEGUNDA LETRA (CARACTER DE DUPLICADO)",line.substring(239,240));
 			//c.addAttribute("KILOMETRO (3enteros y 2decimales)",line.substring(240,245));
-			c.addAttribute("BLOQUE",line.substring(245,249));
-			c.addAttribute("ESCALERA",line.substring(249,251));
-			c.addAttribute("PLANTA",line.substring(251,254));
-			c.addAttribute("PUERTA",line.substring(254,257));
+			//c.addAttribute("BLOQUE",line.substring(245,249));
+			//c.addAttribute("ESCALERA",line.substring(249,251));
+			//c.addAttribute("PLANTA",line.substring(251,254));
+			//c.addAttribute("PUERTA",line.substring(254,257));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(257,282));
 			//c.addAttribute("CODIGO POSTAL",line.substring(282,287));
 			c.addAttribute("addr:postcode",line.substring(282,287));
@@ -778,10 +842,11 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DEL MUNICIPIO",line.substring(25,28));
-			c.addAttribute("NATURALEZA DEL SUELO OCUPADO POR EL CULTIVO (UR, RU)",line.substring(28,30));
+			//c.addAttribute("NATURALEZA DEL SUELO OCUPADO POR EL CULTIVO (UR, RU)",line.substring(28,30));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("CODIGO DE LA SUBPARCELA",line.substring(44,48));
+			c.setSubparce(line.substring(44,48));
 			//c.addAttribute("NUMERO DE ORDEN DEL BIEN INMUEBLE FISCAL",line.substring(50,54));
 			//c.addAttribute("TIPO DE SUBPARCELA (T, A, D)",line.substring(54,55));
 			//c.addAttribute("SUPERFICIE DE LA SUBPARCELA (m cuadrad)",line.substring(55,65));
@@ -809,106 +874,526 @@ public class Cat2Osm {
 		return c;
 	}
 
+	
 	public static String tipoViaParser(String codigo){
 		
-		// TODO Descifrar codigos
-		if (codigo.equals("CL   "))
-			return "Calle";
-		else if (codigo.equals("AV   "))
-			return "Avenida";
-		else if (codigo.equals("PZ   "))
-			return "Plaza";
-		else if (codigo.equals("CR   "))
-			return "Carretera";
-		else if (codigo.equals("PJ   "))
-			return "PJ";
-		else if (codigo.equals("RD   "))
-			return "RD";
-		else if (codigo.equals("AR   "))
-			return "AR";
-		else if (codigo.equals("ER   "))
-			return "ER";
-		else if (codigo.equals("CM   "))
-			return "Camino";
-		else if (codigo.equals("CJ   "))
-			return "CJ";
-		else if (codigo.equals("GR   "))
-			return "GR";
+		if (codigo.equals("CL   "))return "Calle";
+		else if (codigo.equals("AL   "))return "Aldea/Alameda";
+		else if (codigo.equals("AR   "))return "Area/Arrabal";
+		else if (codigo.equals("AU   "))return "Autopista";
+		else if (codigo.equals("AV   "))return "Avenida";
+		else if (codigo.equals("AY   "))return "Arroyo";
+		else if (codigo.equals("BJ   "))return "Bajada";
+		else if (codigo.equals("BO   "))return "Barrio";
+		else if (codigo.equals("BR   "))return "Barranco";
+		else if (codigo.equals("CA   "))return "Cañada";
+		else if (codigo.equals("CG   "))return "Colegio/Cigarral";
+		else if (codigo.equals("CH   "))return "Chalet";
+		else if (codigo.equals("CI   "))return "Cinturon";
+		else if (codigo.equals("CJ   "))return "Calleja/Callejón";
+		else if (codigo.equals("CM   "))return "Camino";
+		else if (codigo.equals("CN   "))return "Colonia";
+		else if (codigo.equals("CO   "))return "Concejo/Colegio";
+		else if (codigo.equals("CP   "))return "Campa/Campo";
+		else if (codigo.equals("CR   "))return "Carretera/Carrera";
+		else if (codigo.equals("CS   "))return "Caserío";
+		else if (codigo.equals("CT   "))return "Cuesta/Costanilla";
+		else if (codigo.equals("CU   "))return "Conjunto";
+		else if (codigo.equals("DE   "))return "Detrás";
+		else if (codigo.equals("DP   "))return "Diputación";
+		else if (codigo.equals("DS   "))return "Diseminados";
+		else if (codigo.equals("ED   "))return "Edificios";
+		else if (codigo.equals("EM   "))return "Extramuros";
+		else if (codigo.equals("EN   "))return "Entrada, Ensanche";
+		else if (codigo.equals("ER   "))return "Extrarradio";
+		else if (codigo.equals("ES   "))return "Escalinata";
+		else if (codigo.equals("EX   "))return "Explanada";
+		else if (codigo.equals("FC   "))return "Ferrocarril";
+		else if (codigo.equals("FN   "))return "Finca";
+		else if (codigo.equals("GL   "))return "Glorieta";
+		else if (codigo.equals("GR   "))return "Grupo";
+		else if (codigo.equals("GV   "))return "Gran Vía";
+		else if (codigo.equals("HT   "))return "Huerta/Huerto";
+		else if (codigo.equals("JR   "))return "Jardines";
+		else if (codigo.equals("LD   "))return "Lado/Ladera";
+		else if (codigo.equals("LG   "))return "Lugar";
+		else if (codigo.equals("MC   "))return "Mercado";
+		else if (codigo.equals("ML   "))return "Muelle";
+		else if (codigo.equals("MN   "))return "Municipio";
+		else if (codigo.equals("MS   "))return "Masias";
+		else if (codigo.equals("MT   "))return "Monte";
+		else if (codigo.equals("MZ   "))return "Manzana";
+		else if (codigo.equals("PB   "))return "Poblado";
+		else if (codigo.equals("PD   "))return "Partida";
+		else if (codigo.equals("PJ   "))return "Pasaje/Pasadizo";
+		else if (codigo.equals("PL   "))return "Polígono";
+		else if (codigo.equals("PM   "))return "Paramo";
+		else if (codigo.equals("PQ   "))return "Parroquia/Parque";
+		else if (codigo.equals("PR   "))return "Prolongación/Continuación";
+		else if (codigo.equals("PS   "))return "Paseo";
+		else if (codigo.equals("PT   "))return "Puente";
+		else if (codigo.equals("PZ   "))return "Plaza";
+		else if (codigo.equals("QT   "))return "Quinta";
+		else if (codigo.equals("RB   "))return "Rambla";
+		else if (codigo.equals("RC   "))return "Rincón/Rincona";
+		else if (codigo.equals("RD   "))return "Ronda";
+		else if (codigo.equals("RM   "))return "Ramal";
+		else if (codigo.equals("RP   "))return "Rampa";
+		else if (codigo.equals("RR   "))return "Riera";
+		else if (codigo.equals("RU   "))return "Rua";
+		else if (codigo.equals("SA   "))return "Salida";
+		else if (codigo.equals("SD   "))return "Senda";
+		else if (codigo.equals("SL   "))return "Solar";
+		else if (codigo.equals("SN   "))return "Salón";
+		else if (codigo.equals("SU   "))return "Subida";
+		else if (codigo.equals("TN   "))return "Terrenos";
+		else if (codigo.equals("TO   "))return "Torrente";
+		else if (codigo.equals("TR   "))return "Travesía";
+		else if (codigo.equals("UR   "))return "Urbanización";
+		else if (codigo.equals("VR   "))return "Vereda";
+		else if (codigo.equals("CY   "))return "Caleya";
+
 		return codigo;
 	}
 
+	
 	public static String[] usoInmueblesParser(String codigo){
 		
 		// TODO Mirar landuses
 		switch (codigo.charAt(0)){
 		case 'A':{
 			String[] s = {"landuse","farmyard"};
-			return s;
-			}
+			return s;}
 		case 'V':{
 			String[] s = {"landuse","residential"};
-			return s;
-		}
+			return s;}
 		case 'I':{
 			String[] s = {"landuse","industrial"};
-			return s;
-		}
+			return s;}
 		case 'O':{
 			String[] s = {"landuse","retail"};
-			return s;
-		}
+			return s;}
 		case 'C':{
 			String[] s = {"landuse","commercial"};
-			return s;
-		}
+			return s;}
 		case 'K':{
 			String[] s = {"landuse","recreation_ground"};
-			return s;
-		}
+			return s;}
 		case 'T':{
 			String[] s = {"landuse","recreation_ground"};
-			return s;
-		}
+			return s;}
 		case 'G':{
 			String[] s = {"landuse","retail"};
-			return s;
-		}
+			return s;}
 		case 'Y':{
 			String[] s = {"landuse","health"};
-			return s;
-		}
+			return s;}
 		case 'E':{
 			String[] s = {"landuse","recreation_ground"};
-			return s;
-		}
+			return s;}
 		case 'R':{
 			String[] s = {"landuse","place_of_worship"};
-			return s;
-		}
+			return s;}
 		case 'M':{
 			String[] s = {"landuse","allotments"};
-			return s;
-			}
+			return s;}
 		case 'P':{
 			String[] s = {"landuse","singular"};
-			return s;
-		}
+			return s;}
 		case 'B':{
 			String[] s = {"landuse","orchard"};
-			return s;
-		}
+			return s;}
 		case 'J':{
-			String[] s = {"landuse","orchard"};
-			return s;
-		}
+			String[] s = {"landuse","industrial"};
+			return s;}
 		case 'Z':{
 			String[] s = {"landuse","orchard"};
-			return s;
-		}
+			return s;}
 		default:
 			String[] s = {codigo,codigo};
-			return s;
-		}
+			return s;}
 	}
 	
+	
+	public static List<String[]> ttggssParser(String ttggss){
+		List<String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
+		
+		// Divisiones administrativas
+		if (ttggss.equals("010401")){
+			s[0] = "admin_level"; s[1] ="2";
+			l.add(s);
+			s = new String[2];
+			s[0] = "boundary"; s[1] ="administrative";
+			l.add(s);
+			s = new String[2];
+			s[0] = "border_type"; s[1] ="nation";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("010301")){ 
+			s[0] = "admin_level"; s[1] ="4";
+			l.add(s);
+			s = new String[2];
+			s[0] = "boundary"; s[1] ="administrative";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("010201")){ 
+			s[0] = "admin_level"; s[1] ="6";
+			l.add(s);
+			s = new String[2];
+			s[0] = "boundary"; s[1] ="administrative";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("010101")){ 
+			s[0] = "admin_level"; s[1] ="8";
+			l.add(s);
+			s = new String[2];
+			s[0] = "boundary"; s[1] ="administrative";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("010102")){ 
+			s[0] = "admin_level"; s[1] ="10";
+			l.add(s);
+			s = new String[2];
+			s[0] = "boundary"; s[1] ="administrative";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("018507")){ 
+			s[0] = "historic"; s[1] ="boundary_stone";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("018506")){ 
+			s[0] = "historic"; s[1] ="boundary_stone";
+			l.add(s);
+			return l;}
+		
+		// Relieve
+		if (ttggss.equals("028110")){ 
+			s[0] = "man_made"; s[1] ="survey_point";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("028112")){ 
+			s[0] = "man_made"; s[1] ="survey_point";
+			l.add(s);
+			return l;}
+		
+		// Hidrografia
+		if (ttggss.equals("030102")){ 
+			s[0] = "waterway"; s[1] ="stream";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("030202")){ 
+			s[0] = "waterway"; s[1] ="stream";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("030302")){ 
+			s[0] = "waterway"; s[1] ="canal";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("032301")){ 
+			s[0] = "natural"; s[1] ="coastline";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("033301")){ 
+			s[0] = "natural"; s[1] ="water";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("037101")){ 
+			s[0] = "man_made"; s[1] ="water_well";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("037102")){ 
+			s[0] = "natural"; s[1] ="spring";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("037107")){ 
+			s[0] = "waterway"; s[1] ="dam";
+			l.add(s);
+			return l;}
+		
+		// Vias de comunicacion
+		if (ttggss.equals("060102")){ 
+			//s[0] = "natural"; s[1] ="coastline";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("060104")){ 
+			s[0] = "highway"; s[1] ="motorway";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("060202")){ 
+			//s[0] = "man_made"; s[1] ="water_well";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("060204")){ 
+			s[0] = "highway"; s[1] ="primary";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("060402")){ 
+			//s[0] = "waterway"; s[1] ="dam";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("060404")){ 
+			s[0] = "highway"; s[1] ="tertiary";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("060109")){ 
+			s[0] = "railway"; s[1] ="funicular";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("061104")){ 
+			s[0] = "railway"; s[1] ="rail";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("067121")){ 
+			s[0] = "bridge"; s[1] ="yes";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("068401")){ 
+			//s[0] = "waterway"; s[1] ="dam";
+			//l.add(s);
+			return l;}
+		
+		// Red geodesica y topografica
+		if (ttggss.equals("108100")){ 
+			s[0] = "man_made"; s[1] ="survey_point";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("108101")){ 
+			s[0] = "man_made"; s[1] ="survey_point";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("108104")){ 
+			s[0] = "man_made"; s[1] ="survey_point";
+			l.add(s);
+			return l;}
+		
+		// Delimitaciones catastrales urbanisticas y estadisticas
+		if (ttggss.equals("111101")){ 
+			s[0] = "admin_level"; s[1] ="10";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("111000")){ 
+			s[0] = "admin_level"; s[1] ="12";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("111200")){ 
+			s[0] = "admin_level"; s[1] ="14";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("111300")){ 
+			s[0] = "admin_level"; s[1] ="10";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("115101")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("115000")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("115200")){ 
+			//s[0] = "admin_level"; s[1] ="14";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("115300")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		
+		// Rustica (Compatibilidad 2006 hacia atras)
+		if (ttggss.equals("120100")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("120200")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("120500")){ 
+			//s[0] = "admin_level"; s[1] ="14";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("120180")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("120280")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("120580")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("125101")){ 
+			//s[0] = "admin_level"; s[1] ="14";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("125201")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("125501")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("125510")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+
+		// Rustica y Urbana
+		if (ttggss.equals("130100")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("130200")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("130500")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("135101")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("135201")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("135501")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("135510")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+
+		// Urbana (Compatibilidad 2006 hacia atras)
+		if (ttggss.equals("140100")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("140190")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("140200")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("140290")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("140500")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("140590")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("145101")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("145201")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("145501")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("145510")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		
+		// Infraestructura/Mobiliario
+		if (ttggss.equals("160101")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("160131")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("160132")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("160201")){ 
+			s[0] = "power"; s[1] ="line";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("160202")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("160300")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("161101")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("167103")){ 
+			s[0] = "historic"; s[1] ="monument";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("167104")){ 
+			s[0] = "highway"; s[1] ="steps";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("167106")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("167111")){ 
+			s[0] = "power"; s[1] ="sub_station";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("167167")){ 
+			//s[0] = "admin_level"; s[1] ="10";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("167201")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("168100")){ 
+			//s[0] = "power"; s[1] ="sub_station";
+			//l.add(s);
+			return l;}
+		if (ttggss.equals("168103")){ 
+			s[0] = "historic"; s[1] ="monument";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("168113")){ 
+			s[0] = "power"; s[1] ="pole";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("168116")){ 
+			s[0] = "highway"; s[1] ="street_lamp";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("168153")){ 
+			s[0] = "natural"; s[1] ="tree";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("168168")){ 
+			//s[0] = "admin_level"; s[1] ="12";
+			//l.add(s);
+			return l;}
+		
+		
+	return null;	
+	}
 }

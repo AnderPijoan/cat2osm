@@ -128,7 +128,7 @@ public class WayOsm {
 			s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 		*/
 		
-		if (refCatastral != null)
+		if (refCatastral != null && !refCatastral.isEmpty())
 		s += "<tag k=\"ref-cat\" v=\""+refCatastral+"\"/>\n";
 		
 		s += ("</way>\n");

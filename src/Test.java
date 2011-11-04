@@ -1,5 +1,3 @@
-
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,16 +21,28 @@ public class Test {
 		System.out.println("\nLeyendo SHAPEFile CONSTRU");
 		shapes.addAll( catastro.shpParser(new File(Config.get("ConstruSHPFile"))) );
 		
+		System.out.println("\nLeyendo SHAPEFile SUBPARCE");
+		shapes.addAll( catastro.shpParser(new File(Config.get("SubparceSHPFile"))) );
+		
 		System.out.println("\nLeyendo SHAPEFile PARCELA");
 		shapes.addAll( catastro.shpParser(new File(Config.get("ParcelaSHPFile"))) );
+		
+		System.out.println("\nLeyendo SHAPEFile MASA");
+		shapes.addAll( catastro.shpParser(new File(Config.get("MasaSHPFile"))) );
 		
 		// Seleccionamos el archivo .cat
 		// Los otros shapefiles que vienen despues no tienen referencia catastral por lo que 
 		// no hay forma de relacionarlos con los registros de catastro.
 		System.out.println("\nLeyendo CATFile");
 		catastro.catParser(new File(Config.get("CATFile")), shapes);
-		
+
 		// Seleccionamos los otros archivos .shp (Necesario que esten tambien los .shx, .prj y .dbf)
+		System.out.println("\nLeyendo SHAPEFile ELEMLIN");
+		shapes.addAll( catastro.shpParser(new File(Config.get("ElemlinSHPFile"))) );
+		
+		System.out.println("\nLeyendo SHAPEFile ELEMPUN");
+		shapes.addAll( catastro.shpParser(new File(Config.get("ElempunSHPFile"))) );
+		
 		System.out.println("\nLeyendo SHAPEFile ELEMTEX");
 		shapes.addAll( catastro.shpParser(new File(Config.get("ElemtexSHPFile"))) );
 		
@@ -47,7 +57,7 @@ public class Test {
 		System.out.println("\nEscribiendo "+ Cat2Osm.utils.getTotalRelations().size() +" RELATIONS");
 		catastro.printRelations( Cat2Osm.utils.getTotalRelations());
 		System.out.println("\nJUNTANDO los tres archivos");
-		catastro.joinFiles("ARCHIVO");
+		catastro.joinFiles(Config.get("ResultFileName"));
 		System.out.println("\nTERMINADO");
 
 	}

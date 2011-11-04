@@ -1,24 +1,43 @@
 # Ruta donde se guardaran los resultados
 resultPath=result
 
+# Nombre para el archivo resultado
+ResultFileName=Archivo
+
+# Ruta al archivo con los datos Shapefile de Catastro (MASA.SHP)
+MasaSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\MASA\\MASA.SHP
+
 # Ruta al archivo con los datos Shapefile de Catastro (PARCELA.SHP)
-ParcelaSHPFile=files\\PARCELA\\PARCELA.SHP
+ParcelaSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\PARCELA\\PARCELA.SHP
+
+# Ruta al archivo con los datos Shapefile de Catastro (SUBPARCE.SHP)
+SubparceSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\SUBPARCE\\SUBPARCE.SHP
 
 # Ruta al archivo con los datos Shapefile de Catastro (CONSTRU.SHP)
-ConstruSHPFile=files\\CONSTRU\\CONSTRU.SHP
+ConstruSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\CONSTRU\\CONSTRU.SHP
 
 # Ruta al archivo con los datos Shapefile de Catastro (ELEMTEX.SHP)
 # NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
 # .cat, no les anyade nada.
-ElemtexSHPFile=files\\ELEMTEX\\ELEMTEX.SHP
+ElemtexSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\ELEMTEX\\ELEMTEX.SHP
+
+# Ruta al archivo con los datos Shapefile de Catastro (ELEMPUN.SHP)
+# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
+# .cat, no les anyade nada.
+ElempunSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\ELEMPUN\\ELEMPUN.SHP
+
+# Ruta al archivo con los datos Shapefile de Catastro (ELEMPUN.SHP)
+# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
+# .cat, no les anyade nada.
+ElemlinSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\ELEMLIN\\ELEMLIN.SHP
 
 # Ruta al archivo con los datos Shapefile de Catastro (EJES.SHP)
 # NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
 # .cat, no les anyade nada.
-EjesSHPFile=files\\EJES\\EJES.SHP
+EjesSHPFile=files\\AlmodovarDelCampo\\RUSTICAS\\EJES\\EJES.SHP
 
 # Ruta al archivo con los datos Cat de Catastro (.CAT)
-CATFile=files\\13_900_U_2011-05-08.CAT
+CATFile=files\\AlmodovarDelCampo\\RUSTICAS\\13_15_R_2011-09-17.CAT
 
 # Huso geografico en el que se encuentra la cartografia
 # Ejemplo: Ciudad Real Huso "30 N" por tanto getHuso=30 y getHemisferio=N
