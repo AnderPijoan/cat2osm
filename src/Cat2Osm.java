@@ -255,7 +255,7 @@ public class Cat2Osm {
 		List<Shape> shapeList = new ArrayList<Shape>();
 
 		for(Shape shape : shapes) 
-			if (shape.getRefCat().equals(ref)) shapeList.add(shape);
+			if (shape.getRefCat() != null && shape.getRefCat().equals(ref)) shapeList.add(shape);
 
 		return shapeList;
 	}
