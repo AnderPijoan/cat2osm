@@ -64,11 +64,13 @@ public class ShapeConstru extends Shape {
 	}
 
 	public void addNode(long nodeId){
-		nodes.add(nodeId);
+		if (!nodes.contains(nodeId))
+			nodes.add(nodeId);
 	}
 	
 	public void addWay(long wayId){
-		ways.add(wayId);
+		if (!ways.contains(wayId))
+			ways.add(wayId);
 	}
 	
 	public void removeWay(long wayId){
@@ -155,7 +157,7 @@ public class ShapeConstru extends Shape {
 		String[] s = new String[2];
 		
 		if (refCatastral != null){
-		s[0] = "refcatastral"; s[1] = refCatastral;
+		s[0] = "catastro:ref"; s[1] = refCatastral;
 		l.add(s);
 		}
 		

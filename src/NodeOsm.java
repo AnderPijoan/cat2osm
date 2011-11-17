@@ -50,7 +50,6 @@ public class NodeOsm {
 		return coor;
 	}
 	
-	
 	public double getX() {
 		return coor.x;
 	}
@@ -68,9 +67,11 @@ public class NodeOsm {
 	}
 	
 	public void addTags(List<String[]> tags) {
-		if (this.tags == null)
+		if (this.tags == null && !tags.isEmpty())
 			this.tags = new ArrayList<String[]>();
-		this.tags.addAll(tags);
+
+			for (String [] s : tags)
+				this.tags.add(s);
 	}
 	
 	public void setY(Coordinate c) {
@@ -99,11 +100,13 @@ public class NodeOsm {
 
 		// Hora para el timestamp
 		Date date = new java.util.Date();
-		s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"292702\" user=\"AnderPijoan\" changeset=\"5407370\" lat=\""+coor[0]+"\" lon=\""+coor[1]+"\">\n</node>\n");
+		s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\" lat=\""+coor[0]+"\" lon=\""+coor[1]+"\">\n");
 		
 		if (tags != null)
 			for (int x = 0; x < tags.size(); x++)
 				s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
+		
+		s += ("</node>\n");
 		
 		return s;
 	}

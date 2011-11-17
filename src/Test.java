@@ -17,48 +17,80 @@ public class Test {
 		Cat2Osm catastro = new Cat2Osm(utils);
 		List<Shape> shapes = new ArrayList<Shape>();
 		
-		// Seleccionamos los archivos .shp (Necesario que esten tambien los .shx, .prj y .dbf)
-		System.out.println("\nLeyendo SHAPEFile CONSTRU");
-		shapes.addAll( catastro.shpParser(new File(Config.get("ConstruSHPFile"))) );
+		// Recorrer los directorios Urbanos
+		File dirU = new File (Config.get("UrbanoSHPDir"));
 		
-		System.out.println("\nLeyendo SHAPEFile SUBPARCE");
-		shapes.addAll( catastro.shpParser(new File(Config.get("SubparceSHPFile"))) );
-		
-		System.out.println("\nLeyendo SHAPEFile PARCELA");
-		shapes.addAll( catastro.shpParser(new File(Config.get("ParcelaSHPFile"))) );
-		
-		System.out.println("\nLeyendo SHAPEFile MASA");
-		shapes.addAll( catastro.shpParser(new File(Config.get("MasaSHPFile"))) );
+		if( dirU.exists() && dirU.isDirectory()){
+			File[] filesU = dirU.listFiles();
+			for(int i=0; i < filesU.length; i++)
+				if ( filesU[i].getName().toUpperCase().equals("CONSTRU") ||
+						filesU[i].getName().toUpperCase().equals("EJES") ||
+						filesU[i].getName().toUpperCase().equals("ELEMLIN") ||
+						filesU[i].getName().toUpperCase().equals("ELEMPUN") ||
+						filesU[i].getName().toUpperCase().equals("ELEMTEX") ||
+						filesU[i].getName().toUpperCase().equals("MASA") ||
+						filesU[i].getName().toUpperCase().equals("PARCELA") ||
+						filesU[i].getName().toUpperCase().equals("SUBPARCE"))
+				try{
+				System.out.println("Leyendo "+ filesU[i].getName() +" Urbano.");
+				shapes.addAll(catastro.shpParser(new File(filesU[i] + "\\" + filesU[i].getName() + ".SHP")));
+				}
+			catch(Exception e){}
+			}
+		else{
+			System.out.println("UrbanoSHPDir no es un directorio valido.");
+		}
 		
 		// Seleccionamos el archivo .cat
-		// Los otros shapefiles que vienen despues no tienen referencia catastral por lo que 
+		// No todos los shapefiles tienen referencia catastral por lo que algunos
 		// no hay forma de relacionarlos con los registros de catastro.
-		System.out.println("\nLeyendo CATFile");
-		catastro.catParser(new File(Config.get("CATFile")), shapes);
+		System.out.println("Leyendo CAT Urbano");
+		catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
+		
+		catastro.simplifyWays(shapes);
+		
+		// Recorrer los directorios Rusticos
+		File dirR = new File (Config.get("RusticoSHPDir"));
+		
+		if( dirR.exists() && dirR.isDirectory()){
+			File[] filesR = dirR.listFiles();
+			for(int i=0; i < filesR.length; i++)
+				if ( filesR[i].getName().toUpperCase().equals("CONSTRU") ||
+						filesR[i].getName().toUpperCase().equals("EJES") ||
+						filesR[i].getName().toUpperCase().equals("ELEMLIN") ||
+						filesR[i].getName().toUpperCase().equals("ELEMPUN") ||
+						filesR[i].getName().toUpperCase().equals("ELEMTEX") ||
+						filesR[i].getName().toUpperCase().equals("MASA") ||
+						filesR[i].getName().toUpperCase().equals("PARCELA") ||
+						filesR[i].getName().toUpperCase().equals("SUBPARCE"))
+				try{
+				System.out.println("Leyendo "+ filesR[i].getName() +" Rustico.");
+				shapes.addAll(catastro.shpParser(new File(filesR[i] + "\\" + filesR[i].getName() + ".SHP")));
+				}
+			catch(Exception e){}
+			}
+		else{
+			System.out.println("RusticoSHPDir no es un directorio valido. No se han encontrado los shapefiles.");
+		}
+		
+		// Seleccionamos el archivo .cat
+		// No todos los shapefiles tienen referencia catastral por lo que algunos
+		// no hay forma de relacionarlos con los registros de catastro.
+		System.out.println("Leyendo CAT Rustico");
+		catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
+		
+		
 
-		// Seleccionamos los otros archivos .shp (Necesario que esten tambien los .shx, .prj y .dbf)
-		System.out.println("\nLeyendo SHAPEFile ELEMLIN");
-		shapes.addAll( catastro.shpParser(new File(Config.get("ElemlinSHPFile"))) );
-		
-		System.out.println("\nLeyendo SHAPEFile ELEMPUN");
-		shapes.addAll( catastro.shpParser(new File(Config.get("ElempunSHPFile"))) );
-		
-		System.out.println("\nLeyendo SHAPEFile ELEMTEX");
-		shapes.addAll( catastro.shpParser(new File(Config.get("ElemtexSHPFile"))) );
-		
-		System.out.println("\nLeyendo SHAPEFile EJES");
-		shapes.addAll( catastro.shpParser(new File(Config.get("EjesSHPFile"))) );
-		
 		// Escribir los datos
-		System.out.println("\nEscribiendo "+ Cat2Osm.utils.getTotalNodes().size() +" NODOS");
+		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalNodes().size() +" NODOS");
 		catastro.printNodes( Cat2Osm.utils.getTotalNodes());
-		System.out.println("\nEscribiendo "+ Cat2Osm.utils.getTotalWays().size() +" WAYS");
+		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalWays().size() +" WAYS");
 		catastro.printWays(Cat2Osm.utils.getTotalWays());
-		System.out.println("\nEscribiendo "+ Cat2Osm.utils.getTotalRelations().size() +" RELATIONS");
+		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalRelations().size() +" RELATIONS");
 		catastro.printRelations( Cat2Osm.utils.getTotalRelations());
-		System.out.println("\nJUNTANDO los tres archivos");
+		System.out.println("JUNTANDO los tres archivos");
 		catastro.joinFiles(Config.get("ResultFileName"));
-		System.out.println("\nTERMINADO");
+		System.out.println("TERMINADO");
 
 	}
 

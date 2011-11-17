@@ -2,42 +2,15 @@
 resultPath=result
 
 # Nombre para el archivo resultado
-ResultFileName=Archivo
+ResultFileName=AldeasecadeAlbaUrbanoRustico
 
-# Ruta al archivo con los datos Shapefile de Catastro (MASA.SHP)
-MasaSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\MASA\\MASA.SHP
-
-# Ruta al archivo con los datos Shapefile de Catastro (PARCELA.SHP)
-ParcelaSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\PARCELA\\PARCELA.SHP
-
-# Ruta al archivo con los datos Shapefile de Catastro (SUBPARCE.SHP)
-SubparceSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\SUBPARCE\\SUBPARCE.SHP
-
-# Ruta al archivo con los datos Shapefile de Catastro (CONSTRU.SHP)
-ConstruSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\CONSTRU\\CONSTRU.SHP
-
-# Ruta al archivo con los datos Shapefile de Catastro (ELEMTEX.SHP)
-# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
-# .cat, no les anyade nada.
-ElemtexSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\ELEMTEX\\ELEMTEX.SHP
-
-# Ruta al archivo con los datos Shapefile de Catastro (ELEMPUN.SHP)
-# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
-# .cat, no les anyade nada.
-ElempunSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\ELEMPUN\\ELEMPUN.SHP
-
-# Ruta al archivo con los datos Shapefile de Catastro (ELEMPUN.SHP)
-# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
-# .cat, no les anyade nada.
-ElemlinSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\ELEMLIN\\ELEMLIN.SHP
-
-# Ruta al archivo con los datos Shapefile de Catastro (EJES.SHP)
-# NO TIENEN REFCATASTRAL por lo que si se intenta luego relacionar con el
-# .cat, no les anyade nada.
-EjesSHPFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\EJES\\EJES.SHP
+# Ruta al directorio donde estan los shapefiles urbanos de catastro (.SHP)
+UrbanoSHPDir=files\\AldeasecadeAlba\\37_21_UA_2011-09-16_SHF
+RusticoSHPDir=files\\AldeasecadeAlba\\37_21_RA_2011-09-16_SHF
 
 # Ruta al archivo con los datos Cat de Catastro (.CAT)
-CATFile=files\\AldeasecadeAlba\37_21_RA_2011-09-16_SHF\\37_21_R_2011-09-17.CAT
+UrbanoCATFile=files\\AldeasecadeAlba\\37_21_U_2011-09-18.CAT
+RusticoCATFile=files\\AldeasecadeAlba\\37_21_R_2011-09-17.CAT
 
 # Huso geografico en el que se encuentra la cartografia
 # Ejemplo: Ciudad Real Huso "30 N" por tanto getHuso=30 y getHemisferio=N

@@ -59,9 +59,17 @@ public class Cat {
 	}
 
 	public void addAttribute(String nombre, String valor){
-		String[] temp = {nombre, valor};
-		if (!atributos.contains(temp))
-			atributos.add(temp);
+		if (valor != null){
+			String v = valor.trim();
+			String[] temp = {nombre, v};
+			if (!v.isEmpty() && !atributos.contains(temp))
+				atributos.add(temp);
+		}
+	}
+	
+	public void addAttribute(List<String[]> l){
+		if (l != null)
+			atributos.addAll(l);
 	}
 	
 	public List<String[]> getAttributes(){

@@ -5,38 +5,32 @@ import org.opengis.feature.simple.SimpleFeature;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.Point;
 
 
-public class ShapeElemtex extends Shape {
+public class ShapeElempun extends Shape {
 
 	private Coordinate coor;
 	private Long nodo;
-	private String rotulo; // Campo Rotulo solo en Elemtex.shp
-	private String ttggss; // Campo TTGGSS en Elemtex.shp
+	private String ttggss; // Campo TTGGSS solo en Elempun.shp
 	private List<ShapeAttribute> atributos;
 
-	public ShapeElemtex(SimpleFeature f) {
+	public ShapeElempun(SimpleFeature f) {
 		super(f);
 
-		// Elemtex trae la geometria en formato MultiLineString
-		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
+		// Elempun trae la geometria en formato Point
+		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.Point")){
 
-			MultiLineString l = (MultiLineString) f.getDefaultGeometry();
-			LineString line = new LineString(l.getCoordinates(),null , 0);
+			Point p = (Point) f.getDefaultGeometry();
 
-			coor = line.getEnvelopeInternal().centre();
+			coor = p.getCoordinate();
 		}
 		else {
 			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
-		rotulo = new String();
-		String r = (String) f.getAttribute("ROTULO");
-		for (int x = 0; x < r.length(); x++)
-			if (r.charAt(x) != '"') rotulo += r.charAt(x);
-		
+
 		ttggss = (String) f.getAttribute("TTGGSS");
 
 		// Si queremos coger todos los atributos del .shp
@@ -45,10 +39,6 @@ public class ShapeElemtex extends Shape {
 		atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
 		}*/
 
-	}
-
-	public Coordinate getCoor(){
-		return coor;
 	}
 
 	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
@@ -66,76 +56,76 @@ public class ShapeElemtex extends Shape {
 	/** Devuelve los atributos del shape
 	 * @return Lista de atributos
 	 */
-	public List<String[]> getAttributes(){
+	@Override
+	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (rotulo != null){
-			s[0] = "addr:housenumber"; s[1] = rotulo;
-			l.add(s);
-		}
-		
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
 			}
-
-		//s = new String[2];
-		//s[0] = "FECHAALTA"; s[1] = String.valueOf(fechaAlta);
-		//l.add(s);
-
-		//s = new String[2];
-		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
-		//l.add(s);
-
 		return l;
 	}
 
-	public String getRotulo() {
-		return rotulo;
-	}
-	
-	public void addNode(long nodeId){
-		nodo = nodeId;
-	}
-	
-	public String getRefCat(){
-		return "";
-	}
-
-	public Long getRelation(){
+	@Override
+	public String getRefCat() {
 		return null;
 	}
 
-	public List<LineString> getPoligons(){
+	@Override
+	public Long getRelation() {
 		return null;
 	}
 
-	public Coordinate[] getCoordenadas(int x){
+	@Override
+	public List<LineString> getPoligons() {
 		return null;
 	}
 
-	public List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils){
+	@Override
+	public Coordinate[] getCoordenadas(int x) {
 		return null;
 	}
 
-	public void addWay(long wayId){	
+	@Override
+	public void addNode(long nodeId) {
 	}
 
-	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils){
-		return null;
-	}
-
-	public void setRelation(long relationId){
-	}
-
-	public List<Long> getNodes(){
+	@Override
+	public List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils) {
 		List<Long> l = new ArrayList<Long>();
 		l.add(nodo);
 		return l;
 	}
 
-	public List<Long> getWays(){
+	@Override
+	public void addWay(long wayId) {
+	}
+
+	@Override
+	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils) {
 		return null;
 	}
-	
+
+	@Override
+	public void setRelation(long relationId) {
+	}
+
+	@Override
+	public List<Long> getNodes() {
+		List<Long> l = new ArrayList<Long>();
+		l.add(nodo);
+		return l;
+	}
+
+	@Override
+	public List<Long> getWays() {
+		return null;
+	}
+
+	@Override
+	public Coordinate getCoor() {
+		return coor;
+	}
+
 }

@@ -47,7 +47,7 @@ public class Config {
 		finally
 		{
 			try                  {if (null != fr) fr.close();}
-			catch (Exception e2) {e2.printStackTrace();}
+			catch (Exception e2) { e2.printStackTrace();}
 		}
 	}
 

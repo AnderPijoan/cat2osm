@@ -1,4 +1,5 @@
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -7,13 +8,11 @@ import java.util.List;
 public class WayOsm {
 
 	private List<Long> nodos; // Nodos que componen ese way
-	private String refCatastral; // Referencia catastral para la simplificacion de ways
-	//private List<String[]> tags; //TODO No creo que sean necesarios
+	private List<String[]> tags; // Tags, para la simplificacion de ways
 
 	public WayOsm(List<Long> l){
 		this.nodos = l;
-		this.refCatastral = "";
-		//tags = new ArrayList<String[]>();
+		tags = new ArrayList<String[]>();
 	}
 	
 	public void addNode(Long l){
@@ -29,46 +28,18 @@ public class WayOsm {
 	public List<Long> getNodes() {
 		return nodos;
 	}
-	
-	/*public List<String[]> getTags() {
+
+	public List<String[]> getTags(){
 		return tags;
 	}
-
-	public void setTags(List<String[]> tags) {
-		this.tags = tags;
-	}*/
 	
-	/*public void addTags(List<String[]> tags) {
-		boolean encontrado = false;
-		for (int x = 0; x < tags.size(); x++){
-			encontrado = false;
-			for (int y = 0 ; y < this.tags.size() && !encontrado; y++){
-				String[] s;
-				if (this.tags.contains(tags.get(x)))
-					encontrado = true;
-				else if (tags.get(x)[0].equals(this.tags.get(y)[0])){
-					s = this.tags.get(y);
-					this.tags.remove(y);
-					s[1] += tags.get(x)[1];
-					this.tags.add(s);
-					encontrado = true;
-				}
-			}
-			if (!encontrado) this.tags.add(tags.get(x));
-		}
-	}*/
-
-	public String getRefCat(){
-		return refCatastral;
+	public void setTags(List<String[]> s){
+		tags = s;
 	}
 	
-	public void setRefCat(String s){
-		refCatastral = s;
-	}
-	
-	public void addRefCat(String s){
-		if (!refCatastral.equals(s))
-		refCatastral += s;
+	public void addTags(List<String[]> s){
+		if (!tags.equals(s))
+		tags.addAll(s);
 	}
 	
 	public List<Long> sortNodos(){
@@ -118,18 +89,15 @@ public class WayOsm {
 		
 		// Hora para el timestamp
 		Date date = new java.util.Date();
-		s = ("<way id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"292702\" user=\"AnderPijoan\" changeset=\"5407370\">\n");
+		s = ("<way id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\">\n");
 		
 		// Referencias a los nodos
 		for (int x = 0; x < nodos.size(); x++)
 			s += ("<nd ref=\""+ nodos.get(x) +"\"/>\n");
 		
-		/*for (int x = 0; x < tags.size(); x++)
-			s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
-		*/
-		
-		if (refCatastral != null && !refCatastral.isEmpty())
-		s += "<tag k=\"ref-cat\" v=\""+refCatastral+"\"/>\n";
+		if (tags != null)
+			for (int x = 0; x < tags.size(); x++)
+				s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 		
 		s += ("</way>\n");
 		

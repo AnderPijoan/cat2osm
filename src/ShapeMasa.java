@@ -9,26 +9,26 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Polygon;
 
 
-public class ShapeParcela extends Shape {
+public class ShapeMasa extends Shape {
 
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
 	private List<Long> nodes;
 	private List<Long> ways;
 	private Long relation; // Relacion de sus ways
-	private String refCatastral; // Referencia catastral
+	private String masa; // Codigo de masa, solo en Masa.shp
 	private List<ShapeAttribute> atributos;
 
 
 	/** Constructor
 	 * @param f Linea del archivo shp
 	 */
-	public ShapeParcela(SimpleFeature f) {
+	public ShapeMasa (SimpleFeature f) {
 
 		super(f);
 
 		this.poligons = new ArrayList<LineString>();
 
-		// Parcela.shp trae la geometria en formato MultiPolygon
+		// Masa.shp trae la geometria en formato MultiPolygon
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiPolygon")){
 
 			// Poligono, trae el primer punto de cada poligono repetido al final.
@@ -56,7 +56,7 @@ public class ShapeParcela extends Shape {
 		this.ways = new ArrayList<Long>();
 
 		// Los demas atributos son metadatos y de ellos sacamos 
-		refCatastral = (String) f.getAttribute("REFCAT");
+		masa = (String) f.getAttribute("MASA");
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -159,8 +159,8 @@ public class ShapeParcela extends Shape {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (refCatastral != null){
-			s[0] = "catastro:ref"; s[1] = refCatastral;
+		if (masa != null){
+			s[0] = "masa"; s[1] = masa;
 			l.add(s);
 		}
 
@@ -176,7 +176,7 @@ public class ShapeParcela extends Shape {
 	}
 
 	public String getRefCat(){
-		return refCatastral;
+		return null;
 	}
 
 	public Coordinate[] getCoordenadas(int i){

@@ -1,31 +1,38 @@
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.opengis.feature.simple.SimpleFeature;
 
+import com.linuxense.javadbf.DBFReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Polygon;
 
 
-public class ShapeParcela extends Shape {
+public class ShapeSubparce extends Shape {
 
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
 	private List<Long> nodes;
 	private List<Long> ways;
 	private Long relation; // Relacion de sus ways
 	private String refCatastral; // Referencia catastral
+	private String subparce; // Clave de Subparcela
+	private String cultivo; // Tipo de cultivo de la subparcela
 	private List<ShapeAttribute> atributos;
 
 
 	/** Constructor
 	 * @param f Linea del archivo shp
+	 * @throws IOException 
 	 */
-	public ShapeParcela(SimpleFeature f) {
-
+	public ShapeSubparce(SimpleFeature f) throws IOException {
+		
 		super(f);
-
+		
 		this.poligons = new ArrayList<LineString>();
 
 		// Parcela.shp trae la geometria en formato MultiPolygon
@@ -57,6 +64,8 @@ public class ShapeParcela extends Shape {
 
 		// Los demas atributos son metadatos y de ellos sacamos 
 		refCatastral = (String) f.getAttribute("REFCAT");
+		subparce = (String) f.getAttribute("SUBPARCE");
+		cultivo = getTipoCultivo(subparce);
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -157,11 +166,17 @@ public class ShapeParcela extends Shape {
 	 */
 	public List<String[]> getAttributes(){
 		List <String[]> l = new ArrayList<String[]>();
-		String[] s = new String[2];
 
 		if (refCatastral != null){
+			String[] s = new String[2];
 			s[0] = "catastro:ref"; s[1] = refCatastral;
 			l.add(s);
+		}
+		
+			if (subparce != null){
+				String[] s = new String[2];
+				s[0] = "SUBPARCE"; s[1] = subparce;
+				l.add(s);
 		}
 
 		//s = new String[2];
@@ -178,6 +193,10 @@ public class ShapeParcela extends Shape {
 	public String getRefCat(){
 		return refCatastral;
 	}
+	
+	public String getSubparce(){
+		return subparce;
+	}
 
 	public Coordinate[] getCoordenadas(int i){
 		return poligons.get(i).getCoordinates();
@@ -186,5 +205,31 @@ public class ShapeParcela extends Shape {
 	public Coordinate getCoor(){
 		return null;
 	}
+	
+	
+	/** Relaciona el numero de subparcela que trae el Subparce.shp con
+	 * el codigo de cultivo que trae Rusubparcela.dbf y este a su vez con el 
+	 * Rucultivo.dbf. Solo es para subparcelas rurales
+	 * @param v Numero de subparcela a buscar
+	 * @return String tipo de cultivo
+	 * @throws IOException
+	 */
+	public String getTipoCultivo(String s) throws IOException{
+		InputStream inputStream  = new FileInputStream(Config.get("RuralSHPDir") + "\\RUSUBPARCELA\\RUSUBPARCELA.DBF");
+		DBFReader reader = new DBFReader(inputStream); 
+
+		
+		Object[] rowObjects;
+		
+		while((rowObjects = reader.nextRecord()) != null) {
+			
+			if ( rowObjects[2].equals(s)){
+				inputStream.close();
+				return ((String) rowObjects[3]);
+			}
+		}
+		return null;
+	}  
+	
 	
 }
