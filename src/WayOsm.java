@@ -74,8 +74,12 @@ public class WayOsm {
 		if (nodos == null) {
 			if (other.nodos != null)
 				return false;
-		} else if (this.sortNodos() == other.sortNodos())
-				return true;
+		} else if (this.sortNodos().size() == other.sortNodos().size()){
+			boolean equal = true;
+			for(int x = 0; equal && x < this.sortNodos().size(); x++)
+				equal = this.sortNodos().get(x).equals(other.sortNodos().get(x));
+				return equal;
+			}
 
 		return true;
 	}
