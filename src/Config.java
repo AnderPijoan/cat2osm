@@ -43,8 +43,7 @@ public class Config {
 				}
 				temp = br.readLine();
 			}
-		} catch (Exception e) { e.printStackTrace(); 
-		System.out.println("Linea inadecuada en el archivo de configuracion: \""+ temp +"\"");
+		} catch (Exception e) { System.out.println("Linea inadecuada en el archivo de configuracion: \""+ temp +"\"");
 		System.out.println("Los comentarios deben estar indicados con el caracter '#' al inicio.");}
 		finally
 		{
