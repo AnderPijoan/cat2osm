@@ -16,7 +16,7 @@ public class Test {
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 		List<Shape> shapes = new ArrayList<Shape>();
-		
+				
 		// Recorrer los directorios Urbanos
 		File dirU = new File (Config.get("UrbanoSHPDir"));
 		
