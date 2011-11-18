@@ -120,6 +120,7 @@ public class Cat2OsmUtils {
 		Long id = null;
 		if (!totalWays.isEmpty())
 			id = totalWays.get(new WayOsm(nodes));
+		
 		if (id != null){
 			if (tags != null)
 				((WayOsm) getKeyFromValue((Map<Object, Long>) ((Object) totalWays), id)).addTags(tags);

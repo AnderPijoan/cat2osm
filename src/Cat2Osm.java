@@ -183,7 +183,8 @@ public class Cat2Osm {
 		List <String> roles = new ArrayList<String>(); // Roles de los members
 		for (int x = 0; x < shape.getPoligons().size() ; x++){
 			List <Long> wayList = shape.getWaysPoligonN(x, utils);
-			for (Long way: wayList){
+			for (Long way: wayList)
+			if (!ids.contains(way)){
 				ids.add(way);
 				types.add("way");
 				if (x == 0)roles.add("outer");

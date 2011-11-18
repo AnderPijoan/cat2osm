@@ -101,6 +101,8 @@ public class NodeOsm {
 		// Hora para el timestamp
 		Date date = new java.util.Date();
 		s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\" lat=\""+coor[0]+"\" lon=\""+coor[1]+"\">\n");
+		//s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
+		
 		
 		if (tags != null)
 			for (int x = 0; x < tags.size(); x++)
