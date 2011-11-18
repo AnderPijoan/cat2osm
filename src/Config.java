@@ -17,7 +17,7 @@ public class Config {
 	public Config(String file)
 	{
 		String[] aux; // Auxiliar para parsear las lineas
-		String   temp; // Temporal para recoger las lineas
+		String   temp = null; // Temporal para recoger las lineas
 
 		File           f  = null;
 		FileReader     fr = null;
@@ -43,7 +43,9 @@ public class Config {
 				}
 				temp = br.readLine();
 			}
-		} catch (Exception e) { e.printStackTrace(); }
+		} catch (Exception e) { e.printStackTrace(); 
+		System.out.println("Linea inadecuada en el archivo de configuracion: \""+ temp +"\"");
+		System.out.println("Los comentarios deben estar indicados con el caracter '#' al inicio.");}
 		finally
 		{
 			try                  {if (null != fr) fr.close();}
