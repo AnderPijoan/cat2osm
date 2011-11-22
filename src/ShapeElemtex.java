@@ -32,12 +32,12 @@ public class ShapeElemtex extends Shape {
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
+		ttggss = (String) f.getAttribute("TTGGSS");
+		
 		rotulo = new String();
 		String r = (String) f.getAttribute("ROTULO");
 		for (int x = 0; x < r.length(); x++)
 			if (r.charAt(x) != '"') rotulo += r.charAt(x);
-		
-		ttggss = (String) f.getAttribute("TTGGSS");
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -69,11 +69,6 @@ public class ShapeElemtex extends Shape {
 	public List<String[]> getAttributes(){
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
-
-		if (rotulo != null){
-			s[0] = "addr:housenumber"; s[1] = rotulo;
-			l.add(s);
-		}
 		
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
@@ -87,11 +82,22 @@ public class ShapeElemtex extends Shape {
 		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
 		//l.add(s);
 
+		s = new String[2];
+		s[0] = "source"; s[1] = "catastro";
+		l.add(s);
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
+		l.add(s);
+		
 		return l;
 	}
 
 	public String getRotulo() {
 		return rotulo;
+	}
+	
+	public String getTtggss() {
+		return ttggss;
 	}
 	
 	public void addNode(long nodeId){
@@ -136,6 +142,60 @@ public class ShapeElemtex extends Shape {
 
 	public List<Long> getWays(){
 		return null;
+	}
+	
+	
+	/** Comprueba si es un ttggss valido. Hay elementos textuales que no queremos mostrar
+	 * @return
+	 */
+	public List<String[]> ttggssParser(String ttggss){
+		List<String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
+		
+		if (ttggss.equals("189203")){ 
+			s[0] = "place"; s[1] ="locality";
+			l.add(s);
+			if (rotulo != null){
+			s = new String[2];
+			s[0] = "name"; s[1] = rotulo;
+			l.add(s);
+			}
+			return l;}
+		
+		if (ttggss.equals("189102")){ 
+			if (rotulo != null){
+			s = new String[2];
+			s[0] = "addr:housenumber"; s[1] = rotulo;
+			l.add(s);
+			}
+			return l;}
+		
+		if (ttggss.equals("189300")){ 
+			if (rotulo != null){
+			s = new String[2];
+			System.out.println(rotulo);
+			s[0] = "addr:housenumber"; s[1] = rotulo;
+			l.add(s);
+			}
+			return l;}
+		
+		else{
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
+			return l;
+		}
+	}
+	
+	public boolean shapeValido (){
+
+		if (ttggss.equals("189300"))
+			return true;
+		else if (ttggss.equals("189700"))
+			return true;
+		else if (ttggss.equals("189203"))
+			return true;
+		else
+			return false;
 	}
 	
 }

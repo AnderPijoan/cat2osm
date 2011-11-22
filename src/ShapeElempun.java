@@ -64,6 +64,14 @@ public class ShapeElempun extends Shape {
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
 			}
+
+		
+		s[0] = "source"; s[1] = "catastro";
+		l.add(s);
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
+		l.add(s);
+		
 		return l;
 	}
 
@@ -87,6 +95,15 @@ public class ShapeElempun extends Shape {
 		return null;
 	}
 
+	@Override
+	public String getTtggss() {
+		return ttggss;
+	}
+	
+	public boolean shapeValido (){
+		return true;
+	}
+	
 	@Override
 	public void addNode(long nodeId) {
 	}

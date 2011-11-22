@@ -101,7 +101,8 @@ public class Cat2Osm {
 				Shape shape = new ShapeElemtex(reader.next());
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				// Si cumple tener un ttggss valido (no interesa mostrar todos)
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(pointShapeParser(shape));
 			}
@@ -123,7 +124,8 @@ public class Cat2Osm {
 				Shape shape = new ShapeElemlin(reader.next());
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				// Si cumple tener un ttggss valido (no interesa mostrar todos)
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(mLineStringShapeParser(shape));
 			}
@@ -722,9 +724,6 @@ public class Cat2Osm {
 			c.addAttribute("catastro:ref:bice",eliminarCerosString(line.substring(581,601)));
 			//c.addAttribute("DENOMINACION DEL BICE DE LA FINCA",line.substring(601,666));
 			//c.addAttribute("HUSO GEOGRAFICO SRS",line.substring(666,676));
-
-			c.addAttribute("source", "catastro");
-			c.addAttribute("addr:country","ES");
 			
 			return c;}
 		case 13: {
@@ -771,8 +770,6 @@ public class Cat2Osm {
 			//c.addAttribute("LONGITUD DE FACHADA",line.substring(307,312));
 			//c.addAttribute("CODIGO DE UNIDAD CONSTRUCTIVA MATRIZ",line.substring(409,413));
 
-			c.addAttribute("source", "catastro");
-			c.addAttribute("addr:country","ES");
 			
 			return c; }
 		case 14: {
@@ -802,9 +799,6 @@ public class Cat2Osm {
 			//c.addAttribute("SUPERFICIE IMPUTABLE AL LOCAL SITUADA EN OTRAS PLANTAS",line.substring(97,104));
 			//c.addAttribute("TIPOLOGIA CONSTRUCTIVA SEGUN NORMAS TECNICAS DE VALORACION",line.substring(104,109));
 			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(111,114));
-
-			c.addAttribute("source", "catastro");
-			c.addAttribute("addr:country","ES");
 			
 			return c;}
 		case 15: {
@@ -870,8 +864,6 @@ public class Cat2Osm {
 			//c.addAttribute("SUPERFICIE ASOCIADA AL INMUEBLE",line.substring(451,461));
 			//c.addAttribute("COEFICIENTE DE PROPIEDAD (3ent y 6deci)",line.substring(461,470));
 
-			c.addAttribute("source", "catastro");
-			c.addAttribute("addr:country","ES");
 			
 			return c;}
 		case 16: {
@@ -889,8 +881,6 @@ public class Cat2Osm {
 			//c.addAttribute("CALIFICACION CATASTRAL DE LA SUBPARCELA",line.substring(48,50));
 			//c.addAttribute("BLOQUE REPETITIVO HASTA 15 VECES",line.substring(50,999)); //TODO ¿Necesario?
 
-			c.addAttribute("source", "catastro");
-			c.addAttribute("addr:country","ES");
 			
 			return c;}
 		case 17: {
@@ -919,8 +909,6 @@ public class Cat2Osm {
 			c.addAttribute("INTENSIDAD PRODUCTIVA",line.substring(107,109));
 			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(126,129)); //TODO ¿Necesario?
 
-			c.addAttribute("source", "catastro");
-			c.addAttribute("addr:country","ES");
 			
 			return c;}
 		case 90: {

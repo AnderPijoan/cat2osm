@@ -172,6 +172,13 @@ public class ShapeParcela extends Shape {
 		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
 		//l.add(s);
 
+		s = new String[2];
+		s[0] = "source"; s[1] = "catastro";
+		l.add(s);
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
+		l.add(s);
+		
 		return l;
 	}
 
@@ -185,6 +192,14 @@ public class ShapeParcela extends Shape {
 
 	public Coordinate getCoor(){
 		return null;
+	}
+	
+	public String getTtggss() {
+		return null;
+	}
+	
+	public boolean shapeValido (){
+		return true;
 	}
 	
 }

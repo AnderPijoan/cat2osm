@@ -91,6 +91,13 @@ public class ShapeEjes extends Shape {
 		if (tags != null)
 			l.addAll(tags);
 
+		s = new String[2];
+		s[0] = "source"; s[1] = "catastro";
+		l.add(s);
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
+		l.add(s);
+		
 		return l;
 	}
 
@@ -282,4 +289,12 @@ public class ShapeEjes extends Shape {
 		return null;
 	}  
 
+	public String getTtggss() {
+		return null;
+	}
+	
+	public boolean shapeValido (){
+		return true;
+	}
+	
 }

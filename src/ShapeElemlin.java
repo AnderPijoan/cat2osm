@@ -65,7 +65,16 @@ public class ShapeElemlin extends Shape {
 
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			}
+		
+		s = new String[2];
+		s[0] = "source"; s[1] = "catastro";
+		l.add(s);
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
+		l.add(s);
 		
 		return l;
 	}
@@ -91,7 +100,28 @@ public class ShapeElemlin extends Shape {
 	public Coordinate[] getCoordenadas(int x) {
 		return line.getCoordinates();
 	}
+	
+	@Override
+	public String getTtggss() {
+		return ttggss;
+	}
+	
+	public boolean shapeValido (){
 
+		if (ttggss.equals("060402"))
+			return false;
+		if (ttggss.equals("060202"))
+			return false;
+		if (ttggss.equals("160300"))
+			return false;
+		if (ttggss.equals("067121"))
+			return false;
+		if (ttggss.equals("160101"))
+			return false;
+		else
+			return true;
+	}
+	
 	@Override
 	public void addNode(long nodeId) {
 		if (!nodes.contains(nodeId))

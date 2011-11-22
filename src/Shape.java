@@ -100,6 +100,10 @@ public abstract class Shape {
 	public abstract List<Long> getWays();
 
 	public abstract Coordinate getCoor();
+	
+	public abstract String getTtggss();
+	
+	public abstract boolean shapeValido();
 
 	public static String nombreTipoViaParser(String codigo){
 		
@@ -182,7 +186,7 @@ public abstract class Shape {
 		return codigo;
 	}
 	
-	public static List<String[]> ttggssParser(String ttggss){
+	public List<String[]> ttggssParser(String ttggss){
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
@@ -280,24 +284,24 @@ public abstract class Shape {
 
 		// Vias de comunicacion
 		if (ttggss.equals("060102")){ 
-			//s[0] = "natural"; s[1] ="coastline";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("060104")){ 
 			s[0] = "highway"; s[1] ="motorway";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("060202")){ 
-			//s[0] = "man_made"; s[1] ="water_well";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("060204")){ 
 			s[0] = "highway"; s[1] ="primary";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("060402")){ 
-			//s[0] = "waterway"; s[1] ="dam";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("060404")){ 
 			s[0] = "highway"; s[1] ="track";
@@ -361,134 +365,134 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("115101")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("115000")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("115200")){ 
-			//s[0] = "admin_level"; s[1] ="14";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("115300")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 
 		// Rustica (Compatibilidad 2006 hacia atras)
 		if (ttggss.equals("120100")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("120200")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("120500")){ 
-			//s[0] = "admin_level"; s[1] ="14";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("120180")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("120280")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("120580")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("125101")){ 
-			//s[0] = "admin_level"; s[1] ="14";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("125201")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("125501")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("125510")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 
 		// Rustica y Urbana
 		if (ttggss.equals("130100")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("130200")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("130500")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("135101")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("135201")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("135501")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("135510")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 
 		// Urbana (Compatibilidad 2006 hacia atras)
 		if (ttggss.equals("140100")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("140190")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("140200")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("140290")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("140500")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("140590")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("145101")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("145201")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("145501")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("145510")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 
 		// Infraestructura/Mobiliario
@@ -497,12 +501,12 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("160131")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("160132")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("160201")){ 
 			s[0] = "power"; s[1] ="line";
@@ -513,8 +517,8 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("160300")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("161101")){ 
 			s[0] = "highway"; s[1] ="road";
@@ -540,16 +544,16 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("167167")){ 
-			//s[0] = "admin_level"; s[1] ="10";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("167201")){ 
-			//s[0] = "admin_level"; s[1] ="12";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("168100")){ 
-			//s[0] = "power"; s[1] ="sub_station";
-			//l.add(s);
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
 			return l;}
 		if (ttggss.equals("168103")){ 
 			s[0] = "historic"; s[1] ="monument";
@@ -571,8 +575,12 @@ public abstract class Shape {
 			s[0] = "amenity"; s[1] ="parking_entrance";
 			l.add(s);
 			return l;}
-
-		return l;	
+		else{
+			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
+			return l;
+		}
+	
 	}
 
 }
