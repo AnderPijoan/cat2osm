@@ -49,7 +49,7 @@ public class ShapeMasa extends Shape {
 			}
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile MASA");
 		}
 
 		this.nodes = new ArrayList<Long>();

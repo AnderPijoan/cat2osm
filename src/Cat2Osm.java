@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,10 +41,6 @@ public class Cat2Osm {
 	 * @throws IOException
 	 */
 	public List<Shape> shpParser(File f) throws IOException {
-		
-		
-		
-		
 		
 		FileDataStore store = FileDataStoreFinder.getDataStore(f);
 		FeatureReader<SimpleFeatureType, SimpleFeature> reader = 
@@ -117,7 +114,7 @@ public class Cat2Osm {
 				Shape shape = new ShapeElempun(reader.next());
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(pointShapeParser(shape));
 			}
@@ -254,6 +251,31 @@ public class Cat2Osm {
 		return shape;
 	}
 	
+	/** Utilizando ogr2ogr reproyecta el archivo de shapes de su proyeccion
+	 * EPSG a WGS84 que es la que utiliza OpenStreetMap. Tambien convierte las 
+	 * coordenadas UTM en Lat/Lon
+	 * @return
+	 */
+	public File reprojectWGS84(File f){
+		
+		try
+		   {
+			Process p = null;
+			String line = "\""+Config.get("Ogr2OgrFile") +"\" -s_srs \"+init=epsg:23030 +nadgrids="+ Config.get("GridFile") + " +wktext\" -t_srs EPSG:4326 " + " E:/PEPE.SHP E:/workspace/cat2osm/files/AldeasecadeAlba/37_21_UA_2011-09-16_SHF/MASA/MASA.SHP";
+			
+			p = Runtime.getRuntime().exec("scripts/ogr2ogr.bat " + Config.get("ResultPath")+"\\"+f.getName() +" "+ f.getPath());
+			BufferedReader bf = new BufferedReader(new InputStreamReader(p.getInputStream()));
+		    while ((line = bf.readLine()) != null)
+		        System.out.println(line);
+
+		    bf.close();
+
+		   } catch (Exception er){ er.printStackTrace(); }
+		
+		return new File(Config.get("ResultPath")+"\\"+f.getName());
+	}
+	
+	
 	/** Busca en la lista de shapes los que coincidan con la ref catastral
 	 * @param ref referencia catastral a buscar
 	 * @returns List<Shape> lista de shapes que coinciden                    
@@ -371,7 +393,7 @@ public class Cat2Osm {
 	public void printNodes(Map <NodeOsm, Long> nodes) throws IOException{
 		
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("resultPath") + "\\tempNodes.osm");
+		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\tempNodes.osm");
 		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
 		
 		String huso = (Config.get("Huso")+ " " +Config.get("Hemisferio"));
@@ -395,7 +417,7 @@ public class Cat2Osm {
 	public void printNodesShapesOrder(List<Shape> shapes, Map <NodeOsm, Long> nodes) throws IOException{
 		
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("resultPath") + "\\tempNodes.osm");
+		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\tempNodes.osm");
 		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
 		
 		String huso = (Config.get("Huso")+ " " +Config.get("Hemisferio"));
@@ -417,7 +439,7 @@ public class Cat2Osm {
 	public void printWays(Map <WayOsm, Long> ways) throws IOException{
 		
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("resultPath") + "\\tempWays.osm");
+		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\tempWays.osm");
 		BufferedWriter outWays = new BufferedWriter(fstreamWays);
 		
 		Iterator<Entry<WayOsm, Long>> it = ways.entrySet().iterator();
@@ -439,7 +461,7 @@ public class Cat2Osm {
 	public void printWaysShapesOrder( List<Shape> shapes, Map <WayOsm, Long> ways) throws IOException{
 		
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("resultPath") + "\\tempWays.osm");
+		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\tempWays.osm");
 		BufferedWriter outWays = new BufferedWriter(fstreamWays);
 		
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
@@ -460,7 +482,7 @@ public class Cat2Osm {
 	public void printRelations( Map <RelationOsm, Long> relations) throws IOException{
 		
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamRelations = new FileWriter(Config.get("resultPath") + "\\tempRelations.osm");
+		FileWriter fstreamRelations = new FileWriter(Config.get("ResultPath") + "\\tempRelations.osm");
 		BufferedWriter outRelations = new BufferedWriter(fstreamRelations);
 		
 		Iterator<Entry<RelationOsm, Long>> it = relations.entrySet().iterator();
@@ -481,7 +503,7 @@ public class Cat2Osm {
 	 */
 	public void joinFiles(String filename) throws IOException{
 		
-		String path = Config.get("resultPath");
+		String path = Config.get("ResultPath");
 		
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
 		new File(path + "\\"+ filename +".osm").delete();

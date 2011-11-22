@@ -28,7 +28,7 @@ public class ShapeElemtex extends Shape {
 			coor = line.getEnvelopeInternal().centre();
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMTEX");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 

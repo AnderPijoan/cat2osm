@@ -32,7 +32,7 @@ public class ShapeElemlin extends Shape {
 
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMLIN");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos
@@ -118,6 +118,8 @@ public class ShapeElemlin extends Shape {
 			return false;
 		if (ttggss.equals("160101"))
 			return false;
+		if (ttggss.equals("115101"))
+				return false;
 		else
 			return true;
 	}

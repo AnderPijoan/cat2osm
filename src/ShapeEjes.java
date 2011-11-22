@@ -32,7 +32,7 @@ public class ShapeEjes extends Shape {
 
 		}
 		else {
-			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile EJES");
 		}
 
 		if (f.getAttribute("VIA") instanceof Double){

@@ -2,7 +2,7 @@
 # Readme: http://wiki.openstreetmap.org/wiki/Catastro_Espa%C3%B1a
 
 # Ruta donde se guardaran los resultados
-resultPath=result
+ResultPath=result
 
 # Nombre para el archivo resultado
 ResultFileName=AldeasecaDeAlba
@@ -11,17 +11,18 @@ ResultFileName=AldeasecaDeAlba
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
 # con su nombre original y dentro de cada una sus respectivos shapefiles.
 # Para acceder a carpetas, indicar con '\\'
-UrbanoSHPDir=files\\AldeasecadeAlba\\37_21_UA_2011-09-16_SHF
-RusticoSHPDir=files\\AldeasecadeAba\\37_21_RA_2011-09-16_SHF
+UrbanoSHPPath=files\\AldeasecadeAlba\\37_21_UA_2011-09-16_SHF
+RusticoSHPPath=files\\AldeasecadeAba\\37_21_RA_2011-09-16_SHF
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
 UrbanoCATFile=files\\AldeasecadeAlba\\37_21_U_2011-09-18.CAT
 RusticoCATFile=files\\AldeasecadeAlba\\37_21_R_2011-09-17.CAT
 
-# Huso geografico en el que se encuentra la cartografia
-# Ejemplo: Ciudad Real Huso "30 N" por tanto Huso=30 y Hemisferio=N
-Huso=30
-Hemisferio=N
+# Ruta a ogr2ogr (ogr2ogr.exe)
+Ogr2OgrFile=C:\\Program Files (x86)\\FWTools2.4.7\\bin\\ogr2ogr.exe
+
+# Ruta a la rejilla de desplazamiento (.GSB)
+GridFile=E:\\workspace\\cat2osm\\peninsula.gsb
 
 # Fecha desde la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha

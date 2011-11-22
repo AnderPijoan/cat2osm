@@ -56,7 +56,7 @@ public class ShapeSubparce extends Shape {
 			}
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile SUBPARCE");
 		}
 
 		this.nodes = new ArrayList<Long>();

@@ -26,7 +26,7 @@ public class ShapeElempun extends Shape {
 			coor = p.getCoordinate();
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMPUN");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
@@ -101,7 +101,20 @@ public class ShapeElempun extends Shape {
 	}
 	
 	public boolean shapeValido (){
-		return true;
+		if (ttggss.equals("060402"))
+			return false;
+		if (ttggss.equals("060202"))
+			return false;
+		if (ttggss.equals("160300"))
+			return false;
+		if (ttggss.equals("067121"))
+			return false;
+		if (ttggss.equals("160101"))
+			return false;
+		if (ttggss.equals("115101"))
+				return false;
+		else
+			return true;
 	}
 	
 	@Override

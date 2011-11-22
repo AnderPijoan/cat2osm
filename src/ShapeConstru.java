@@ -45,7 +45,7 @@ public class ShapeConstru extends Shape {
 			}
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile");
+			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile CONSTRU");
 		}
 
 		this.nodes = new ArrayList<Long>();
