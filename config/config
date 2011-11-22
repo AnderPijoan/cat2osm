@@ -18,12 +18,6 @@ RusticoSHPPath=files\\AldeasecadeAba\\37_21_RA_2011-09-16_SHF
 UrbanoCATFile=files\\AldeasecadeAlba\\37_21_U_2011-09-18.CAT
 RusticoCATFile=files\\AldeasecadeAlba\\37_21_R_2011-09-17.CAT
 
-# Ruta a ogr2ogr (ogr2ogr.exe)
-Ogr2OgrFile=C:\\Program Files (x86)\\FWTools2.4.7\\bin\\ogr2ogr.exe
-
-# Ruta a la rejilla de desplazamiento (.GSB)
-GridFile=E:\\workspace\\cat2osm\\peninsula.gsb
-
 # Fecha desde la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
 # Ejemeplo: FechaDesde=20050101
