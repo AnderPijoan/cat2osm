@@ -5,18 +5,18 @@
 resultPath=result
 
 # Nombre para el archivo resultado
-ResultFileName=CiudadRealUrbano
+ResultFileName=AldeasecaDeAlba
 
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
 # con su nombre original y dentro de cada una sus respectivos shapefiles.
 # Para acceder a carpetas, indicar con '\\'
-UrbanoSHPDir=files\\CiudadReal\\13_900_UA_2011-09-16_SHF
-RusticoSHPDir=files\\CiudadReal\\
+UrbanoSHPDir=files\\AldeasecadeAlba\\37_21_UA_2011-09-16_SHF
+RusticoSHPDir=files\\AldeasecadeAba\\37_21_RA_2011-09-16_SHF
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
-UrbanoCATFile=files\\CiudadReal\\13_900_U_2011-05-08.CAT
-RusticoCATFile=files\\CiudadReal\\13_900_U_2011-05-08.CAT
+UrbanoCATFile=files\\AldeasecadeAlba\\37_21_U_2011-09-18.CAT
+RusticoCATFile=files\\AldeasecadeAlba\\37_21_R_2011-09-17.CAT
 
 # Huso geografico en el que se encuentra la cartografia
 # Ejemplo: Ciudad Real Huso "30 N" por tanto Huso=30 y Hemisferio=N

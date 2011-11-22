@@ -41,6 +41,10 @@ public class Cat2Osm {
 	 */
 	public List<Shape> shpParser(File f) throws IOException {
 		
+		
+		
+		
+		
 		FileDataStore store = FileDataStoreFinder.getDataStore(f);
 		FeatureReader<SimpleFeatureType, SimpleFeature> reader = 
 			store.getFeatureReader();

@@ -14,7 +14,9 @@ public class NodeOsm {
 	
 	public NodeOsm(Coordinate c){
 		coor = new Coordinate();
-		this.coor.x = c.x; // Coordenadas en UTM
+		// Coordenadas en Lat/Lon. Ogr2Ogr hace el cambio de 
+		// UTM a Lat/Lon ya que en el shapefile vienen en UTM
+		this.coor.x = c.x; 
 		this.coor.y = c.y;
 		this.coor.z = c.z;
 	}
@@ -96,12 +98,9 @@ public class NodeOsm {
 	public String printNode(Long id, String huso){
 		String s = null;
 			
-		double [] coor = UTM2LatLong(huso + " " + this.coor.x + " " + this.coor.y);
-
 		// Hora para el timestamp
 		Date date = new java.util.Date();
-		s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\" lat=\""+coor[0]+"\" lon=\""+coor[1]+"\">\n");
-		//s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
+		s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
 		
 		
 		if (tags != null)
