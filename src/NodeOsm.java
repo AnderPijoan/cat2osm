@@ -79,16 +79,6 @@ public class NodeOsm {
 	public void setY(Coordinate c) {
 		this.coor.y = c.y;
 	}
-
-	/** Convierte coordenadas UTM a Lat/Long
-	 * @param utm String en formato "Huso Northing Easting" Ejemplo: "30 N 4266508 257016"
-	 * @returns double[] [0]Lat [1]Lon                    
-	 */
-	public static double[] UTM2LatLong(String utm)
-	{
-		CoordinateConversion obj=new CoordinateConversion();
-		return obj.utm2LatLon(utm);
-	}
 	
 	/** Imprime en el formato Osm el nodo con la informacion
 	 * @param id Id del nodo
