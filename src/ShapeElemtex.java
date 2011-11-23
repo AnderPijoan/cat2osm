@@ -179,8 +179,20 @@ public class ShapeElemtex extends Shape {
 			}
 			return l;}
 		
+		if (ttggss.equals("189700")){ 
+			if (rotulo != null){
+			s = new String[2];
+			System.out.println(rotulo);
+			s[0] = "rotulo"; s[1] = rotulo;
+			l.add(s);
+			}
+			return l;}
+		
 		else{
 			s[0] = "ttggss"; s[1] =ttggss;
+			l.add(s);
+			s = new String[2];
+			s[0] = "rotulo"; s[1] = rotulo;
 			l.add(s);
 			return l;
 		}
@@ -188,14 +200,16 @@ public class ShapeElemtex extends Shape {
 	
 	public boolean shapeValido (){
 
-		if (ttggss.equals("189300"))
+		if (ttggss.equals("189203"))
+			return true;
+		else if (ttggss.equals("189102"))
+			return true;
+		else if (ttggss.equals("189300"))
 			return true;
 		else if (ttggss.equals("189700"))
 			return true;
-		else if (ttggss.equals("189203"))
-			return true;
 		else
-			return false;
+			return true;
 	}
 	
 }

@@ -65,7 +65,9 @@ public class ShapeSubparce extends Shape {
 		// Los demas atributos son metadatos y de ellos sacamos 
 		refCatastral = (String) f.getAttribute("REFCAT");
 		subparce = (String) f.getAttribute("SUBPARCE");
-		cultivo = getTipoCultivo(subparce);
+		if (subparce != null){
+			cultivo = getTipoCultivo(subparce);
+		}
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -215,7 +217,7 @@ public class ShapeSubparce extends Shape {
 	}
 	
 	
-	/** Relaciona el numero de subparcela que trae el Subparce.shp con
+	/** Relaciona el codigo de subparcela que trae el Subparce.shp con
 	 * el codigo de cultivo que trae Rusubparcela.dbf y este a su vez con el 
 	 * Rucultivo.dbf. Solo es para subparcelas rurales
 	 * @param v Numero de subparcela a buscar
@@ -223,10 +225,9 @@ public class ShapeSubparce extends Shape {
 	 * @throws IOException
 	 */
 	public String getTipoCultivo(String s) throws IOException{
-		InputStream inputStream  = new FileInputStream(Config.get("RuralSHPDir") + "\\RUSUBPARCELA\\RUSUBPARCELA.DBF");
+		/*InputStream inputStream  = new FileInputStream(Config.get("RuralSHPDir") + "\\RUSUBPARCELA\\RUSUBPARCELA.DBF");
 		DBFReader reader = new DBFReader(inputStream); 
 
-		
 		Object[] rowObjects;
 		
 		while((rowObjects = reader.nextRecord()) != null) {
@@ -236,6 +237,7 @@ public class ShapeSubparce extends Shape {
 				return ((String) rowObjects[3]);
 			}
 		}
+		inputStream.close();*/
 		return null;
 	}  
 	

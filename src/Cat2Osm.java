@@ -147,6 +147,23 @@ public class Cat2Osm {
 		return shapeList;
 	}
 
+	/** Borra los shapefiles temporales creados. Hay que borrar si se quiere
+	 * reproyectar nuevos y como urbano y rustico tienen los mismos nombres
+	 * de shapefiles, cada vez que usamos uno, lo borramos.
+	 * @param filename
+	 */
+	public void deleteShpFiles(String filename){
+	
+		String path = Config.get("ResultPath");
+		
+		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
+		new File(path + "\\"+ filename +".SHP").delete();
+		new File(path + "\\"+ filename +".DBF").delete();
+		new File(path + "\\"+ filename +".PRJ").delete();
+		new File(path + "\\"+ filename +".SHX").delete();
+		
+	}
+	
 	
 	/** Metodo para parsear los shapes cuyas geografias vienen dadas como
 	 * MultiPolygon, como MASA.SHP, PARCELA.SHP y CONSTRU.SHP
