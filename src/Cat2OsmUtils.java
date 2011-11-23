@@ -1,14 +1,10 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.linuxense.javadbf.DBFReader;
 import com.vividsolutions.jts.geom.Coordinate;
 
 
@@ -40,6 +36,7 @@ public class Cat2OsmUtils {
 		totalWays.put(w, idway);
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public void deleteWay(WayOsm w){
 		Iterator<Entry<RelationOsm, Long>> it = totalRelations.entrySet().iterator();
 		
@@ -53,21 +50,29 @@ public class Cat2OsmUtils {
 	
 	/** Junta dos ways en uno. Hay que tener en cuenta los 4 casos que se pueden
 	 * dar.
-	 * @param w1 Way al que se le anade el node del otro
-	 * @param w2 Way que se eliminara
+	 * @param w1 Way1 Dependiendo del caso se eliminara un way o el otro
+	 * @param w2 Way2
+	 * @return long Id de way que hay que eliminar de los shapes, porque se ha juntado al otro
 	 */
 	public long joinWays(WayOsm w1, WayOsm w2){
 		
 		if ( !w1.getNodes().isEmpty() && !w2.getNodes().isEmpty()){
-
+			
 			// Caso1: w1.final = w2.primero
-			if (w1.getNodes().get(w1.getNodes().size()-1) == w2.getNodes().get(0) && totalWays.get(w2) != null){
+			if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(0)) && totalWays.get(w2) != null){
+				System.out.println("CASO1");
 				long l = totalWays.get(w2);
 				List<Long> nodes = w2.getNodes();
 				nodes.remove(w2.getNodes().get(0));
 				w1.addNodes(nodes);
 				deleteWay(w2);
 				return l;
+			}
+			
+			// Caso2: w1.primero = w2.final
+			else if (w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1)) && totalWays.get(w1) != null){
+				System.out.println("CASO2");
+				return joinWays(w2, w1);
 			}
 		}
 		return 0;
@@ -186,6 +191,20 @@ public class Cat2OsmUtils {
 				return entry.getKey();
 		}
 		return null;
+	}
+	
+	/** Dada una lista de identificadores de ways, devuelve una lista con esos
+	 * ways
+	 * @return ways lista de WayOsm
+	 */
+	@SuppressWarnings("unchecked")
+	public List<WayOsm> getWays(List<Long> ids){
+		List<WayOsm> ways = new ArrayList<WayOsm>();
+		
+		for (Long l: ids)
+			ways.add(((WayOsm) getKeyFromValue((Map<Object, Long>) ((Object)totalWays), l)));
+		
+		return ways;
 	}
 	
 }

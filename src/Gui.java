@@ -53,8 +53,6 @@ public class Gui extends JFrame {
 		System.out.println("Leyendo CAT Urbano");
 		catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
 
-		catastro.simplifyWays(shapes);
-
 		// Recorrer los directorios Rusticos
 		File dirR = new File (Config.get("RusticoSHPPath"));
 
@@ -89,7 +87,7 @@ public class Gui extends JFrame {
 		System.out.println("Leyendo CAT Rustico");
 		catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
 
-
+		catastro.simplifyWays(shapes);
 
 		// Escribir los datos
 		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalNodes().size() +" NODOS");

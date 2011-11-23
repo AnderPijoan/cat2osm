@@ -108,7 +108,7 @@ public class ShapeElemtex extends Shape {
 		return "";
 	}
 
-	public Long getRelation(){
+	public Long getRelationId(){
 		return null;
 	}
 
@@ -126,6 +126,10 @@ public class ShapeElemtex extends Shape {
 
 	public void addWay(long wayId){	
 	}
+	
+	@Override
+	public void deleteWay(long wayId){
+	}
 
 	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils){
 		return null;
@@ -134,13 +138,13 @@ public class ShapeElemtex extends Shape {
 	public void setRelation(long relationId){
 	}
 
-	public List<Long> getNodes(){
+	public List<Long> getNodesIds(){
 		List<Long> l = new ArrayList<Long>();
 		l.add(nodo);
 		return l;
 	}
 
-	public List<Long> getWays(){
+	public List<Long> getWaysIds(){
 		return null;
 	}
 	

@@ -81,7 +81,7 @@ public class ShapeElempun extends Shape {
 	}
 
 	@Override
-	public Long getRelation() {
+	public Long getRelationId() {
 		return null;
 	}
 
@@ -144,6 +144,10 @@ public class ShapeElempun extends Shape {
 	@Override
 	public void addWay(long wayId) {
 	}
+	
+	@Override
+	public void deleteWay(long wayId){
+	}
 
 	@Override
 	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils) {
@@ -155,14 +159,14 @@ public class ShapeElempun extends Shape {
 	}
 
 	@Override
-	public List<Long> getNodes() {
+	public List<Long> getNodesIds() {
 		List<Long> l = new ArrayList<Long>();
 		l.add(nodo);
 		return l;
 	}
 
 	@Override
-	public List<Long> getWays() {
+	public List<Long> getWaysIds() {
 		return null;
 	}
 

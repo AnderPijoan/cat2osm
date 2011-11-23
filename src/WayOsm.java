@@ -16,6 +16,7 @@ public class WayOsm {
 	}
 	
 	public void addNode(Long l){
+		if (!nodos.contains(l))
 		nodos.add(l);
 	}
 	

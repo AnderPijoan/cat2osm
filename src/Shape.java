@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -79,8 +80,6 @@ public abstract class Shape {
 
 	public abstract String getRefCat();
 
-	public abstract Long getRelation();
-
 	public abstract List<LineString> getPoligons();
 
 	public abstract Coordinate[] getCoordenadas(int x);
@@ -90,14 +89,18 @@ public abstract class Shape {
 	public abstract List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils);
 
 	public abstract void addWay(long wayId);
+	
+	public abstract void deleteWay(long wayId);
 
 	public abstract List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils);
 
 	public abstract void setRelation(long relationId);
 
-	public abstract List<Long> getNodes();
+	public abstract List<Long> getNodesIds();
 
-	public abstract List<Long> getWays();
+	public abstract List<Long> getWaysIds();
+	
+	public abstract Long getRelationId();
 
 	public abstract Coordinate getCoor();
 	

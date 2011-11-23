@@ -22,9 +22,10 @@ public class RelationOsm {
 	}
 	
 	public void addMember(Long id , String type, String role){
+		if (!ids.contains(id)){
 		ids.add(id);
 		types.add(type);
-		roles.add(role);
+		roles.add(role);}
 	}
 	
 	public void removeMember(Long id){

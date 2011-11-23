@@ -120,7 +120,7 @@ public class ShapeEjes extends Shape {
 
 
 	@Override
-	public Long getRelation() {
+	public Long getRelationId() {
 		return relation;
 	}
 
@@ -152,6 +152,12 @@ public class ShapeEjes extends Shape {
 		if (!ways.contains(wayId))
 			ways.add(wayId);
 	}
+	
+	@Override
+	public void deleteWay(long wayId){
+		ways.remove(wayId);
+	}
+
 
 	@Override
 	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils) {
@@ -168,12 +174,12 @@ public class ShapeEjes extends Shape {
 	}
 	
 	@Override
-	public List<Long> getNodes() {
+	public List<Long> getNodesIds() {
 		return nodes;
 	}
 
 	@Override
-	public List<Long> getWays() {
+	public List<Long> getWaysIds() {
 		return ways;
 	}
 

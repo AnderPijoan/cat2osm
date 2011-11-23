@@ -1,11 +1,9 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,7 +18,6 @@ import org.geotools.data.FileDataStoreFinder;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-import com.linuxense.javadbf.DBFReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 
@@ -117,6 +114,7 @@ public class Cat2Osm {
 				Shape shape = new ShapeElempun(reader.next());
 
 				// Si cumple estar entre las fechas
+				// Si cumple tener un ttggss valido (no interesa mostrar todos)
 				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(pointShapeParser(shape));
@@ -168,7 +166,7 @@ public class Cat2Osm {
 	
 	
 	/** Metodo para parsear los shapes cuyas geografias vienen dadas como
-	 * MultiPolygon, como MASA.SHP, PARCELA.SHP y CONSTRU.SHP
+	 * MultiPolygon, como MASA.SHP, PARCELA.SHP, SUBPARCE.SHP y CONSTRU.SHP
 	 * Asigna los valores al shape, sus nodos, sus ways y relation
 	 * @param shape Shape creado pero sin los valores de los nodos, ways o relation
 	 * @return Shape con todos los valores asignados
@@ -248,7 +246,7 @@ public class Cat2Osm {
 				shape.addNode(utils.getNodeId(coor[x], null));
 			
 		// Con los nodos creamos ways
-		List <Long> nodeList = shape.getNodes();
+		List <Long> nodeList = shape.getNodesIds();
 		for (int y = 0; y < nodeList.size()-1 ; y++){
 			List<Long> way = new ArrayList<Long>();
 			way.add(nodeList.get(y));
@@ -260,7 +258,7 @@ public class Cat2Osm {
 		List <Long> ids = new ArrayList<Long>(); // Ids de los members
 		List <String> types = new ArrayList<String>(); // Tipos de los members
 		List <String> roles = new ArrayList<String>(); // Roles de los members
-		for (Long way: shape.getWays()){
+		for (Long way: shape.getWaysIds()){
 			ids.add(way);
 			types.add("way");
 			roles.add("outer");
@@ -273,7 +271,8 @@ public class Cat2Osm {
 	/** Utilizando ogr2ogr reproyecta el archivo de shapes de su proyeccion
 	 * EPSG a WGS84 que es la que utiliza OpenStreetMap. Tambien convierte las 
 	 * coordenadas UTM en Lat/Lon
-	 * @return
+	 * @param f Archivo a reproyectar
+	 * @return File Archivo reproyectado
 	 */
 	public File reprojectWGS84(File f){
 		
@@ -398,8 +397,33 @@ public class Cat2Osm {
 	 * @param shapes Lista de shapes con los ways divididos por cada 2 nodes.
 	 * @return Lista de shapes con la simplificacion hecha.
 	 */
+	@SuppressWarnings("unchecked")
 	public List<Shape> simplifyWays(List<Shape> shapes){
-		
+
+		for (Shape shape : shapes)
+			
+			for (int x = 0; shape.getPoligons() != null && x < shape.getPoligons().size(); x++){
+				
+				List<WayOsm> ways = utils.getWays(shape.getWaysPoligonN(x, utils));
+				
+				// Comprobar que la lista no este vacia
+				if (ways != null && !ways.isEmpty()){
+				
+					
+					// Eliminar los elementos null de la lista
+					ways.remove(null);
+					
+					for (int y = 0; y < ways.size()-1; y++){
+						
+						WayOsm way1 = ways.get(y);
+						WayOsm way2 = ways.get(y+1);
+						
+						if (way1.getTags().equals(way2.getTags()) && !way1.equals(way2)){
+							shape.deleteWay(utils.joinWays(way1, way2));
+						}
+					}
+				}
+			}
 		return shapes;
 	}
 	
@@ -428,7 +452,7 @@ public class Cat2Osm {
 	}
 	
 	
-	/** Escribe el osm con unicamente los nodos de los shapes (MUY LENTO)
+	/** Escribe el osm con unicamente los nodos de los shapes que le pasamos (MUY LENTO)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
@@ -443,8 +467,8 @@ public class Cat2Osm {
 		
 		// Escribimos todos los nodos
 		for(Shape shape : shapes){
-			for (int y = 0; y < shape.getNodes().size(); y++)
-			outNodes.write( ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)nodes), shape.getNodes().get(y))).printNode((Long) shape.getNodes().get(y), huso));
+			for (int y = 0; y < shape.getNodesIds().size(); y++)
+			outNodes.write( ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)nodes), shape.getNodesIds().get(y))).printNode((Long) shape.getNodesIds().get(y), huso));
 		}
 		outNodes.close();
 	}
@@ -472,7 +496,7 @@ public class Cat2Osm {
 	}
 	
 	
-	/** Escribe el osm con unicamente los ways de los shapes (MUY LENTO)
+	/** Escribe el osm con unicamente los ways de los shapes que le pasamos (MUY LENTO)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
@@ -485,8 +509,8 @@ public class Cat2Osm {
 		
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
 		for(Shape shape : shapes){
-			for (int y = 0; y < shape.getWays().size(); y++)
-			outWays.write( ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWays().get(y))).printWay((Long) shape.getWays().get(y)));
+			for (int y = 0; y < shape.getWaysIds().size(); y++)
+			outWays.write( ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds().get(y))).printWay((Long) shape.getWaysIds().get(y)));
 		}
 		outWays.close();
 	}
@@ -534,12 +558,7 @@ public class Cat2Osm {
 		// Juntamos los archivos en uno, al de los nodos le concatenamos el de ways y el de relations
 		// Cabecera del archivo Osm
 		outOsm.write("<?xml version='1.0' encoding='UTF-8'?>\n" +
-		"<osm version=\"0.6\" generator=\"cat-2-osm\" >\n");
-		
-		// Para crear el OsmChange
-		//outOsm.write("<osmChange version=\"0.1\" generator=\"cat2osm\">\n" +
-		//"<create version=\"0.1\" generator=\"cat2osm\">\n");
-		
+		"<osm version=\"0.6\" generator=\"cat-2-osm\" >\n");	
 		
 		// Concatenamos todos los archivos
 		String str;
@@ -556,9 +575,6 @@ public class Cat2Osm {
 			outOsm.write(str+"\n");
 
 		outOsm.write("</osm>\n");
-		
-		// Para crear el OsmChange
-		//outOsm.write("</create>\n</osmChange>");
 		
 		outOsm.close();
 		inNodes.close();
@@ -611,7 +627,7 @@ public class Cat2Osm {
 
 					for (Shape shape : matches)
 					if (shape != (null)){
-							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelation()));
+							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
 							r.addTags(c.getAttributes());
 					}
 				}
@@ -971,10 +987,13 @@ public class Cat2Osm {
 		return c;
 	}
 
-	
+	/** Elimina ceros a la izquierda en un String
+	 * @param s String en el cual eliminar los ceros de la izquierda
+	 * @return String sin los ceros de la izquierda
+	 */
 	public static String eliminarCerosString(String s){
 		String temp = s.trim();
-		if (isNumb(temp) && !temp.isEmpty()){
+		if (esNumero(temp) && !temp.isEmpty()){
 			Integer i = Integer.parseInt(temp);
 			if (i != 0)
 				temp = i.toString();
@@ -985,9 +1004,13 @@ public class Cat2Osm {
 
 	}
 	
-	public static boolean isNumb(String str)
+	
+	/** Comprueba si solo contiene caracteres numericos
+	 * @param str String en el cual comprobar
+	 * @return boolean de si es o no
+	 */
+	public static boolean esNumero(String s)
 	{
-		String s=str;
 		for (int x = 0; x < s.length(); x++) {
 			if (!Character.isDigit(s.charAt(x)))
 				return false;
@@ -1190,5 +1213,6 @@ public class Cat2Osm {
 			l.add(s);
 			return l;}
 	}
+	
 	
 }

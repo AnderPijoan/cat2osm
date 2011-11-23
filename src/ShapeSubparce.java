@@ -95,6 +95,11 @@ public class ShapeSubparce extends Shape {
 			ways.add(wayId);
 	}
 
+	@Override
+	public void deleteWay(long wayId){
+		ways.remove(wayId);
+	}
+	
 	public void removeWay(long wayId){
 		ways.remove(wayId);
 	}
@@ -107,7 +112,7 @@ public class ShapeSubparce extends Shape {
 		return poligons;
 	}
 
-	public List<Long> getNodes(){
+	public List<Long> getNodesIds(){
 		return nodes;
 	}
 
@@ -159,11 +164,11 @@ public class ShapeSubparce extends Shape {
 		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
 	}
 
-	public List<Long> getWays() {
+	public List<Long> getWaysIds() {
 		return ways;
 	}
 
-	public Long getRelation(){
+	public Long getRelationId(){
 		return relation;
 	}
 
