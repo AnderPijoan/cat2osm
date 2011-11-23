@@ -1,9 +1,14 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.linuxense.javadbf.DBFReader;
 import com.vividsolutions.jts.geom.Coordinate;
 
 
@@ -14,11 +19,10 @@ public class Cat2OsmUtils {
 	private static long idrelation = -1; // Comienzo de id de relations
 	// Lista de nodos (para evitar repetidos)
 	private final Map <NodeOsm, Long> totalNodes = new HashMap <NodeOsm, Long>();
-	// Lista de ways (para manejar los que se comparten)
+	// Listaa de ways (para manejar los que se comparten)
 	private final Map <WayOsm, Long> totalWays = new HashMap <WayOsm, Long>();
-	// Lista de relations
+	// Listaa de relations
 	private final Map <RelationOsm, Long> totalRelations = new HashMap <RelationOsm, Long>();
-	
 	
 	public Map<NodeOsm, Long> getTotalNodes() {
 		return totalNodes;
@@ -183,5 +187,5 @@ public class Cat2OsmUtils {
 		}
 		return null;
 	}
-
+	
 }

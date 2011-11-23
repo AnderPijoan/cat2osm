@@ -1,9 +1,11 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,6 +20,7 @@ import org.geotools.data.FileDataStoreFinder;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
+import com.linuxense.javadbf.DBFReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 
@@ -131,7 +134,7 @@ public class Cat2Osm {
 					shapeList.add(mLineStringShapeParser(shape));
 			}
 		else if (f.getName().toUpperCase().equals("EJES.SHP"))
-
+			
 			// Shapes del archivo EJES.SHP
 			while (reader.hasNext()) {
 				Shape shape = new ShapeEjes(reader.next());
@@ -161,7 +164,6 @@ public class Cat2Osm {
 		new File(path + "\\"+ filename +".DBF").delete();
 		new File(path + "\\"+ filename +".PRJ").delete();
 		new File(path + "\\"+ filename +".SHX").delete();
-		
 	}
 	
 	

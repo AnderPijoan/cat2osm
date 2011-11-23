@@ -2,7 +2,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -18,12 +20,17 @@ public class ShapeEjes extends Shape {
 	private List<Long> ways;
 	private Long relation; // Relacion de sus ways
 	private String via; // Nombre de via, solo en Ejes.shp, lo coge de Carvia.dbf
-	private String ttggss; // Campo TTGGSS en Carvia.dbf
 	private List<ShapeAttribute> atributos;
+	private static final Map<Long,String> ejesNames = new HashMap<Long,String>(); // Lista de codigos y nombres de vias (para el Ejes.shp)
 
 	public ShapeEjes(SimpleFeature f) throws IOException {
+		
 		super(f);
 
+		if (ejesNames.isEmpty()){
+			readCarvia();
+		}
+		
 		// Ejes trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
 
@@ -154,11 +161,11 @@ public class ShapeEjes extends Shape {
 	public void setRelation(long relationId) {
 		relation = relationId;
 	}
-	
-	public void setTtggss(String t) {
-		ttggss = t;
-	}
 
+	public void setVia(String t) {
+		via = t;
+	}
+	
 	@Override
 	public List<Long> getNodes() {
 		return nodes;
@@ -261,34 +268,6 @@ public class ShapeEjes extends Shape {
 		return l;
 	}
 
-	/** Lee el archivo Carvia.dbf y relaciona el numero de via que trae el Ejes.shp con
-	 * los nombres de via que trae el Carvia.dbf. El nombre de via trae tambien el tipo
-	 * en formato 2caracteres de tipo de via, un espacio en blanco y el nombre de via
-	 * @param v Numero de via a buscar
-	 * @return String tipo y nombre de via
-	 * @throws IOException
-	 */
-	public String getVia(long v) throws IOException{
-		InputStream inputStream  = new FileInputStream(Config.get("UrbanoSHPDir") + "\\CARVIA\\CARVIA.DBF");
-		DBFReader reader = new DBFReader(inputStream); 
-
-		Object[] rowObjects;
-
-		while((rowObjects = reader.nextRecord()) != null) {
-
-			// La posicion 2 es el codigo de via
-			if ((Double) rowObjects[2] == (v)){
-				inputStream.close();
-				// La posicion 3 es la denominacion de via
-				
-				setTtggss((String) rowObjects[1]);
-				
-				return ((String) rowObjects[3]);
-			}
-		}
-		return null;
-	}  
-
 	public String getTtggss() {
 		return null;
 	}
@@ -296,5 +275,47 @@ public class ShapeEjes extends Shape {
 	public boolean shapeValido (){
 		return true;
 	}
+	
+	
+	/** Lee el archivo Carvia.dbf y lo almacena para despues relacionar el numero de via 
+	 * de Ejes.shp con los nombres de via que trae Carvia.dbf. El nombre de via trae tambien el tipo
+	 * en formato 2caracteres de tipo de via, un espacio en blanco y el nombre de via
+	 * @param file Archivo Ejes.shp del para acceder a su Carvia.dbf
+	 * @throws IOException 
+	 * @throws IOException
+	 */
+	public void readCarvia() throws IOException{
+		
+		InputStream inputStream = new FileInputStream(Config.get("UrbanoSHPPath") + "\\CARVIA\\CARVIA.DBF");
+		DBFReader reader = new DBFReader(inputStream);
+		
+		Object[] rowObjects;
+
+		while((rowObjects = reader.nextRecord()) != null) {
+
+			// La posicion 2 es el codigo de via
+			// La posicion 3 es la denominacion de via
+			if (rowObjects[2] instanceof Double){
+				double v = (Double) rowObjects[2];
+				ejesNames.put((long) v, (String) rowObjects[3]);
+			}
+			else if (rowObjects[2] instanceof Long){
+				ejesNames.put((Long) rowObjects[2], (String) rowObjects[3]);
+			}
+			else if (rowObjects[2] instanceof Integer){
+				int v = (Integer) rowObjects[2];
+				ejesNames.put((long) v, (String) rowObjects[3]);
+			}
+		}
+	}  
+	
+	/** Relaciona el numero de via de Ejes.shp con los nombres de via que trae Carvia.dbf. El nombre de via trae tambien el tipo
+	 * en formato 2caracteres de tipo de via, un espacio en blanco y el nombre de via
+	 * @param v Numero de via a buscar
+	 * @return String tipo y nombre de via
+	 */
+	public String getVia(long v){
+			return ejesNames.get(v);
+	} 
 	
 }

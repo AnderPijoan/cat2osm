@@ -2,7 +2,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -23,6 +25,8 @@ public class ShapeSubparce extends Shape {
 	private String subparce; // Clave de Subparcela
 	private String cultivo; // Tipo de cultivo de la subparcela
 	private List<ShapeAttribute> atributos;
+	private static final Map<String,String> ruSub = new HashMap<String,String>(); // Lista de subparce y calificacion (para el Subparce.shp)
+	private static final Map<String,String> ruCul = new HashMap<String,String>(); // Lista de cc y denominacion (para el Subparce.shp)
 
 
 	/** Constructor
@@ -32,6 +36,10 @@ public class ShapeSubparce extends Shape {
 	public ShapeSubparce(SimpleFeature f) throws IOException {
 		
 		super(f);
+		
+		if (ruSub.isEmpty() || ruCul.isEmpty()){
+			readRusubparcelaRucultivo();
+		}
 		
 		this.poligons = new ArrayList<LineString>();
 
@@ -66,7 +74,7 @@ public class ShapeSubparce extends Shape {
 		refCatastral = (String) f.getAttribute("REFCAT");
 		subparce = (String) f.getAttribute("SUBPARCE");
 		if (subparce != null){
-			cultivo = getTipoCultivo(subparce);
+			cultivo = getCultivo(subparce);
 		}
 
 		// Si queremos coger todos los atributos del .shp
@@ -176,9 +184,9 @@ public class ShapeSubparce extends Shape {
 			l.add(s);
 		}
 
-		if (subparce != null){
+		if (cultivo != null){
 			s = new String[2];
-			s[0] = "SUBPARCE"; s[1] = subparce;
+			s[0] = "CULTIVO"; s[1] = cultivo;
 			l.add(s);
 		}
 
@@ -216,31 +224,50 @@ public class ShapeSubparce extends Shape {
 		return null;
 	}
 	
+	/** Lee el archivo Rusubparcela.dbf y lo almacena para despues relacionar la clave subparce 
+	 * de Subparce.shp con la calificacion catastral que trae Rusubparcela.dbf. Con la cc se accedera
+	 * al rucultivo.dbf.
+	 * @throws IOException 
+	 */
+	public void readRusubparcelaRucultivo() throws IOException{
+		
+		InputStream inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "\\RUSUBPARCELA\\RUSUBPARCELA.DBF");
+		DBFReader reader = new DBFReader(inputStream);
+		Object[] rowObjects;
+
+		while((rowObjects = reader.nextRecord()) != null) {
+			
+			// La posicion 6 es el codigo subparce
+			// La posicion 8 es la calificacion catastral
+			ruSub.put(((String) rowObjects[6]).trim(), ((String) rowObjects[8]).trim());
+		
+		}
+		inputStream.close();
+		
+		inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "\\RUCULTIVO\\RUCULTIVO.DBF");
+		reader = new DBFReader(inputStream);
+		
+		while((rowObjects = reader.nextRecord()) != null) {
+
+			// La posicion 1 es la calificacion catastral
+			// La posicion 2 es la denominacion
+			ruCul.put(((String) rowObjects[1]).trim(), ((String) rowObjects[2]).trim());
+		
+		}
+		inputStream.close();
+
+	}  
 	
-	/** Relaciona el codigo de subparcela que trae el Subparce.shp con
+	 /**Relaciona el codigo de subparcela que trae el Subparce.shp con
 	 * el codigo de cultivo que trae Rusubparcela.dbf y este a su vez con el 
 	 * Rucultivo.dbf. Solo es para subparcelas rurales
 	 * @param v Numero de subparcela a buscar
 	 * @return String tipo de cultivo
-	 * @throws IOException
 	 */
-	public String getTipoCultivo(String s) throws IOException{
-		/*InputStream inputStream  = new FileInputStream(Config.get("RuralSHPDir") + "\\RUSUBPARCELA\\RUSUBPARCELA.DBF");
-		DBFReader reader = new DBFReader(inputStream); 
+	public String getCultivo(String s){
+		return ruCul.get(ruSub.get(s));
+	} 
 
-		Object[] rowObjects;
-		
-		while((rowObjects = reader.nextRecord()) != null) {
-			
-			if ( rowObjects[2].equals(s)){
-				inputStream.close();
-				return ((String) rowObjects[3]);
-			}
-		}
-		inputStream.close();*/
-		return null;
-	}  
-	
 	public String getTtggss() {
 		return null;
 	}

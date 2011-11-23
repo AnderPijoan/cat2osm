@@ -209,7 +209,7 @@ public class ShapeElemtex extends Shape {
 		else if (ttggss.equals("189700"))
 			return true;
 		else
-			return true;
+			return false;
 	}
 	
 }
