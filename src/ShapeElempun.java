@@ -101,6 +101,19 @@ public class ShapeElempun extends Shape {
 	}
 	
 	public boolean shapeValido (){
+		
+		if (ttggss.equals("030202"))
+			return true;
+		if (ttggss.equals("030302"))
+			return true;
+		if (ttggss.equals("037101"))
+			return true;
+		if (ttggss.equals("037102"))
+			return true;
+		if (ttggss.equals("167111"))
+			return true;
+		if (ttggss.equals("167201"))
+			return true;
 		if (ttggss.equals("060402"))
 			return false;
 		if (ttggss.equals("060202"))

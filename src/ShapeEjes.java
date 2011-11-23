@@ -23,6 +23,7 @@ public class ShapeEjes extends Shape {
 	private List<ShapeAttribute> atributos;
 	private static final Map<Long,String> ejesNames = new HashMap<Long,String>(); // Lista de codigos y nombres de vias (para el Ejes.shp)
 
+
 	public ShapeEjes(SimpleFeature f) throws IOException {
 		
 		super(f);

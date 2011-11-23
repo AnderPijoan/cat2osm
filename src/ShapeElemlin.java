@@ -21,9 +21,10 @@ public class ShapeElemlin extends Shape {
 	private String ttggss; // Campo TTGGSS en Elemlin.shp
 	private List<ShapeAttribute> atributos;
 	
+
 	public ShapeElemlin(SimpleFeature f) {
 		super(f);
-
+		
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
 
@@ -108,20 +109,20 @@ public class ShapeElemlin extends Shape {
 	
 	public boolean shapeValido (){
 
-		if (ttggss.equals("060402"))
-			return false;
-		if (ttggss.equals("060202"))
-			return false;
-		if (ttggss.equals("160300"))
-			return false;
-		if (ttggss.equals("067121"))
-			return false;
-		if (ttggss.equals("160101"))
-			return false;
-		if (ttggss.equals("115101"))
-				return false;
-		else
+		if (ttggss.equals("030202"))
 			return true;
+		if (ttggss.equals("030302"))
+			return true;
+		if (ttggss.equals("037101"))
+			return true;
+		if (ttggss.equals("037102"))
+			return true;
+		if (ttggss.equals("167111"))
+			return true;
+		if (ttggss.equals("167201"))
+			return true;
+		else
+			return false;
 	}
 	
 	@Override

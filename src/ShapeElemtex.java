@@ -202,11 +202,11 @@ public class ShapeElemtex extends Shape {
 
 		if (ttggss.equals("189203"))
 			return true;
-		else if (ttggss.equals("189102"))
+		if (ttggss.equals("189102"))
 			return true;
-		else if (ttggss.equals("189300"))
+		if (ttggss.equals("189300"))
 			return true;
-		else if (ttggss.equals("189700"))
+		if (ttggss.equals("189700"))
 			return true;
 		else
 			return false;
