@@ -148,6 +148,7 @@ public class Cat2Osm {
 		return shapeList;
 	}
 
+	
 	/** Borra los shapefiles temporales creados. Hay que borrar si se quiere
 	 * reproyectar nuevos y como urbano y rustico tienen los mismos nombres
 	 * de shapefiles, cada vez que usamos uno, lo borramos.
@@ -180,20 +181,20 @@ public class Cat2Osm {
 			// Miramos por cada punto si existe un nodo si no, lo creamos
 			for (int y = 0 ; y < coor.length; y++){
 				// Insertamos en la lista de nodos del shape, los ids de sus nodos
-				shape.addNode(utils.getNodeId(coor[y], null));
+				shape.addNode(x,utils.getNodeId(coor[y], null));
 			}
 		}
-
+		
 		// Partimos el poligono en el maximo numero de ways es decir uno por cada
 		// dos nodos, mas adelante se juntaran los que sean posibles
 		for (int x = 0; x < shape.getPoligons().size() ; x++){
-			List <Long> nodeList = shape.getNodesPoligonN(x, utils);
+			List <Long> nodeList = shape.getNodesIds(x);
 			for (int y = 0; y < nodeList.size()-1 ; y++){
 				List<Long> way = new ArrayList<Long>();
 				way.add(nodeList.get(y));
 				way.add(nodeList.get(y+1));
 				if (!(nodeList.get(y) == (nodeList.get(y+1))))
-				shape.addWay(utils.getWayId(way, shape.getAttributes()));
+				shape.addWay(x,utils.getWayId(way, shape.getAttributes()));
 			}
 		}
 
@@ -202,7 +203,7 @@ public class Cat2Osm {
 		List <String> types = new ArrayList<String>(); // Tipos de los members
 		List <String> roles = new ArrayList<String>(); // Roles de los members
 		for (int x = 0; x < shape.getPoligons().size() ; x++){
-			List <Long> wayList = shape.getWaysPoligonN(x, utils);
+			List <Long> wayList = shape.getWaysIds(x);
 			for (Long way: wayList)
 			if (!ids.contains(way)){
 				ids.add(way);
@@ -226,7 +227,7 @@ public class Cat2Osm {
 	private Shape pointShapeParser(Shape shape){
 		
 		// Anadimos solo un nodo
-		shape.addNode(utils.getNodeId(shape.getCoor(), shape.getAttributes()));
+		shape.addNode(0,utils.getNodeId(shape.getCoor(), shape.getAttributes()));
 		
 		return shape;
 	}
@@ -243,22 +244,22 @@ public class Cat2Osm {
 		// Anadimos todos los nodos
 			Coordinate[] coor = shape.getCoordenadas(0);
 			for (int x = 0; x < coor.length; x++)
-				shape.addNode(utils.getNodeId(coor[x], null));
+				shape.addNode(0,utils.getNodeId(coor[x], null));
 			
 		// Con los nodos creamos ways
-		List <Long> nodeList = shape.getNodesIds();
+		List <Long> nodeList = shape.getNodesIds(0);
 		for (int y = 0; y < nodeList.size()-1 ; y++){
 			List<Long> way = new ArrayList<Long>();
 			way.add(nodeList.get(y));
 			way.add(nodeList.get(y+1));
-			shape.addWay(utils.getWayId(way, null));
+			shape.addWay(0,utils.getWayId(way, null));
 		}
 		
 		// Con los ways creamos una relacion
 		List <Long> ids = new ArrayList<Long>(); // Ids de los members
 		List <String> types = new ArrayList<String>(); // Tipos de los members
 		List <String> roles = new ArrayList<String>(); // Roles de los members
-		for (Long way: shape.getWaysIds()){
+		for (Long way: shape.getWaysIds(0)){
 			ids.add(way);
 			types.add("way");
 			roles.add("outer");
@@ -279,9 +280,8 @@ public class Cat2Osm {
 		try
 		   {
 			Process p = null;
-			String line = "\""+Config.get("Ogr2OgrFile") +"\" -s_srs \"+init=epsg:23030 +nadgrids="+ Config.get("GridFile") + " +wktext\" -t_srs EPSG:4326 " + " E:/PEPE.SHP E:/workspace/cat2osm/files/AldeasecadeAlba/37_21_UA_2011-09-16_SHF/MASA/MASA.SHP";
-			
-			p = Runtime.getRuntime().exec("scripts/ogr2ogr.bat " + Config.get("ResultPath")+"\\"+f.getName() +" "+ f.getPath());
+			String line = "scripts/ogr2ogr.bat " + f.getPath().substring(0, f.getPath().length()-4) +" "+ Config.get("ResultPath")+"\\"+f.getName() +" "+ f.getPath();
+			p = Runtime.getRuntime().exec("scripts/ogr2ogr.bat " + f.getPath().substring(0, f.getPath().length()-4) +" "+ Config.get("ResultPath")+"\\"+f.getName() +" "+ f.getPath() );
 			BufferedReader bf = new BufferedReader(new InputStreamReader(p.getInputStream()));
 		    while ((line = bf.readLine()) != null)
 		        System.out.println(line);
@@ -344,7 +344,7 @@ public class Cat2Osm {
 			for( int x = 0; x < shape.getPoligons().size(); x++){
 				
 				// Coger todos sus ways
-				for (Long wayId : shape.getWaysPoligonN(x, utils)){
+				for (Long wayId : shape.getWaysIds(x)){
 					
 					WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), wayId));
 					NodeOsm nodeA = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(0))); 
@@ -392,8 +392,10 @@ public class Cat2Osm {
 	 * dos nodes. Este metodo compara los tags de los ways para saber que ways se pueden
 	 * unir para formar uno unico nuevo. Los tags de los ways se insertan al crear el way y
 	 * si un way es compartido por otra geometria se le anaden los de la otra tambien. De esta forma
-	 * los ways que se pueden "concatenar" tendran los mismos tags. Una vez hecho esto, los tags
-	 * los tags de los ways son prescindibles.
+	 * los ways que se pueden "concatenar" tendran los mismos tags. Al borrar un way, hay que borrarlo
+	 * de todos los shapes y relaciones que lo usaban. Este metodo borra de los shapes
+	 * y el del utils borra de las relaciones. Una vez hecho esto, los tags
+	 * de los ways son prescindibles.
 	 * @param shapes Lista de shapes con los ways divididos por cada 2 nodes.
 	 * @return Lista de shapes con la simplificacion hecha.
 	 */
@@ -401,34 +403,41 @@ public class Cat2Osm {
 	public List<Shape> simplifyWays(List<Shape> shapes){
 
 		for (Shape shape : shapes)
-			
-			for (int x = 0; shape.getPoligons() != null && x < shape.getPoligons().size(); x++){
+
+			for (int x = 0; shape.getPoligons() != null && x < shape.getPoligons().size(); x++)
 				
-				List<WayOsm> ways = utils.getWays(shape.getWaysPoligonN(x, utils));
-				
-				// Comprobar que la lista no este vacia
-				if (ways != null && !ways.isEmpty()){
-				
-					
-					// Eliminar los elementos null de la lista
-					ways.remove(null);
-					
-					for (int y = 0; y < ways.size()-1; y++){
+				for(int y = 0; y < shape.getWaysIds(x).size(); y++)
+
+					for (int z = 0; z < shape.getWaysIds(x).size(); z++){
 						
-						WayOsm way1 = ways.get(y);
-						WayOsm way2 = ways.get(y+1);
+						Map<WayOsm, Long> ways = utils.getTotalWays();
+
+						WayOsm way1 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(y)));
+						WayOsm way2 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(z)));
 						
-						if (way1.getTags().equals(way2.getTags()) && !way1.equals(way2)){
-							shape.deleteWay(utils.joinWays(way1, way2));
+						if (way1 != null && way2 != null && !way1.equals(way2) && way1.sameTags(way2.getTags())){
+							
+							// Juntamos los ways y borra el way que no se va a usar de las relations
+							long removeId = utils.joinWays(way1, way2);
+							
+							if (removeId != 0){
+								ways = utils.getTotalWays();
+								z = 0;
+								y = 0;
+							}
+	
+							// Borramos el way que no se va a usar de los shapes
+							for (Shape s : shapes)
+								for (int pos = 0; pos < s.getPoligons().size(); pos++)
+								s.deleteWay(pos,removeId);
 						}
+							
 					}
-				}
-			}
 		return shapes;
 	}
 	
 	
-	/** Escribe el osm con todos los nodos (Del archivo totalNodes, sin orden, MAS RAPIDO)
+	/** Escribe el osm con todos los nodos (Del archivo totalNodes, sin orden)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
@@ -439,14 +448,12 @@ public class Cat2Osm {
 		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\tempNodes.osm");
 		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
 		
-		String huso = (Config.get("Huso")+ " " +Config.get("Hemisferio"));
-		
 		Iterator<Entry<NodeOsm, Long>> it = nodes.entrySet().iterator();
 		
 		// Escribimos todos los nodos
 		while(it.hasNext()){
 			Map.Entry e = (Map.Entry)it.next();
-			outNodes.write(((NodeOsm) e.getKey()).printNode((Long) e.getValue(), huso));
+			outNodes.write(((NodeOsm) e.getKey()).printNode((Long) e.getValue()));
 		}
 		outNodes.close();
 	}
@@ -467,14 +474,17 @@ public class Cat2Osm {
 		
 		// Escribimos todos los nodos
 		for(Shape shape : shapes){
-			for (int y = 0; y < shape.getNodesIds().size(); y++)
-			outNodes.write( ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)nodes), shape.getNodesIds().get(y))).printNode((Long) shape.getNodesIds().get(y), huso));
+			
+			for (int x = 0; x < shape.getPoligons().size(); x++)
+
+				for (int y = 0; y < shape.getNodesIds(x).size(); y++)
+					outNodes.write( ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)nodes), shape.getNodesIds(x).get(y))).printNode((Long) shape.getNodesIds(x).get(y)));
 		}
 		outNodes.close();
 	}
 	
 	
-	/** Escribe el osm con todos los ways (Del archivo waysTotales, sin orden, MAS RAPIDO)
+	/** Escribe el osm con todos los ways (Del archivo waysTotales, sin orden)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
@@ -509,8 +519,10 @@ public class Cat2Osm {
 		
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
 		for(Shape shape : shapes){
-			for (int y = 0; y < shape.getWaysIds().size(); y++)
-			outWays.write( ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds().get(y))).printWay((Long) shape.getWaysIds().get(y)));
+			
+			for (int x = 0; x < shape.getPoligons().size(); x++)
+				for (int y = 0; y < shape.getWaysIds(x).size(); y++)
+					outWays.write( ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(y))).printWay((Long) shape.getWaysIds(x).get(y)));
 		}
 		outWays.close();
 	}

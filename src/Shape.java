@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -12,12 +11,15 @@ public abstract class Shape {
 	private List<ShapeAttribute> atributos;
 	protected long fechaAlta; // Formato AAAAMMDD
 	protected long fechaBaja;
+	protected static Long shapeId = (long) 0; // Para la simplificacion de ways
 
 	/**Constructor
 	 * @param f Linea del archivo shp
 	 */
 	public Shape(SimpleFeature f){
 
+		shapeId++;
+		
 		// Algunos conversores de DATUM cambian el formato de double a int en el .shp
 		// FECHAALATA y FECHABAJA siempre existen
 		if (f.getAttribute("FECHAALTA") instanceof Double){
@@ -76,6 +78,10 @@ public abstract class Shape {
 		return fechaBaja;
 	}
 
+	public String getShapeId(){
+		return shapeId.toString();
+	}
+	
 	public abstract List<String[]> getAttributes();
 
 	public abstract String getRefCat();
@@ -84,21 +90,17 @@ public abstract class Shape {
 
 	public abstract Coordinate[] getCoordenadas(int x);
 
-	public abstract void addNode(long nodeId);
+	public abstract void addNode(int pos, long nodeId);
 
-	public abstract List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils);
-
-	public abstract void addWay(long wayId);
+	public abstract void addWay(int pos, long wayId);
 	
-	public abstract void deleteWay(long wayId);
-
-	public abstract List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils);
+	public abstract void deleteWay(int pos, long wayId);
 
 	public abstract void setRelation(long relationId);
 
-	public abstract List<Long> getNodesIds();
+	public abstract List<Long> getNodesIds(int pos);
 
-	public abstract List<Long> getWaysIds();
+	public abstract List<Long> getWaysIds(int pos);
 	
 	public abstract Long getRelationId();
 
@@ -261,7 +263,7 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("030302")){ 
-			s[0] = "waterway"; s[1] ="canal";
+			s[0] = "waterway"; s[1] ="drain";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("032301")){ 
@@ -551,7 +553,7 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("167201")){ 
-			s[0] = "ttggss"; s[1] =ttggss;
+			s[0] = "barrier"; s[1] ="hedge";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("168100")){ 

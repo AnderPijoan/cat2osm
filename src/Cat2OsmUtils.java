@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -36,8 +37,12 @@ public class Cat2OsmUtils {
 		totalWays.put(w, idway);
 	}
 	
+	/** A la hora de simplificar, hay ways que se eliminan porque sus nodos se concatenan
+	 * a otro way. Borramos los ways que no se vayan a usar de las relaciones que los contenian
+	 * @param w
+	 */
 	@SuppressWarnings("rawtypes")
-	public void deleteWay(WayOsm w){
+	public void deleteWayFromRelations(WayOsm w){
 		Iterator<Entry<RelationOsm, Long>> it = totalRelations.entrySet().iterator();
 		
 		while(it.hasNext()){
@@ -45,7 +50,6 @@ public class Cat2OsmUtils {
 			RelationOsm r = (RelationOsm) e.getKey();
 			r.removeMember(totalWays.get(w));
 		}
-		totalWays.remove(w);
 	}
 	
 	/** Junta dos ways en uno. Hay que tener en cuenta los 4 casos que se pueden
@@ -59,21 +63,91 @@ public class Cat2OsmUtils {
 		if ( !w1.getNodes().isEmpty() && !w2.getNodes().isEmpty()){
 			
 			// Caso1: w1.final = w2.primero
-			if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(0)) && totalWays.get(w2) != null){
-				System.out.println("CASO1");
-				long l = totalWays.get(w2);
-				List<Long> nodes = w2.getNodes();
+			if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(0)) && totalWays.get(w1) != null && totalWays.get(w2) != null){
+				long l1 = totalWays.get(w1);
+				long l2 = totalWays.get(w2);
+				WayOsm w3 = new WayOsm(w1.getNodes());
+				w3.setTags(w1.getTags());
+				totalWays.remove(w1);
+				
+				// Copiamos la lista de nodos del way que eliminaremos
+				List<Long> nodes = new ArrayList<Long>();
+				for (Long lo : w2.getNodes())
+					nodes.add(lo);
+				
+				// Eliminamos el nodo que comparten del way2
 				nodes.remove(w2.getNodes().get(0));
-				w1.addNodes(nodes);
-				deleteWay(w2);
-				return l;
+				
+				// Concatenamos al final del way3 (copia del way1) los nodos del way2
+				w3.addNodes(nodes);
+				
+				// Lo guardamos en la lista de ways, manteniendo su id 
+				totalWays.put(w3, l1);
+				
+				// Borramos el way que no se volvera a usar, ya que sus nodos se han concatenado al otro
+				deleteWayFromRelations(w2);
+				totalWays.remove(w2);
+
+				return l2;
 			}
 			
 			// Caso2: w1.primero = w2.final
-			else if (w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1)) && totalWays.get(w1) != null){
-				System.out.println("CASO2");
+			else if (w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1)) && totalWays.get(w1) != null  && totalWays.get(w2) != null){
+				// Es igual que el Caso1 pero cambiados de orden.
 				return joinWays(w2, w1);
 			}
+			
+			// Caso3: w1.ultimo = w2.ultimo
+			else if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(w2.getNodes().size()-1))  && totalWays.get(w1) != null && totalWays.get(w2) != null){
+				
+				//w1.reverseNodes();
+				//return joinWays(w2, w1);
+				
+				/*long l = totalWays.get(w2);
+				
+				// Copiamos la lista de nodos del way que eliminaremos
+				List<Long> nodes = new ArrayList<Long>();
+				for (Long lo : w2.getNodes())
+					nodes.add(lo);
+				
+				// Eliminamos el nodo que comparten del way2
+				nodes.remove(w2.getNodes().get(w2.getNodes().size()-1));
+				
+				// Se van anadiendo al final del way1 los nodos del way 2 pero ordenados de atras
+				// a adelante
+				for(int x = nodes.size()-1; x > -1; x--)
+					w1.getNodes().add(nodes.get(x));	
+				deleteWay(w2);
+				return l;*/
+			}
+			
+			// Caso4: w1.primero = w2.primero
+			/*else if (w1.getNodes().get(0).equals(w2.getNodes().get(0))  && totalWays.get(w1) != null && totalWays.get(w2) != null){	
+				long l = totalWays.get(w2);
+				
+				System.out.println("\nAntes w1"+w1.getNodes());
+				System.out.println("Antes w2"+w2.getNodes());
+				
+				// Copiamos la lista de nodos del way que eliminaremos
+				List<Long> nodes = new ArrayList<Long>();
+				for (Long lo : w2.getNodes())
+					nodes.add(lo);
+				
+				// Eliminamos el nodo que comparten del way2
+				nodes.remove(w2.getNodes().get(0));
+				
+				// Se van anadiendo al principio del way1 los nodos del way 2 en orden normal
+				for(int x = 0; x < nodes.size(); x++){
+					System.out.println("nodo "+nodes.get(x));
+					w1.getNodes().add(0,nodes.get(x));
+				}
+						
+				System.out.println("Despues "+w1.getNodes());
+				
+				deleteWay(w2);
+				return l;
+			}*/
+			
 		}
 		return 0;
 	}

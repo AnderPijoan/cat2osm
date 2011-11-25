@@ -43,9 +43,8 @@ public class Gui extends JFrame {
 				}
 			catch(Exception e){}
 			}
-		else{
+		else
 			System.out.println("UrbanoSHPDir no es un directorio valido.");
-		}
 
 		// Seleccionamos el archivo .cat
 		// No todos los shapefiles tienen referencia catastral por lo que algunos
@@ -77,9 +76,8 @@ public class Gui extends JFrame {
 				}
 			catch(Exception e){}
 			}
-		else{
+		else
 			System.out.println("RusticoSHPDir no es un directorio valido. No se han encontrado los shapefiles.");
-		}
 
 		// Seleccionamos el archivo .cat
 		// No todos los shapefiles tienen referencia catastral por lo que algunos
@@ -87,6 +85,8 @@ public class Gui extends JFrame {
 		System.out.println("Leyendo CAT Rustico");
 		catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
 
+		// Simplificamos los ways
+		System.out.println("Simplificando Vias");
 		catastro.simplifyWays(shapes);
 
 		// Escribir los datos

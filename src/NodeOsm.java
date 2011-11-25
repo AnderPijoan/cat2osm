@@ -85,7 +85,7 @@ public class NodeOsm {
 	 * @param huso Huso geografico para la conversion UTM a Lat/Long
 	 * @return Devuelve en un String el nodo listo para imprimir
 	 */
-	public String printNode(Long id, String huso){
+	public String printNode(Long id){
 		String s = null;
 			
 		// Hora para el timestamp

@@ -20,6 +20,11 @@ public class WayOsm {
 		nodos.add(l);
 	}
 	
+	public void addNode(int pos, Long l){
+		if (!nodos.contains(l))
+		nodos.add(pos, l);
+	}
+	
 	public void addNodes(List<Long> l){
 		for (int x = 0; x < l.size(); x++)
 			if (!nodos.contains(l.get(x)))
@@ -39,8 +44,38 @@ public class WayOsm {
 	}
 	
 	public void addTags(List<String[]> s){
-		if (!tags.equals(s))
 		tags.addAll(s);
+	}
+	
+	/** Metodo para comparar si dos WayOsm tienen los mismos tags, de esta forma se
+	 * iran simplificando los ways.
+	 * @param s Lista de tags del otro WayOsm a comparar
+	 * @return boolean de si tienen los mismos o no.
+	 */
+	public boolean sameTags(List<String[]> s){
+		
+		if (this.tags == null || s == null)
+			return false;
+		
+		if (this.tags.size() != s.size())
+			return false;
+		
+		boolean encontrado = true;
+		for (int x = 0; encontrado && x < this.tags.size(); x++){
+			encontrado = false;
+			for (int y = 0; !encontrado && y < this.tags.size(); y++){
+				if (this.tags.get(x)[0].equals(s.get(y)[0]) && this.tags.get(x)[1].equals(s.get(y)[1]))
+				encontrado = true;
+			}
+		}
+		return encontrado;
+	}
+	
+	/** Invierte el orden de la lista de los nodos y la devuelve.
+	 * @return La lista de nodos despues de haber invertido el orden.
+	 */
+	public void reverseNodes(){
+		Collections.reverse(nodos);
 	}
 	
 	public List<Long> sortNodos(){
@@ -95,6 +130,9 @@ public class WayOsm {
 		// Hora para el timestamp
 		Date date = new java.util.Date();
 		s = ("<way id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\">\n");
+		
+		if (nodos.size()<2)
+			System.out.println("Way con menos de dos nodos.");
 		
 		// Referencias a los nodos
 		for (int x = 0; x < nodos.size(); x++)

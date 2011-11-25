@@ -18,8 +18,8 @@ import com.vividsolutions.jts.geom.Polygon;
 public class ShapeSubparce extends Shape {
 
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
-	private List<Long> nodes;
-	private List<Long> ways;
+	private List<List<Long>> nodes; //[0] Outer, [1..N] inner
+	private List<List<Long>> ways; //[0] Outer, [1..N] inner
 	private Long relation; // Relacion de sus ways
 	private String refCatastral; // Referencia catastral
 	private String subparce; // Clave de Subparcela
@@ -63,12 +63,18 @@ public class ShapeSubparce extends Shape {
 					poligons.add(p.getInteriorRingN(y));
 			}
 		}
-		else {
+		else
 			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile SUBPARCE");
-		}
 
-		this.nodes = new ArrayList<Long>();
-		this.ways = new ArrayList<Long>();
+		// Inicializamos las listas
+		this.nodes = new ArrayList<List<Long>>();
+		this.ways = new ArrayList<List<Long>>();
+		for(int x = 0; x < poligons.size(); x++){
+			List<Long> lw = new ArrayList<Long>();
+			List<Long> ln = new ArrayList<Long>();
+			nodes.add(ln);
+			ways.add(lw);
+		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
 		refCatastral = (String) f.getAttribute("REFCAT");
@@ -76,7 +82,7 @@ public class ShapeSubparce extends Shape {
 		if (subparce != null){
 			cultivo = getCultivo(subparce);
 		}
-
+		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
 		for (int x = 1; x < f.getAttributes().size(); x++){
@@ -85,77 +91,58 @@ public class ShapeSubparce extends Shape {
 	}
 
 
-	public void addNode(long nodeId){
-		if (!nodes.contains(nodeId))
-			nodes.add(nodeId);
+	public void addNode(int pos, long nodeId){
+		if (nodes.size()>pos)
+			nodes.get(pos).add(nodeId);
 	}
 
-	public void addWay(long wayId){
-		if (!ways.contains(wayId))
-			ways.add(wayId);
+	public void addWay(int pos, long wayId){
+		if (ways.size()>pos && !ways.get(pos).contains(wayId))
+			ways.get(pos).add(wayId);
 	}
 
-	@Override
-	public void deleteWay(long wayId){
-		ways.remove(wayId);
+
+	public void deleteWay(int pos, long wayId){
+		if (ways.size()>pos)
+		ways.get(pos).remove(wayId);
 	}
-	
-	public void removeWay(long wayId){
-		ways.remove(wayId);
-	}
+
 
 	public void setRelation(long relationId){
 		relation = relationId;
 	}
 
+	
 	public List<LineString> getPoligons(){
 		return poligons;
 	}
 
-	public List<Long> getNodesIds(){
-		return nodes;
-	}
-
+	
 	/** Devuelve la lista de ids de nodos del poligono en posicion pos
 	 * @param pos posicion que ocupa el poligono en la lista
-	 * @param utils clase utils que tiene metodos
 	 * @return Lista de ids de nodos del poligono en posicion pos
 	 */
-	public List<Long> getNodesPoligonN(int pos, Cat2OsmUtils utils){
-
-		if (getPoligons().size()>pos){
-			List<Long> l = new ArrayList<Long>();
-			for (int x = 0; x < poligons.get(pos).getNumPoints(); x++)
-				l.add(utils.getNodeId(getPoligons().get(pos).getCoordinateN(x), null));
-			return l;
-		}
-		return null;
+	public List<Long> getNodesIds(int pos){
+		if (nodes.size()>pos)
+			return nodes.get(pos);
+		else
+			return null;
 	}
 
-	/** Devuelve la lista de ids de ways (todos como ways de 2 nodos)
+	
+	/** Devuelve la lista de ids de ways
 	 * del poligono en posicion pos
-	 * No vale para despues de la simplificacion de ways
 	 * @param pos posicion que ocupa el poligono en la lista
-	 * @param utils clase utils que tiene metodos
 	 * @return Lista de ids de ways del poligono en posicion pos
 	 */
-	public List<Long> getWaysPoligonN(int pos, Cat2OsmUtils utils){
-
-		if (getPoligons().size()>pos){
-			List<Long> wayList = new ArrayList<Long>();
-			List<Long> nodeList = getNodesPoligonN(pos, utils);
-			for (int x = 0; x < nodeList.size()-1; x++){
-				List<Long> way = new ArrayList<Long>();
-				way.add(nodeList.get(x));
-				way.add(nodeList.get(x+1));
-				wayList.add(utils.getWayId(way, null));
-			}
-
-			return wayList;
-		}
-		return null;
+	public List<Long> getWaysIds(int pos) {
+		if (nodes.size()>pos)
+			return ways.get(pos);
+		else
+			return null;
 	}
 
+	
 	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
 	 * @param shp Shapefile a comprobar
 	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
@@ -164,18 +151,17 @@ public class ShapeSubparce extends Shape {
 		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
 	}
 
-	public List<Long> getWaysIds() {
-		return ways;
-	}
 
 	public Long getRelationId(){
 		return relation;
 	}
 
+	
 	public ShapeAttribute getAttribute(int x){	
 		return atributos.get(x);
 	}
 
+	
 	/** Devuelve los atributos del shape
 	 * @return Lista de atributos
 	 */
@@ -202,6 +188,10 @@ public class ShapeSubparce extends Shape {
 		//s = new String[2];
 		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
 		//l.add(s);
+		
+		s = new String[2];
+		s[0] = "SHAPEID"; s[1] = getShapeId();
+		l.add(s);
 
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
@@ -213,21 +203,26 @@ public class ShapeSubparce extends Shape {
 		return l;
 	}
 
+	
 	public String getRefCat(){
 		return refCatastral;
 	}
+	
 	
 	public String getSubparce(){
 		return subparce;
 	}
 
+	
 	public Coordinate[] getCoordenadas(int i){
 		return poligons.get(i).getCoordinates();
 	}
 
+	
 	public Coordinate getCoor(){
 		return null;
 	}
+	
 	
 	/** Lee el archivo Rusubparcela.dbf y lo almacena para despues relacionar la clave subparce 
 	 * de Subparce.shp con la calificacion catastral que trae Rusubparcela.dbf. Con la cc se accedera
@@ -263,7 +258,8 @@ public class ShapeSubparce extends Shape {
 
 	}  
 	
-	 /**Relaciona el codigo de subparcela que trae el Subparce.shp con
+	
+	/**Relaciona el codigo de subparcela que trae el Subparce.shp con
 	 * el codigo de cultivo que trae Rusubparcela.dbf y este a su vez con el 
 	 * Rucultivo.dbf. Solo es para subparcelas rurales
 	 * @param v Numero de subparcela a buscar
@@ -273,6 +269,7 @@ public class ShapeSubparce extends Shape {
 		return ruCul.get(ruSub.get(s));
 	} 
 
+	
 	public String getTtggss() {
 		return null;
 	}

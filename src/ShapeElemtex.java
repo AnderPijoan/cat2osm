@@ -47,10 +47,12 @@ public class ShapeElemtex extends Shape {
 
 	}
 
+	
 	public Coordinate getCoor(){
 		return coor;
 	}
 
+	
 	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
 	 * @param shp Shapefile a comprobar
 	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
@@ -59,10 +61,12 @@ public class ShapeElemtex extends Shape {
 		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
 	}
 
+	
 	public ShapeAttribute getAttribute(int x){	
 		return atributos.get(x);
 	}
 
+	
 	/** Devuelve los atributos del shape
 	 * @return Lista de atributos
 	 */
@@ -92,58 +96,81 @@ public class ShapeElemtex extends Shape {
 		return l;
 	}
 
+	
 	public String getRotulo() {
 		return rotulo;
 	}
+	
 	
 	public String getTtggss() {
 		return ttggss;
 	}
 	
-	public void addNode(long nodeId){
+	
+	public void addNode(int pos, long nodeId) {
 		nodo = nodeId;
 	}
+
+
+	public void addWay(int pos, long wayId) {
+	}
+	
 	
 	public String getRefCat(){
-		return "";
+		return null;
 	}
 
+	
 	public Long getRelationId(){
 		return null;
 	}
 
+	
 	public List<LineString> getPoligons(){
-		return null;
+		List<LineString> l = new ArrayList<LineString>();
+		return l;
 	}
 
+	
 	public Coordinate[] getCoordenadas(int x){
 		return null;
 	}
-
-	public List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils){
-		return null;
-	}
-
-	public void addWay(long wayId){	
-	}
 	
-	@Override
-	public void deleteWay(long wayId){
+	
+	public void deleteWay(int pos, long wayId){
 	}
 
-	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils){
-		return null;
+	/** Devuelve la lista de ids de nodos del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de nodos del poligono en posicion pos
+	 */
+	public List<Long> getNodesIds(int pos){
+		List<Long> l = new ArrayList<Long>();
+		l.add(nodo);
+		return l;
 	}
 
+	/** Devuelve la lista de ids de ways
+	 * del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de ways del poligono en posicion pos
+	 */
+	public List<Long> getWaysIds(int pos) {
+			return null;
+	}
+
+	
 	public void setRelation(long relationId){
 	}
 
+	
 	public List<Long> getNodesIds(){
 		List<Long> l = new ArrayList<Long>();
 		l.add(nodo);
 		return l;
 	}
 
+	
 	public List<Long> getWaysIds(){
 		return null;
 	}
@@ -166,19 +193,11 @@ public class ShapeElemtex extends Shape {
 			}
 			return l;}
 		
-		if (ttggss.equals("189102")){ 
-			if (rotulo != null){
-			s = new String[2];
-			s[0] = "addr:housenumber"; s[1] = rotulo;
-			l.add(s);
-			}
-			return l;}
-		
 		if (ttggss.equals("189300")){ 
 			if (rotulo != null){
 			s = new String[2];
-			System.out.println(rotulo);
-			s[0] = "addr:housenumber"; s[1] = rotulo;
+			//System.out.println(rotulo); TODO
+			s[0] = "DETALLE"; s[1] = rotulo;
 			l.add(s);
 			}
 			return l;}
@@ -186,7 +205,7 @@ public class ShapeElemtex extends Shape {
 		if (ttggss.equals("189700")){ 
 			if (rotulo != null){
 			s = new String[2];
-			System.out.println(rotulo);
+			//System.out.println(rotulo); TODO
 			s[0] = "rotulo"; s[1] = rotulo;
 			l.add(s);
 			}
@@ -205,8 +224,6 @@ public class ShapeElemtex extends Shape {
 	public boolean shapeValido (){
 
 		if (ttggss.equals("189203"))
-			return true;
-		if (ttggss.equals("189102"))
 			return true;
 		if (ttggss.equals("189300"))
 			return true;

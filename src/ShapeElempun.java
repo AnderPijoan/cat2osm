@@ -38,9 +38,9 @@ public class ShapeElempun extends Shape {
 		for (int x = 1; x < f.getAttributes().size(); x++){
 		atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
 		}*/
-
 	}
 
+	
 	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
 	 * @param shp Shapefile a comprobar
 	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
@@ -49,14 +49,15 @@ public class ShapeElempun extends Shape {
 		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
 	}
 
+	
 	public ShapeAttribute getAttribute(int x){	
 		return atributos.get(x);
 	}
 
+	
 	/** Devuelve los atributos del shape
 	 * @return Lista de atributos
 	 */
-	@Override
 	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
@@ -65,7 +66,6 @@ public class ShapeElempun extends Shape {
 			l.addAll(ttggssParser(ttggss));
 			}
 
-		
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 		s = new String[2];
@@ -75,30 +75,32 @@ public class ShapeElempun extends Shape {
 		return l;
 	}
 
-	@Override
+
 	public String getRefCat() {
 		return null;
 	}
 
-	@Override
+
 	public Long getRelationId() {
 		return null;
 	}
 
-	@Override
+
 	public List<LineString> getPoligons() {
-		return null;
+		List<LineString> l = new ArrayList<LineString>();
+		return l;
 	}
 
-	@Override
+
 	public Coordinate[] getCoordenadas(int x) {
 		return null;
 	}
 
-	@Override
+
 	public String getTtggss() {
 		return ttggss;
 	}
+	
 	
 	public boolean shapeValido (){
 		
@@ -130,47 +132,44 @@ public class ShapeElempun extends Shape {
 			return true;
 	}
 	
-	@Override
-	public void addNode(long nodeId) {
+	
+	public void addNode(int pos, long nodeId){
+		nodo = nodeId;
 	}
 
-	@Override
-	public List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils) {
-		List<Long> l = new ArrayList<Long>();
-		l.add(nodo);
-		return l;
-	}
-
-	@Override
-	public void addWay(long wayId) {
+	
+	public void addWay(int pos, long wayId){
 	}
 	
-	@Override
-	public void deleteWay(long wayId){
+	
+	public void deleteWay(int pos, long wayId){
 	}
 
-	@Override
-	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils) {
-		return null;
+	
+	public void setRelation(long relationId){
 	}
 
-	@Override
-	public void setRelation(long relationId) {
-	}
 
-	@Override
-	public List<Long> getNodesIds() {
-		List<Long> l = new ArrayList<Long>();
+	/** Devuelve la lista de ids de nodos del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de nodos del poligono en posicion pos
+	 */
+	public List<Long> getNodesIds(int pos){
+		List<Long>l = new ArrayList<Long>();
 		l.add(nodo);
 		return l;
 	}
 
-	@Override
-	public List<Long> getWaysIds() {
-		return null;
+	/** Devuelve la lista de ids de ways
+	 * del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de ways del poligono en posicion pos
+	 */
+	public List<Long> getWaysIds(int pos) {
+			return null;
 	}
 
-	@Override
+
 	public Coordinate getCoor() {
 		return coor;
 	}

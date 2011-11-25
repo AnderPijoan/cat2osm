@@ -50,7 +50,7 @@ public class ShapeElemlin extends Shape {
 		this.ways = new ArrayList<Long>();
 	}
 	
-	@Override
+	
 	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
@@ -64,6 +64,10 @@ public class ShapeElemlin extends Shape {
 		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
 		//l.add(s);
 
+		s = new String[2];
+		s[0] = "SHAPEID"; s[1] = getShapeId();
+		l.add(s);
+		
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
 			s[0] = "ttggss"; s[1] =ttggss;
@@ -80,32 +84,33 @@ public class ShapeElemlin extends Shape {
 		return l;
 	}
 
-	@Override
+
 	public String getRefCat() {
 		return null;
 	}
 
-	@Override
+
 	public Long getRelationId() {
 		return relation;
 	}
 
-	@Override
+
 	public List<LineString> getPoligons() {
 		List<LineString> l = new ArrayList<LineString>();
 		l.add(line);
 		return l;
 	}
 
-	@Override
+
 	public Coordinate[] getCoordenadas(int x) {
 		return line.getCoordinates();
 	}
 	
-	@Override
+
 	public String getTtggss() {
 		return ttggss;
 	}
+	
 	
 	public boolean shapeValido (){
 
@@ -125,49 +130,47 @@ public class ShapeElemlin extends Shape {
 			return false;
 	}
 	
-	@Override
-	public void addNode(long nodeId) {
-		if (!nodes.contains(nodeId))
+	
+	public void addNode(int pos, long nodeId){
 			nodes.add(nodeId);
 	}
 
-	@Override
-	public List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils) {
-		return nodes;
-	}
-
-	@Override
-	public void addWay(long wayId) {
-		if (!ways.contains(wayId))
+	
+	public void addWay(int pos, long wayId){
 			ways.add(wayId);
 	}
 	
-	@Override
-	public void deleteWay(long wayId){
+
+	public void deleteWay(int pos, long wayId){
+		if (ways.size()>pos)
 		ways.remove(wayId);
 	}
-	
-	@Override
-	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils) {
-		return ways;
-	}
 
-	@Override
+
 	public void setRelation(long relationId) {
 		relation = relationId;
 	}
 
-	@Override
-	public List<Long> getNodesIds() {
+	
+	/** Devuelve la lista de ids de nodos del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de nodos del poligono en posicion pos
+	 */
+	public List<Long> getNodesIds(int pos){
 		return nodes;
 	}
 
-	@Override
-	public List<Long> getWaysIds() {
-		return ways;
+	
+	/** Devuelve la lista de ids de ways
+	 * del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de ways del poligono en posicion pos
+	 */
+	public List<Long> getWaysIds(int pos) {
+			return ways;
 	}
 
-	@Override
+
 	public Coordinate getCoor() {
 		return null;
 	}

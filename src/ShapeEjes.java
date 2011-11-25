@@ -66,7 +66,7 @@ public class ShapeEjes extends Shape {
 		this.ways = new ArrayList<Long>();
 	}
 
-	@Override
+
 	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
@@ -80,6 +80,10 @@ public class ShapeEjes extends Shape {
 		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
 		//l.add(s);
 
+		s = new String[2];
+		s[0] = "SHAPEID"; s[1] = getShapeId();
+		l.add(s);
+		
 		// Partimos el TipoVia y NombreVia
 		List<String[]> tags = null;
 		if (via != null){
@@ -109,85 +113,84 @@ public class ShapeEjes extends Shape {
 		return l;
 	}
 
+	
 	public ShapeAttribute getAttribute(int x){	
 		return atributos.get(x);
 	}
 
-	@Override
+
 	public String getRefCat() {
 		return null;
 	}
 
 
-	@Override
 	public Long getRelationId() {
 		return relation;
 	}
 
-	@Override
+
 	public List<LineString> getPoligons() {
 		List<LineString> l = new ArrayList<LineString>();
 		l.add(line);
 		return l;
 	}
 
-	@Override
+
 	public Coordinate[] getCoordenadas(int x) {
 		return line.getCoordinates();
 	}
 
-	@Override
-	public void addNode(long nodeId) {
-		if (!nodes.contains(nodeId))
+
+	public void addNode(int pos, long nodeId){
 			nodes.add(nodeId);
 	}
 
-	@Override
-	public List<Long> getNodesPoligonN(int x, Cat2OsmUtils utils) {
-		return nodes;
-	}
 
-	@Override
-	public void addWay(long wayId) {
-		if (!ways.contains(wayId))
+	public void addWay(int pos, long wayId){
 			ways.add(wayId);
 	}
 	
-	@Override
-	public void deleteWay(long wayId){
+	
+	public void deleteWay(int pos, long wayId){
 		ways.remove(wayId);
 	}
 
 
-	@Override
-	public List<Long> getWaysPoligonN(int x, Cat2OsmUtils utils) {
-		return ways;
+	/** Devuelve la lista de ids de nodos del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de nodos del poligono en posicion pos
+	 */
+	public List<Long> getNodesIds(int pos){
+			return nodes;
 	}
 
-	@Override
+	
+	/** Devuelve la lista de ids de ways
+	 * del poligono en posicion pos
+	 * @param pos posicion que ocupa el poligono en la lista
+	 * @return Lista de ids de ways del poligono en posicion pos
+	 */
+	public List<Long> getWaysIds(int pos) {
+			return ways;
+
+	}
+
+
 	public void setRelation(long relationId) {
 		relation = relationId;
 	}
 
+	
 	public void setVia(String t) {
 		via = t;
 	}
 	
-	@Override
-	public List<Long> getNodesIds() {
-		return nodes;
-	}
 
-	@Override
-	public List<Long> getWaysIds() {
-		return ways;
-	}
-
-	@Override
 	public Coordinate getCoor() {
 		return null;
 	}
 
+	
 	public List<String[]> atributosViaParser(String codigo){
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
@@ -275,9 +278,11 @@ public class ShapeEjes extends Shape {
 		return l;
 	}
 
+	
 	public String getTtggss() {
 		return null;
 	}
+	
 	
 	public boolean shapeValido (){
 		return true;
@@ -315,6 +320,7 @@ public class ShapeEjes extends Shape {
 			}
 		}
 	}  
+	
 	
 	/** Relaciona el numero de via de Ejes.shp con los nombres de via que trae Carvia.dbf. El nombre de via trae tambien el tipo
 	 * en formato 2caracteres de tipo de via, un espacio en blanco y el nombre de via
