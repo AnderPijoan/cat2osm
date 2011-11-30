@@ -75,13 +75,13 @@ public class Cat2Osm {
 	}
 
 	
-	/** Los elementos textuales traen informacion sobre que hay en alguna parcelas como pueden ser cementerios,
-	 * hospitales, etc. Esa informacion no viene en las parcelas y puede hacer que cambie su landuse. 
-	 * Por eso se calcula si un elemtex se encuentra sobre una parcela y se anade el landuse a la parcela.
-	 * @param shapes
-	 * @return
+	/** Los elementos textuales traen informacion sobre que hay en alguna construccion como pueden ser cementerios,
+	 * hospitales, etc. Las opciones en las construcciones son limitadas y puede hacer que cambie su landuse. 
+	 * Por eso se calcula si un elemtex se encuentra sobre una constru y se anade el landuse al constru.
+	 * @param shapes Lista de shapes original
+	 * @return lista de shapes con los tags modificados
 	 */
-	public List<Shape> addElemtexLandusetoParce(List<Shape> shapes){
+	public List<Shape> addElemtexLandusetoConstru(List<Shape> shapes){
 		
 		GeometryFactory factory = new GeometryFactory();
 		
@@ -100,8 +100,14 @@ public class Cat2Osm {
 						// Si cumple, cambiamos el tag de la relacion
 						if (coor.intersects(parcela)){
 							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), s.getRelationId()));
-							String[] tag = shape.getTtggss().split("=");
-							r.addTag(tag);
+							
+							String[] pares = shape.getTtggss().split(",");
+							List<String[]> tags = new ArrayList<String[]>();
+							
+							for (String par : pares)
+								tags.add(par.split("="));
+
+							r.addTags(tags);
 						}
 					}
 				

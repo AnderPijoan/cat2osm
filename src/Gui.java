@@ -90,7 +90,7 @@ public class Gui extends JFrame {
 		// de la parcela sobre la que se encuentran.
 		if (Config.get("ElemtexAConstru").equals("1")){
 			System.out.println("TRASPASANDO posibles tags de Elemtex a Constru.");
-			shapes = catastro.addElemtexLandusetoParce(shapes);
+			shapes = catastro.addElemtexLandusetoConstru(shapes);
 		}
 		
 		// Simplificamos los ways

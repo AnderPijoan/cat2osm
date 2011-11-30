@@ -337,7 +337,6 @@ public class ShapeElemtex extends Shape {
 		if (rotulo.contains("HOSPITAL")){ 
 			s[0] = "amenity"; s[1] = "hospital";
 			l.add(s);
-			setTtggss("landuse=hospital");
 			return l;}
 		
 		if (rotulo.contains("PISCINA")){ 
