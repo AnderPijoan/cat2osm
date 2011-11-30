@@ -11,7 +11,10 @@ public class WayOsm {
 	private List<String[]> tags; // Tags, para la simplificacion de ways
 
 	public WayOsm(List<Long> l){
-		this.nodos = l;
+		if (l == null)
+			this.nodos = new ArrayList<Long>();
+		else
+			this.nodos = l;
 		tags = new ArrayList<String[]>();
 	}
 	
@@ -27,7 +30,6 @@ public class WayOsm {
 	
 	public void addNodes(List<Long> l){
 		for (int x = 0; x < l.size(); x++)
-			if (!nodos.contains(l.get(x)))
 				nodos.add(l.get(x));
 	}
 	
@@ -79,7 +81,9 @@ public class WayOsm {
 	}
 	
 	public List<Long> sortNodos(){
-		List<Long> result = nodos;
+		List<Long> result = new ArrayList<Long>();
+		for (Long l : nodos)
+			result.add(l);
 		Collections.sort(result);
 		return result;
 	}

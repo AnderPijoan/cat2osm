@@ -28,7 +28,7 @@ public class RelationOsm {
 		roles.add(role);}
 	}
 	
-	public void removeMember(Long id){
+	public synchronized void removeMember(Long id){
 		if (ids.contains(id)){
 			int pos = ids.indexOf(id);
 			ids.remove(pos);
@@ -57,12 +57,40 @@ public class RelationOsm {
 		return tags;
 	}
 	
+	public void addTag(String[] tag){
+		
+		boolean encontrado = false;
+		
+		for (int x = 0; !encontrado && x < this.tags.size(); x++)
+			if (this.tags.get(x)[0].equals(tag[0])){
+				this.tags.get(x)[1] = tag[1];
+				encontrado = true;
+			}
+
+		if (!encontrado)
+			this.tags.add(tag);
+	}
+	
 	public void addTags(List<String[]> tags) {
-		this.tags.addAll(tags);
+		
+		for (int x = 0; x < tags.size(); x++){
+
+			boolean encontrado = false;
+
+			for (int y = 0; !encontrado && y < this.tags.size(); y++)
+				if (this.tags.get(y)[0].equals(tags.get(x)[0])){
+					this.tags.get(y)[1] = tags.get(x)[1];
+					encontrado = true;
+				}
+			if (!encontrado)
+				this.tags.add(tags.get(x));
+		}
 	}
 
 	public List<Long> sortIds(){
-		List<Long> result = ids;
+		List<Long> result = new ArrayList<Long>();
+		for (Long l : ids)
+			result.add(l);
 		Collections.sort(result);
 		return result;
 	}
@@ -106,14 +134,15 @@ public class RelationOsm {
 	 * @param id Id de la relation
 	 * @return Devuelve en un String la relation lista para imprimir
 	 */
-	public String printRelation(Long id){
+	public String printRelation(Long id, Cat2OsmUtils utils){
 		String s = null;
 		
 		Date date = new java.util.Date();
 		s = ("<relation id=\""+ id +"\" visible=\"true\"  version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\">\n");
 		
-		for (int x = 0; x < ids.size(); x++){
-			s += ("<member type=\""+ types.get(x) +"\" ref=\""+ ids.get(x)+"\" role=\""+ roles.get(x) +"\" />\n");}
+		for (int x = 0; x < ids.size(); x++)
+			if (utils.getTotalWays().containsValue(ids.get(x)))
+			s += ("<member type=\""+ types.get(x) +"\" ref=\""+ ids.get(x)+"\" role=\""+ roles.get(x) +"\" />\n");
 		
 		for (int x = 0; x < tags.size(); x++)
 			s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";

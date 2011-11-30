@@ -5,7 +5,7 @@
 ResultPath=result
 
 # Nombre para el archivo resultado
-ResultFileName=AldeasecaDeAlba
+ResultFileName=AldeasecaDeAlbaPruebas
 
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
@@ -31,6 +31,12 @@ FechaHasta=99999999
 # Tipo de Registro de catastro a usar (0 = todos)
 # Los registros de catastro, traen informacion adicional a la que tienen los shapefiles
 TipoRegistro=0
+
+# Cambiar tags de las construcciones si contienen sobre ellas un texto (Elemtex)
+# al cual se le puede asociar un tag distinto. Como por ejemplo si es un cementerio modificar
+# el landuse a landuse=cemetery
+# No=0 / Si=1 (Ralentiza el proceso)
+ElemtexAConstru=1
 
 # Hacer simplificacion de Nodos de un shape que se crean sobre Ways de otro shape
 # No=0 / Si=1 (Ralentiza el proceso) (Aun en fase de desarrollo)

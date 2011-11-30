@@ -4,22 +4,18 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
-
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 
 
 public class Cat2Osm {
@@ -35,264 +31,19 @@ public class Cat2Osm {
 	}
 	
 	
-	/** Parsea el archivo binario shp y crea los elementos en memoria en un List
+	/** Crea un thread que parsea el archivo binario shp 
+	 * y crea los elementos en memoria en un List
 	 * @param f Archivo a parsear
 	 * @returns List<Shape> Lista de los elementos parseados
 	 * @throws IOException
 	 */
 	public List<Shape> shpParser(File f) throws IOException {
 		
-		FileDataStore store = FileDataStoreFinder.getDataStore(f);
-		FeatureReader<SimpleFeatureType, SimpleFeature> reader = 
-			store.getFeatureReader();
-
 		List<Shape> shapeList = new ArrayList<Shape>();
-		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
-		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
-		
-		// Creamos el shape dependiendo de su tipo
-		if (f.getName().toUpperCase().equals("MASA.SHP"))
-
-			// Shapes del archivo MASA.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeMasa(reader.next());
-
-				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
-					// Anadimos el shape creado a la lista
-					shapeList.add(mPolygonShapeParser(shape));
-			}
-		else if (f.getName().toUpperCase().equals("PARCELA.SHP"))
-
-			// Shapes del archivo PARCELA.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeParcela(reader.next());
-
-				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
-					// Anadimos el shape creado a la lista
-					shapeList.add(mPolygonShapeParser(shape));
-			}
-		else if (f.getName().toUpperCase().equals("SUBPARCE.SHP"))
-
-			// Shapes del archivo SUBPARCE.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeSubparce(reader.next());
-
-				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
-					// Anadimos el shape creado a la lista
-					shapeList.add(mPolygonShapeParser(shape));
-			}
-		else if (f.getName().toUpperCase().equals("CONSTRU.SHP"))
-
-			// Shapes del archivo CONSTRU.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeConstru(reader.next());
-
-				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
-					// Anadimos el shape creado a la lista
-					shapeList.add(mPolygonShapeParser(shape));
-			}
-		else if (f.getName().toUpperCase().equals("ELEMTEX.SHP"))
-
-			// Shapes del archivo ELEMTEX.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeElemtex(reader.next());
-
-				// Si cumple estar entre las fechas
-				// Si cumple tener un ttggss valido (no interesa mostrar todos)
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
-					// Anadimos el shape creado a la lista
-					shapeList.add(pointShapeParser(shape));
-			}
-		else if (f.getName().toUpperCase().equals("ELEMPUN.SHP"))
-
-			// Shapes del archivo ELEMPUN.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeElempun(reader.next());
-
-				// Si cumple estar entre las fechas
-				// Si cumple tener un ttggss valido (no interesa mostrar todos)
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
-					// Anadimos el shape creado a la lista
-					shapeList.add(pointShapeParser(shape));
-			}
-		else if (f.getName().toUpperCase().equals("ELEMLIN.SHP"))
-
-			// Shapes del archivo ELEMLIN.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeElemlin(reader.next());
-
-				// Si cumple estar entre las fechas
-				// Si cumple tener un ttggss valido (no interesa mostrar todos)
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
-					// Anadimos el shape creado a la lista
-					shapeList.add(mLineStringShapeParser(shape));
-			}
-		else if (f.getName().toUpperCase().equals("EJES.SHP"))
-			
-			// Shapes del archivo EJES.SHP
-			while (reader.hasNext()) {
-				Shape shape = new ShapeEjes(reader.next());
-
-				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
-					// Anadimos el shape creado a la lista
-					shapeList.add(mLineStringShapeParser(shape));
-			}
-		
-		reader.close();
-		store.dispose();
+		new ShapeParser(f, utils, shapeList);
 		return shapeList;
 	}
 
-	
-	/** Borra los shapefiles temporales creados. Hay que borrar si se quiere
-	 * reproyectar nuevos y como urbano y rustico tienen los mismos nombres
-	 * de shapefiles, cada vez que usamos uno, lo borramos.
-	 * @param filename
-	 */
-	public void deleteShpFiles(String filename){
-	
-		String path = Config.get("ResultPath");
-		
-		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
-		new File(path + "\\"+ filename +".SHP").delete();
-		new File(path + "\\"+ filename +".DBF").delete();
-		new File(path + "\\"+ filename +".PRJ").delete();
-		new File(path + "\\"+ filename +".SHX").delete();
-	}
-	
-	
-	/** Metodo para parsear los shapes cuyas geografias vienen dadas como
-	 * MultiPolygon, como MASA.SHP, PARCELA.SHP, SUBPARCE.SHP y CONSTRU.SHP
-	 * Asigna los valores al shape, sus nodos, sus ways y relation
-	 * @param shape Shape creado pero sin los valores de los nodos, ways o relation
-	 * @return Shape con todos los valores asignados
-	 */
-	private Shape mPolygonShapeParser(Shape shape){
-
-		// Obtenemos las coordenadas de cada punto del shape
-		for (int x = 0; x < shape.getPoligons().size(); x++){
-			Coordinate[] coor = shape.getCoordenadas(x);
-
-			// Miramos por cada punto si existe un nodo si no, lo creamos
-			for (int y = 0 ; y < coor.length; y++){
-				// Insertamos en la lista de nodos del shape, los ids de sus nodos
-				shape.addNode(x,utils.getNodeId(coor[y], null));
-			}
-		}
-		
-		// Partimos el poligono en el maximo numero de ways es decir uno por cada
-		// dos nodos, mas adelante se juntaran los que sean posibles
-		for (int x = 0; x < shape.getPoligons().size() ; x++){
-			List <Long> nodeList = shape.getNodesIds(x);
-			for (int y = 0; y < nodeList.size()-1 ; y++){
-				List<Long> way = new ArrayList<Long>();
-				way.add(nodeList.get(y));
-				way.add(nodeList.get(y+1));
-				if (!(nodeList.get(y) == (nodeList.get(y+1))))
-				shape.addWay(x,utils.getWayId(way, shape.getAttributes()));
-			}
-		}
-
-		// Creamos una relation para el shape, metiendoe en ella todos los members
-		List <Long> ids = new ArrayList<Long>(); // Ids de los members
-		List <String> types = new ArrayList<String>(); // Tipos de los members
-		List <String> roles = new ArrayList<String>(); // Roles de los members
-		for (int x = 0; x < shape.getPoligons().size() ; x++){
-			List <Long> wayList = shape.getWaysIds(x);
-			for (Long way: wayList)
-			if (!ids.contains(way)){
-				ids.add(way);
-				types.add("way");
-				if (x == 0)roles.add("outer");
-				else roles.add("inner");
-			}
-		}
-		shape.setRelation(utils.getRelationId(ids, types, roles, shape.getAttributes()));
-
-		return shape;
-	}
-	
-	
-	/** Metodo para parsear los shapes cuyas geografias vienen dadas como Point
-	 * o MultiLineString pero queremos solo un punto, como ELEMPUN.SHP y ELEMTEX.SHP
-	 * Asigna los valores al shape y su unico nodo
-	 * @param shape Shape creado pero sin el valor del nodo
-	 * @return Shape con todos los valores asignados
-	 */
-	private Shape pointShapeParser(Shape shape){
-		
-		// Anadimos solo un nodo
-		shape.addNode(0,utils.getNodeId(shape.getCoor(), shape.getAttributes()));
-		
-		return shape;
-	}
-	
-	
-	/** Metodo para parsear los shapes cuyas geografias vienen dadas como
-	 * MultiLineString, como ELEMLIN.SHP y EJES.SHP
-	 * Asigna los valores al shape, sus nodos, sus ways y relation
-	 * @param shape Shape creado pero sin los valores de los nodos, ways o relation
-	 * @return Shape con todos los valores asignados
-	 */
-	private Shape mLineStringShapeParser(Shape shape){
-		
-		// Anadimos todos los nodos
-			Coordinate[] coor = shape.getCoordenadas(0);
-			for (int x = 0; x < coor.length; x++)
-				shape.addNode(0,utils.getNodeId(coor[x], null));
-			
-		// Con los nodos creamos ways
-		List <Long> nodeList = shape.getNodesIds(0);
-		for (int y = 0; y < nodeList.size()-1 ; y++){
-			List<Long> way = new ArrayList<Long>();
-			way.add(nodeList.get(y));
-			way.add(nodeList.get(y+1));
-			shape.addWay(0,utils.getWayId(way, null));
-		}
-		
-		// Con los ways creamos una relacion
-		List <Long> ids = new ArrayList<Long>(); // Ids de los members
-		List <String> types = new ArrayList<String>(); // Tipos de los members
-		List <String> roles = new ArrayList<String>(); // Roles de los members
-		for (Long way: shape.getWaysIds(0)){
-			ids.add(way);
-			types.add("way");
-			roles.add("outer");
-		}
-		shape.setRelation(utils.getRelationId(ids, types, roles, shape.getAttributes()));
-		
-		return shape;
-	}
-	
-	/** Utilizando ogr2ogr reproyecta el archivo de shapes de su proyeccion
-	 * EPSG a WGS84 que es la que utiliza OpenStreetMap. Tambien convierte las 
-	 * coordenadas UTM en Lat/Lon
-	 * @param f Archivo a reproyectar
-	 * @return File Archivo reproyectado
-	 */
-	public File reprojectWGS84(File f){
-		
-		try
-		   {
-			Process p = null;
-			String line = "scripts/ogr2ogr.bat " + f.getPath().substring(0, f.getPath().length()-4) +" "+ Config.get("ResultPath")+"\\"+f.getName() +" "+ f.getPath();
-			p = Runtime.getRuntime().exec("scripts/ogr2ogr.bat " + f.getPath().substring(0, f.getPath().length()-4) +" "+ Config.get("ResultPath")+"\\"+f.getName() +" "+ f.getPath() );
-			BufferedReader bf = new BufferedReader(new InputStreamReader(p.getInputStream()));
-		    while ((line = bf.readLine()) != null)
-		        System.out.println(line);
-
-		    bf.close();
-
-		   } catch (Exception er){ er.printStackTrace(); }
-		
-		return new File(Config.get("ResultPath")+"\\"+f.getName());
-	}
-	
 	
 	/** Busca en la lista de shapes los que coincidan con la ref catastral
 	 * @param ref referencia catastral a buscar
@@ -323,6 +74,45 @@ public class Cat2Osm {
 		return shapeList;
 	}
 
+	
+	/** Los elementos textuales traen informacion sobre que hay en alguna parcelas como pueden ser cementerios,
+	 * hospitales, etc. Esa informacion no viene en las parcelas y puede hacer que cambie su landuse. 
+	 * Por eso se calcula si un elemtex se encuentra sobre una parcela y se anade el landuse a la parcela.
+	 * @param shapes
+	 * @return
+	 */
+	public List<Shape> addElemtexLandusetoParce(List<Shape> shapes){
+		
+		GeometryFactory factory = new GeometryFactory();
+		
+		for (Shape shape: shapes){
+			
+			// Si le hemos modificado el ttggss para que ahora cambie alguno de los tags
+			if (shape instanceof ShapeElemtex && shape.getTtggss().contains("=")){
+				
+				for (Shape s: shapes)
+				
+					if (s instanceof ShapeConstru && s.getPoligons() != null){
+						LinearRing l = factory.createLinearRing(s.getPoligons().get(0).getCoordinates());
+						Polygon parcela = factory.createPolygon(l, null);
+						Point coor = factory.createPoint(shape.getCoor());
+						
+						// Si cumple, cambiamos el tag de la relacion
+						if (coor.intersects(parcela)){
+							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), s.getRelationId()));
+							String[] tag = shape.getTtggss().split("=");
+							r.addTag(tag);
+						}
+					}
+				
+				shape.getCoor();
+				
+			}
+			
+		}
+		
+		return shapes;
+	}
 	
 	/** Se encarga de solucionar casos de nodos de un shape que se hayan creado sobre el
 	 * way de otro shape. Con un valor flexible del config decide si un nodo esta sobre
@@ -398,41 +188,51 @@ public class Cat2Osm {
 	 * de los ways son prescindibles.
 	 * @param shapes Lista de shapes con los ways divididos por cada 2 nodes.
 	 * @return Lista de shapes con la simplificacion hecha.
+	 * @throws InterruptedException 
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> simplifyWays(List<Shape> shapes){
+	public List<Shape> simplifyWays(List<Shape> shapes) throws InterruptedException{
 
+		WayOsm way1 = null;
+		WayOsm way2 = null;
+		long removeId = 0;
+		
 		for (Shape shape : shapes)
 
 			for (int x = 0; shape.getPoligons() != null && x < shape.getPoligons().size(); x++)
-				
-				for(int y = 0; y < shape.getWaysIds(x).size(); y++)
 
+				for(int y = 0; y < shape.getWaysIds(x).size(); y++){
+					
+					if (removeId != 0)
+						y = (int) (removeId = 0);
+					
 					for (int z = 0; z < shape.getWaysIds(x).size(); z++){
-						
+
 						Map<WayOsm, Long> ways = utils.getTotalWays();
 
-						WayOsm way1 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(y)));
-						WayOsm way2 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(z)));
-						
+							way1 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(y)));
+							way2 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(z)));
+
+
 						if (way1 != null && way2 != null && !way1.equals(way2) && way1.sameTags(way2.getTags())){
-							
+
 							// Juntamos los ways y borra el way que no se va a usar de las relations
-							long removeId = utils.joinWays(way1, way2);
-							
-							if (removeId != 0){
-								ways = utils.getTotalWays();
-								z = 0;
-								y = 0;
-							}
-	
+							removeId = utils.joinWays(way1, way2);
+
 							// Borramos el way que no se va a usar de los shapes
 							for (Shape s : shapes)
 								for (int pos = 0; pos < s.getPoligons().size(); pos++)
-								s.deleteWay(pos,removeId);
-						}
+									s.deleteWay(pos,removeId);
 							
+							if (removeId != 0){
+								z = -1;
+							}
+							
+						}
 					}
+
+				}
+		
 		return shapes;
 	}
 	
@@ -545,7 +345,7 @@ public class Cat2Osm {
 		// Escribimos todos las relaciones y sus referencias a los ways en el archivo
 		while(it.hasNext()){
 			Map.Entry e = (Map.Entry) it.next();
-			outRelations.write(((RelationOsm) e.getKey()).printRelation((Long) e.getValue()));
+			outRelations.write(((RelationOsm) e.getKey()).printRelation((Long) e.getValue(), utils));
 		}
 		outRelations.close();
 	}
@@ -762,7 +562,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DE VIA PUBLICA",line.substring(153,158));
 			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
 			//c.addAttribute("TIPO DE VIA O SIGLA PUBLICA",line.substring(158,163));
-			c.addAttribute("name:type",nombreTipoViaParser(line.substring(158,163)));
+			c.addAttribute("name:type",nombreTipoViaParser(line.substring(158,163).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
 			c.addAttribute("addr:street",line.substring(163,188));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
@@ -823,7 +623,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DE VIA PUBLICA DGC",line.substring(153,158));
 			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
 			//c.addAttribute("TIPO DE VIA O SIBLA PUBLICA",line.substring(158,163));
-			c.addAttribute("name:type",nombreTipoViaParser(line.substring(158,163)));
+			c.addAttribute("name:type",nombreTipoViaParser(line.substring(158,163).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
 			c.addAttribute("addr:street",line.substring(163,188));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
@@ -903,7 +703,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DE VIA PUBLICA",line.substring(195,200));
 			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(195,200)));
 			//c.addAttribute("TIPO DE VIA O SIGLA PUBLICA",line.substring(200,205));
-			c.addAttribute("name:type",nombreTipoViaParser(line.substring(200,205)));
+			c.addAttribute("name:type",nombreTipoViaParser(line.substring(200,205).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(205,230));
 			c.addAttribute("addr:street",line.substring(205,230));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(230,234));
@@ -1013,7 +813,6 @@ public class Cat2Osm {
 				temp = null;
 		}
 		return temp;
-
 	}
 	
 	
@@ -1033,81 +832,81 @@ public class Cat2Osm {
 	
 	public static String nombreTipoViaParser(String codigo){
 		
-		if (codigo.equals("CL   "))return "Calle";
-		else if (codigo.equals("AL   "))return "Aldea/Alameda";
-		else if (codigo.equals("AR   "))return "Area/Arrabal";
-		else if (codigo.equals("AU   "))return "Autopista";
-		else if (codigo.equals("AV   "))return "Avenida";
-		else if (codigo.equals("AY   "))return "Arroyo";
-		else if (codigo.equals("BJ   "))return "Bajada";
-		else if (codigo.equals("BO   "))return "Barrio";
-		else if (codigo.equals("BR   "))return "Barranco";
-		else if (codigo.equals("CA   "))return "Cañada";
-		else if (codigo.equals("CG   "))return "Colegio/Cigarral";
-		else if (codigo.equals("CH   "))return "Chalet";
-		else if (codigo.equals("CI   "))return "Cinturon";
-		else if (codigo.equals("CJ   "))return "Calleja/Callejón";
-		else if (codigo.equals("CM   "))return "Camino";
-		else if (codigo.equals("CN   "))return "Colonia";
-		else if (codigo.equals("CO   "))return "Concejo/Colegio";
-		else if (codigo.equals("CP   "))return "Campa/Campo";
-		else if (codigo.equals("CR   "))return "Carretera/Carrera";
-		else if (codigo.equals("CS   "))return "Caserío";
-		else if (codigo.equals("CT   "))return "Cuesta/Costanilla";
-		else if (codigo.equals("CU   "))return "Conjunto";
-		else if (codigo.equals("DE   "))return "Detrás";
-		else if (codigo.equals("DP   "))return "Diputación";
-		else if (codigo.equals("DS   "))return "Diseminados";
-		else if (codigo.equals("ED   "))return "Edificios";
-		else if (codigo.equals("EM   "))return "Extramuros";
-		else if (codigo.equals("EN   "))return "Entrada, Ensanche";
-		else if (codigo.equals("ER   "))return "Extrarradio";
-		else if (codigo.equals("ES   "))return "Escalinata";
-		else if (codigo.equals("EX   "))return "Explanada";
-		else if (codigo.equals("FC   "))return "Ferrocarril";
-		else if (codigo.equals("FN   "))return "Finca";
-		else if (codigo.equals("GL   "))return "Glorieta";
-		else if (codigo.equals("GR   "))return "Grupo";
-		else if (codigo.equals("GV   "))return "Gran Vía";
-		else if (codigo.equals("HT   "))return "Huerta/Huerto";
-		else if (codigo.equals("JR   "))return "Jardines";
-		else if (codigo.equals("LD   "))return "Lado/Ladera";
-		else if (codigo.equals("LG   "))return "Lugar";
-		else if (codigo.equals("MC   "))return "Mercado";
-		else if (codigo.equals("ML   "))return "Muelle";
-		else if (codigo.equals("MN   "))return "Municipio";
-		else if (codigo.equals("MS   "))return "Masias";
-		else if (codigo.equals("MT   "))return "Monte";
-		else if (codigo.equals("MZ   "))return "Manzana";
-		else if (codigo.equals("PB   "))return "Poblado";
-		else if (codigo.equals("PD   "))return "Partida";
-		else if (codigo.equals("PJ   "))return "Pasaje/Pasadizo";
-		else if (codigo.equals("PL   "))return "Polígono";
-		else if (codigo.equals("PM   "))return "Paramo";
-		else if (codigo.equals("PQ   "))return "Parroquia/Parque";
-		else if (codigo.equals("PR   "))return "Prolongación/Continuación";
-		else if (codigo.equals("PS   "))return "Paseo";
-		else if (codigo.equals("PT   "))return "Puente";
-		else if (codigo.equals("PZ   "))return "Plaza";
-		else if (codigo.equals("QT   "))return "Quinta";
-		else if (codigo.equals("RB   "))return "Rambla";
-		else if (codigo.equals("RC   "))return "Rincón/Rincona";
-		else if (codigo.equals("RD   "))return "Ronda";
-		else if (codigo.equals("RM   "))return "Ramal";
-		else if (codigo.equals("RP   "))return "Rampa";
-		else if (codigo.equals("RR   "))return "Riera";
-		else if (codigo.equals("RU   "))return "Rua";
-		else if (codigo.equals("SA   "))return "Salida";
-		else if (codigo.equals("SD   "))return "Senda";
-		else if (codigo.equals("SL   "))return "Solar";
-		else if (codigo.equals("SN   "))return "Salón";
-		else if (codigo.equals("SU   "))return "Subida";
-		else if (codigo.equals("TN   "))return "Terrenos";
-		else if (codigo.equals("TO   "))return "Torrente";
-		else if (codigo.equals("TR   "))return "Travesía";
-		else if (codigo.equals("UR   "))return "Urbanización";
-		else if (codigo.equals("VR   "))return "Vereda";
-		else if (codigo.equals("CY   "))return "Caleya";
+		if (codigo.equals("CL"))return "Calle";
+		else if (codigo.equals("AL"))return "Aldea/Alameda";
+		else if (codigo.equals("AR"))return "Area/Arrabal";
+		else if (codigo.equals("AU"))return "Autopista";
+		else if (codigo.equals("AV"))return "Avenida";
+		else if (codigo.equals("AY"))return "Arroyo";
+		else if (codigo.equals("BJ"))return "Bajada";
+		else if (codigo.equals("BO"))return "Barrio";
+		else if (codigo.equals("BR"))return "Barranco";
+		else if (codigo.equals("CA"))return "Cañada";
+		else if (codigo.equals("CG"))return "Colegio/Cigarral";
+		else if (codigo.equals("CH"))return "Chalet";
+		else if (codigo.equals("CI"))return "Cinturon";
+		else if (codigo.equals("CJ"))return "Calleja/Callejón";
+		else if (codigo.equals("CM"))return "Camino";
+		else if (codigo.equals("CN"))return "Colonia";
+		else if (codigo.equals("CO"))return "Concejo/Colegio";
+		else if (codigo.equals("CP"))return "Campa/Campo";
+		else if (codigo.equals("CR"))return "Carretera/Carrera";
+		else if (codigo.equals("CS"))return "Caserío";
+		else if (codigo.equals("CT"))return "Cuesta/Costanilla";
+		else if (codigo.equals("CU"))return "Conjunto";
+		else if (codigo.equals("DE"))return "Detrás";
+		else if (codigo.equals("DP"))return "Diputación";
+		else if (codigo.equals("DS"))return "Diseminados";
+		else if (codigo.equals("ED"))return "Edificios";
+		else if (codigo.equals("EM"))return "Extramuros";
+		else if (codigo.equals("EN"))return "Entrada, Ensanche";
+		else if (codigo.equals("ER"))return "Extrarradio";
+		else if (codigo.equals("ES"))return "Escalinata";
+		else if (codigo.equals("EX"))return "Explanada";
+		else if (codigo.equals("FC"))return "Ferrocarril";
+		else if (codigo.equals("FN"))return "Finca";
+		else if (codigo.equals("GL"))return "Glorieta";
+		else if (codigo.equals("GR"))return "Grupo";
+		else if (codigo.equals("GV"))return "Gran Vía";
+		else if (codigo.equals("HT"))return "Huerta/Huerto";
+		else if (codigo.equals("JR"))return "Jardines";
+		else if (codigo.equals("LD"))return "Lado/Ladera";
+		else if (codigo.equals("LG"))return "Lugar";
+		else if (codigo.equals("MC"))return "Mercado";
+		else if (codigo.equals("ML"))return "Muelle";
+		else if (codigo.equals("MN"))return "Municipio";
+		else if (codigo.equals("MS"))return "Masias";
+		else if (codigo.equals("MT"))return "Monte";
+		else if (codigo.equals("MZ"))return "Manzana";
+		else if (codigo.equals("PB"))return "Poblado";
+		else if (codigo.equals("PD"))return "Partida";
+		else if (codigo.equals("PJ"))return "Pasaje/Pasadizo";
+		else if (codigo.equals("PL"))return "Polígono";
+		else if (codigo.equals("PM"))return "Paramo";
+		else if (codigo.equals("PQ"))return "Parroquia/Parque";
+		else if (codigo.equals("PR"))return "Prolongación/Continuación";
+		else if (codigo.equals("PS"))return "Paseo";
+		else if (codigo.equals("PT"))return "Puente";
+		else if (codigo.equals("PZ"))return "Plaza";
+		else if (codigo.equals("QT"))return "Quinta";
+		else if (codigo.equals("RB"))return "Rambla";
+		else if (codigo.equals("RC"))return "Rincón/Rincona";
+		else if (codigo.equals("RD"))return "Ronda";
+		else if (codigo.equals("RM"))return "Ramal";
+		else if (codigo.equals("RP"))return "Rampa";
+		else if (codigo.equals("RR"))return "Riera";
+		else if (codigo.equals("RU"))return "Rua";
+		else if (codigo.equals("SA"))return "Salida";
+		else if (codigo.equals("SD"))return "Senda";
+		else if (codigo.equals("SL"))return "Solar";
+		else if (codigo.equals("SN"))return "Salón";
+		else if (codigo.equals("SU"))return "Subida";
+		else if (codigo.equals("TN"))return "Terrenos";
+		else if (codigo.equals("TO"))return "Torrente";
+		else if (codigo.equals("TR"))return "Travesía";
+		else if (codigo.equals("UR"))return "Urbanización";
+		else if (codigo.equals("VR"))return "Vereda";
+		else if (codigo.equals("CY"))return "Caleya";
 
 		return codigo;
 	}

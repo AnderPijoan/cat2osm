@@ -33,7 +33,7 @@ public class ShapeParcela extends Shape {
 
 			// Poligono, trae el primer punto de cada poligono repetido al final.
 			Geometry geom = (Geometry) f.getDefaultGeometry();
-
+			
 			// Cogemos cada poligono del shapefile (por lo general sera uno solo
 			// que puede tener algun subpoligono)
 			for (int x = 0; x < geom.getNumGeometries(); x++) { 
@@ -42,7 +42,7 @@ public class ShapeParcela extends Shape {
 				// Obtener el outer
 				LineString outer = p.getExteriorRing();
 				poligons.add(outer);
-
+				
 				// Comprobar si tiene subpoligonos
 				for (int y = 0; y < p.getNumInteriorRing(); y++)
 					poligons.add(p.getInteriorRingN(y));
@@ -84,7 +84,7 @@ public class ShapeParcela extends Shape {
 	}
 
 
-	public void deleteWay(int pos, long wayId){
+	public synchronized void deleteWay(int pos, long wayId){
 		if (ways.size()>pos)
 			ways.get(pos).remove(wayId);
 	}
@@ -104,7 +104,7 @@ public class ShapeParcela extends Shape {
 	 * @param pos posicion que ocupa el poligono en la lista
 	 * @return Lista de ids de nodos del poligono en posicion pos
 	 */
-	public List<Long> getNodesIds(int pos){
+	public synchronized List<Long> getNodesIds(int pos){
 		if (nodes.size()>pos)
 			return nodes.get(pos);
 		else
@@ -117,7 +117,7 @@ public class ShapeParcela extends Shape {
 	 * @param pos posicion que ocupa el poligono en la lista
 	 * @return Lista de ids de ways del poligono en posicion pos
 	 */
-	public List<Long> getWaysIds(int pos) {
+	public synchronized List<Long> getWaysIds(int pos) {
 		if (nodes.size()>pos)
 			return ways.get(pos);
 		else
@@ -155,14 +155,6 @@ public class ShapeParcela extends Shape {
 			s[0] = "catastro:ref"; s[1] = refCatastral;
 			l.add(s);
 		}
-
-		//s = new String[2];
-		//s[0] = "FECHAALTA"; s[1] = String.valueOf(fechaAlta);
-		//l.add(s);
-
-		//s = new String[2];
-		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
-		//l.add(s);
 
 		s = new String[2];
 		s[0] = "SHAPEID"; s[1] = getShapeId();

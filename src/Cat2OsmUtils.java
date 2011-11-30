@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -21,7 +20,7 @@ public class Cat2OsmUtils {
 	// Listaa de relations
 	private final Map <RelationOsm, Long> totalRelations = new HashMap <RelationOsm, Long>();
 	
-	public Map<NodeOsm, Long> getTotalNodes() {
+	public synchronized Map<NodeOsm, Long> getTotalNodes() {
 		return totalNodes;
 	}
 	
@@ -29,7 +28,7 @@ public class Cat2OsmUtils {
 		totalNodes.put(n, idnode);
 	}
 	
-	public Map<WayOsm, Long> getTotalWays() {
+	public synchronized Map<WayOsm, Long> getTotalWays() {
 		return totalWays;
 	}
 	
@@ -37,9 +36,10 @@ public class Cat2OsmUtils {
 		totalWays.put(w, idway);
 	}
 	
+	
 	/** A la hora de simplificar, hay ways que se eliminan porque sus nodos se concatenan
 	 * a otro way. Borramos los ways que no se vayan a usar de las relaciones que los contenian
-	 * @param w
+	 * @param w Way a borrar
 	 */
 	@SuppressWarnings("rawtypes")
 	public void deleteWayFromRelations(WayOsm w){
@@ -52,7 +52,8 @@ public class Cat2OsmUtils {
 		}
 	}
 	
-	/** Junta dos ways en uno. Hay que tener en cuenta los 4 casos que se pueden
+	
+	/** Junta dos ways en uno. Hay que tener en cuenta los 5 casos que se pueden
 	 * dar.
 	 * @param w1 Way1 Dependiendo del caso se eliminara un way o el otro
 	 * @param w2 Way2
@@ -64,11 +65,15 @@ public class Cat2OsmUtils {
 			
 			// Caso1: w1.final = w2.primero
 			if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(0)) && totalWays.get(w1) != null && totalWays.get(w2) != null){
+				
+				System.out.println("CASO1");
+				
 				long l1 = totalWays.get(w1);
 				long l2 = totalWays.get(w2);
-				WayOsm w3 = new WayOsm(w1.getNodes());
+				WayOsm w3 = new WayOsm(null);
+				for (Long lo : w1.getNodes())
+					w3.addNode(lo);
 				w3.setTags(w1.getTags());
-				totalWays.remove(w1);
 				
 				// Copiamos la lista de nodos del way que eliminaremos
 				List<Long> nodes = new ArrayList<Long>();
@@ -81,18 +86,22 @@ public class Cat2OsmUtils {
 				// Concatenamos al final del way3 (copia del way1) los nodos del way2
 				w3.addNodes(nodes);
 				
-				// Lo guardamos en la lista de ways, manteniendo su id 
+				// Guardamos way3 en la lista de ways, manteniendo el id del way1
 				totalWays.put(w3, l1);
 				
-				// Borramos el way que no se volvera a usar, ya que sus nodos se han concatenado al otro
-				deleteWayFromRelations(w2);
+				// Borramos el way que cuyos nodos hemos utilizado
 				totalWays.remove(w2);
-
+				totalWays.remove(w1);
+				deleteWayFromRelations(w2);
+				
 				return l2;
 			}
 			
 			// Caso2: w1.primero = w2.final
 			else if (w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1)) && totalWays.get(w1) != null  && totalWays.get(w2) != null){
+				
+				System.out.println("CASO2");
+				
 				// Es igual que el Caso1 pero cambiados de orden.
 				return joinWays(w2, w1);
 			}
@@ -100,10 +109,9 @@ public class Cat2OsmUtils {
 			// Caso3: w1.ultimo = w2.ultimo
 			else if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(w2.getNodes().size()-1))  && totalWays.get(w1) != null && totalWays.get(w2) != null){
 				
-				//w1.reverseNodes();
-				//return joinWays(w2, w1);
+				System.out.println("CASO3");
 				
-				/*long l = totalWays.get(w2);
+				long l2 = totalWays.get(w2);
 				
 				// Copiamos la lista de nodos del way que eliminaremos
 				List<Long> nodes = new ArrayList<Long>();
@@ -116,17 +124,20 @@ public class Cat2OsmUtils {
 				// Se van anadiendo al final del way1 los nodos del way 2 pero ordenados de atras
 				// a adelante
 				for(int x = nodes.size()-1; x > -1; x--)
-					w1.getNodes().add(nodes.get(x));	
-				deleteWay(w2);
-				return l;*/
+					w1.getNodes().add(nodes.get(x));
+				
+				// Borramos el way que cuyos nodos hemos utilizado
+				totalWays.remove(w2);
+				deleteWayFromRelations(w2);
+				
+				return l2;
 			}
 			
 			// Caso4: w1.primero = w2.primero
-			/*else if (w1.getNodes().get(0).equals(w2.getNodes().get(0))  && totalWays.get(w1) != null && totalWays.get(w2) != null){	
+			else if (w1.getNodes().get(0).equals(w2.getNodes().get(0))  && totalWays.get(w1) != null && totalWays.get(w2) != null){	
 				long l = totalWays.get(w2);
 				
-				System.out.println("\nAntes w1"+w1.getNodes());
-				System.out.println("Antes w2"+w2.getNodes());
+				System.out.println("CASO4");/*
 				
 				// Copiamos la lista de nodos del way que eliminaremos
 				List<Long> nodes = new ArrayList<Long>();
@@ -145,18 +156,19 @@ public class Cat2OsmUtils {
 				System.out.println("Despues "+w1.getNodes());
 				
 				deleteWay(w2);
-				return l;
-			}*/
+				return l;*/
+				return 0;
+			}
 			
 		}
 		return 0;
 	}
 	
-	public Map<RelationOsm, Long> getTotalRelations() {
+	public synchronized Map<RelationOsm, Long> getTotalRelations() {
 		return totalRelations;
 	} 
 	
-	public void addRelation(RelationOsm r, Long idrel){
+	public synchronized void addRelation(RelationOsm r, Long idrel){
 		totalRelations.put(r, idrel);
 	}
 	
@@ -169,7 +181,7 @@ public class Cat2OsmUtils {
 	 * @return Devuelve el id del nodo ya sea creado o el que existia
 	 */
 	@SuppressWarnings("unchecked")
-	public long getNodeId(Coordinate coor, List<String[]> tags){
+	public synchronized long getNodeId(Coordinate coor, List<String[]> tags){
 
 		Long id = null;
 		if (!totalNodes.isEmpty())
@@ -198,7 +210,7 @@ public class Cat2OsmUtils {
 	 * @return devuelve el id del way creado o el del que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public long getWayId(List<Long> nodes, List<String[]> tags ){
+	public synchronized long getWayId(List<Long> nodes, List<String[]> tags ){
 
 		Long id = null;
 		if (!totalWays.isEmpty())
@@ -230,7 +242,7 @@ public class Cat2OsmUtils {
 	 * @return devuelve el id de la relacion creada o el de la que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public long getRelationId(List<Long> ids, List<String> types, List<String> roles, List<String[]> tags){
+	public synchronized long getRelationId(List<Long> ids, List<String> types, List<String> roles, List<String[]> tags){
 		
 		Long id = null;
 		if (!totalRelations.isEmpty())
@@ -256,7 +268,7 @@ public class Cat2OsmUtils {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public Object getKeyFromValue(Map <Object, Long> map, Long id){
+	public synchronized Object getKeyFromValue(Map <Object, Long> map, Long id){
 		
 		for (Object o: map.entrySet()) {
 			Map.Entry<Object,Long> entry = (Map.Entry<Object,Long>) o;
@@ -272,7 +284,7 @@ public class Cat2OsmUtils {
 	 * @return ways lista de WayOsm
 	 */
 	@SuppressWarnings("unchecked")
-	public List<WayOsm> getWays(List<Long> ids){
+	public synchronized List<WayOsm> getWays(List<Long> ids){
 		List<WayOsm> ways = new ArrayList<WayOsm>();
 		
 		for (Long l: ids)

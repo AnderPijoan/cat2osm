@@ -83,7 +83,7 @@ public class ShapeMasa extends Shape {
 	}
 
 
-	public void deleteWay(int pos, long wayId){
+	public synchronized void deleteWay(int pos, long wayId){
 		if (ways.size()>pos)
 		ways.get(pos).remove(wayId);
 	}
@@ -103,7 +103,7 @@ public class ShapeMasa extends Shape {
 	 * @param pos posicion que ocupa el poligono en la lista
 	 * @return Lista de ids de nodos del poligono en posicion pos
 	 */
-	public List<Long> getNodesIds(int pos){
+	public synchronized List<Long> getNodesIds(int pos){
 		if (nodes.size()>pos)
 			return nodes.get(pos);
 		else
@@ -116,7 +116,7 @@ public class ShapeMasa extends Shape {
 	 * @param pos posicion que ocupa el poligono en la lista
 	 * @return Lista de ids de ways del poligono en posicion pos
 	 */
-	public List<Long> getWaysIds(int pos) {
+	public synchronized List<Long> getWaysIds(int pos) {
 		if (nodes.size()>pos)
 			return ways.get(pos);
 		else
@@ -154,14 +154,6 @@ public class ShapeMasa extends Shape {
 			s[0] = "masa"; s[1] = masa;
 			l.add(s);
 		}
-
-		//s = new String[2];
-		//s[0] = "FECHAALTA"; s[1] = String.valueOf(fechaAlta);
-		//l.add(s);
-
-		//s = new String[2];
-		//s[0] = "FECHABAJA"; s[1] = String.valueOf(fechaBaja);
-		//l.add(s);
 
 		s = new String[2];
 		s[0] = "SHAPEID"; s[1] = getShapeId();

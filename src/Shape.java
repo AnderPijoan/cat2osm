@@ -588,4 +588,17 @@ public abstract class Shape {
 	
 	}
 
+	
+	/** Elimina los puntos  '.' en un String
+	 * @param s String en el cual eliminar los puntos
+	 * @return String sin los puntos
+	 */
+	public static String eliminarPuntosString(String s){
+		if (!s.isEmpty()){
+			s = s.replace('.', ' ');
+			s = s.replace(" ", "");
+		}
+		return s.trim();
+	}
+	
 }

@@ -10,14 +10,16 @@ public class Gui extends JFrame {
 	/**
 	 * @param args
 	 * @throws IOException 
+	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 
 		// Ruta al fichero de configuracion por parametro
 		new Config(args[0]);
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 		List<Shape> shapes = new ArrayList<Shape>();
+		List<ShapeParser> parsers = new ArrayList<ShapeParser>();
 
 		// Recorrer los directorios Urbanos
 		File dirU = new File (Config.get("UrbanoSHPPath"));
@@ -33,24 +35,18 @@ public class Gui extends JFrame {
 						filesU[i].getName().toUpperCase().equals("MASA") ||
 						filesU[i].getName().toUpperCase().equals("PARCELA") ||
 						filesU[i].getName().toUpperCase().equals("SUBPARCE"))
-				try{
-				System.out.println("Leyendo "+ filesU[i].getName() +" Urbano.");
-				shapes.addAll(
-						catastro.shpParser(
-								catastro.reprojectWGS84(
-										new File(filesU[i] + "\\" + filesU[i].getName() + ".SHP"))));
-				catastro.deleteShpFiles(filesU[i].getName().toUpperCase());
-				}
+					try{
+
+						System.out.println("Leyendo "+ filesU[i].getName() +" Urbano.");
+
+						parsers.add(new ShapeParser(new File(filesU[i] + "\\" + filesU[i].getName() + ".SHP"), utils, shapes));
+						
+					}
 			catch(Exception e){}
 			}
 		else
 			System.out.println("UrbanoSHPDir no es un directorio valido.");
 
-		// Seleccionamos el archivo .cat
-		// No todos los shapefiles tienen referencia catastral por lo que algunos
-		// no hay forma de relacionarlos con los registros de catastro.
-		System.out.println("Leyendo CAT Urbano");
-		catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
 
 		// Recorrer los directorios Rusticos
 		File dirR = new File (Config.get("RusticoSHPPath"));
@@ -66,28 +62,40 @@ public class Gui extends JFrame {
 						filesR[i].getName().toUpperCase().equals("MASA") ||
 						filesR[i].getName().toUpperCase().equals("PARCELA") ||
 						filesR[i].getName().toUpperCase().equals("SUBPARCE"))
-				try{
-				System.out.println("Leyendo "+ filesR[i].getName() +" Rustico.");
-				shapes.addAll(
-						catastro.shpParser(
-								catastro.reprojectWGS84(
-										new File(filesR[i] + "\\" + filesR[i].getName() + ".SHP"))));
-				catastro.deleteShpFiles(filesR[i].getName().toUpperCase());
-				}
+					try{
+
+						System.out.println("Leyendo "+ filesR[i].getName() +" Urbano.");
+
+						parsers.add(new ShapeParser(new File(filesR[i] + "\\" + filesR[i].getName() + ".SHP"), utils, shapes));
+
+					}
 			catch(Exception e){}
-			}
+		}
 		else
-			System.out.println("RusticoSHPDir no es un directorio valido. No se han encontrado los shapefiles.");
+			System.out.println("RusticoSHPDir no es un directorio valido.");
+
+		for (ShapeParser sp : parsers)
+			sp.join();
 
 		// Seleccionamos el archivo .cat
 		// No todos los shapefiles tienen referencia catastral por lo que algunos
 		// no hay forma de relacionarlos con los registros de catastro.
-		System.out.println("Leyendo CAT Rustico");
+		System.out.println("Leyendo CAT Urbano.");
+		catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
+		System.out.println("Leyendo CAT Rustico.");
 		catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
 
+		// Anadimos si es posible tags de los Elemtex a las parcelas.
+		// Los Elemtex tienen informacion que puede determinar con mas exactitud detalles
+		// de la parcela sobre la que se encuentran.
+		if (Config.get("ElemtexAConstru").equals("1")){
+			System.out.println("TRASPASANDO posibles tags de Elemtex a Constru.");
+			shapes = catastro.addElemtexLandusetoParce(shapes);
+		}
+		
 		// Simplificamos los ways
-		System.out.println("Simplificando Vias");
-		catastro.simplifyWays(shapes);
+		//System.out.println("SIMPLIFICANDO vias.");
+		//catastro.simplifyWays(shapes);
 
 		// Escribir los datos
 		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalNodes().size() +" NODOS");
