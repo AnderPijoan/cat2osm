@@ -101,6 +101,8 @@ public class Cat2Osm {
 						if (coor.intersects(parcela)){
 							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), s.getRelationId()));
 							
+							// Los tags vienen como "key=value,key=value" almacenados
+							// en el ttggss
 							String[] pares = shape.getTtggss().split(",");
 							List<String[]> tags = new ArrayList<String[]>();
 							
