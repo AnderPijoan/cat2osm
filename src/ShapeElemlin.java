@@ -13,7 +13,8 @@ import com.vividsolutions.jts.geom.MultiLineString;
 
 
 public class ShapeElemlin extends Shape {
-
+	
+	private Long shapeId = (long) 0; // Id del shape
 	private LineString line; // Linea que representa ese elemlin
 	private List<Long> nodes;
 	private List<Long>  ways;
@@ -23,7 +24,11 @@ public class ShapeElemlin extends Shape {
 	
 
 	public ShapeElemlin(SimpleFeature f) {
+		
 		super(f);
+		
+		
+		shapeId = super.newShapeId();
 		
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
@@ -51,12 +56,22 @@ public class ShapeElemlin extends Shape {
 	}
 	
 	
+	public Long getShapeId(){
+		return shapeId;
+	}
+	
+	
+	public String getShapeIdString(){
+		return shapeId.toString();
+	}
+	
+	
 	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
 		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeId();
+		s[0] = "SHAPEID"; s[1] = getShapeIdString();
 		l.add(s);
 		
 		if (ttggss != null){

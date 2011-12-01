@@ -9,7 +9,8 @@ import com.vividsolutions.jts.geom.MultiLineString;
 
 
 public class ShapeElemtex extends Shape {
-
+	
+	private Long shapeId = (long) 0; // Id del shape
 	private Coordinate coor;
 	private Long nodo;
 	private String rotulo; // Campo Rotulo solo en Elemtex.shp
@@ -19,8 +20,12 @@ public class ShapeElemtex extends Shape {
 	private List<String[]> tags;
 
 	public ShapeElemtex(SimpleFeature f) {
+		
 		super(f);
 
+
+		shapeId = super.newShapeId();
+		
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
 
@@ -54,17 +59,18 @@ public class ShapeElemtex extends Shape {
 	}
 
 	
+	public Long getShapeId(){
+		return shapeId;
+	}
+	
+	
+	public String getShapeIdString(){
+		return shapeId.toString();
+	}
+	
+	
 	public Coordinate getCoor(){
 		return coor;
-	}
-
-	
-	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
-	 * @param shp Shapefile a comprobar
-	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
-	 */
-	public boolean checkShapeDate(long fechaDesde, long fechaHasta){
-		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
 	}
 
 	

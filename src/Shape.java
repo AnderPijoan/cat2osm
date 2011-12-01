@@ -11,14 +11,14 @@ public abstract class Shape {
 	private List<ShapeAttribute> atributos;
 	protected long fechaAlta; // Formato AAAAMMDD
 	protected long fechaBaja;
-	protected static Long shapeId = (long) 0; // Para la simplificacion de ways
+	protected volatile static Long Id = (long) 0; // Id que tomaran los shapes
+	// para la simplificacion de ways
 
+	
 	/**Constructor
 	 * @param f Linea del archivo shp
 	 */
 	public Shape(SimpleFeature f){
-
-		shapeId++;
 		
 		// Algunos conversores de DATUM cambian el formato de double a int en el .shp
 		// FECHAALATA y FECHABAJA siempre existen
@@ -55,14 +55,19 @@ public abstract class Shape {
 		}*/
 	}
 
+	
 	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
-	 * @param shp Shapefile a comprobar
+	 * Deben seguir dados de alta despues de fechaHasta para que los devuelva. Es decir, shapes que se hayan
+	 * creado y dado de baja en ese intervalo no las devolvera.
+	 * @param fechaDesde fecha a partir de la cual se cogeran los shapes
+	 * @param fechaHasta fecha hasta la cual se cogeran
 	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
 	 */
 	public boolean checkShapeDate(long fechaDesde, long fechaHasta){
 		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
 	}
 
+	
 	/** Devuelve un atributo concreto
 	 * @return Atributo
 	 */
@@ -70,17 +75,26 @@ public abstract class Shape {
 		return atributos.get(x);
 	}
 
+	
 	public long getFechaAlta(){
 		return fechaAlta;
 	}
 
+	
 	public long getFechaBaja(){
 		return fechaBaja;
 	}
-
-	public String getShapeId(){
-		return shapeId.toString();
+	
+	
+	public synchronized long newShapeId(){
+		Id++;
+		return Id;
 	}
+	
+	
+	public abstract Long getShapeId();
+	
+	public abstract String getShapeIdString();
 	
 	public abstract List<String[]> getAttributes();
 

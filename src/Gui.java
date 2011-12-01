@@ -80,10 +80,12 @@ public class Gui extends JFrame {
 		// Seleccionamos el archivo .cat
 		// No todos los shapefiles tienen referencia catastral por lo que algunos
 		// no hay forma de relacionarlos con los registros de catastro.
+		try {
 		System.out.println("Leyendo CAT Urbano.");
 		catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
 		System.out.println("Leyendo CAT Rustico.");
 		catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
+		}catch(Exception e){System.out.println("Imposible leer cat");}
 
 		// Anadimos si es posible tags de los Elemtex a las parcelas.
 		// Los Elemtex tienen informacion que puede determinar con mas exactitud detalles
@@ -93,9 +95,15 @@ public class Gui extends JFrame {
 			shapes = catastro.addElemtexLandusetoConstru(shapes);
 		}
 		
+		// Comprobamos que no haya nodos creados sobre ways
+		if (Config.get("FixNodesOnWays").equals("1")){
+			System.out.println("COMPROBANDO nodos sueltos sobre vias.");
+			shapes = catastro.fixNodesOnWays(shapes);
+		}
+		
 		// Simplificamos los ways
-		//System.out.println("SIMPLIFICANDO vias.");
-		//catastro.simplifyWays(shapes);
+		System.out.println("SIMPLIFICANDO vias.");
+		catastro.simplifyWays(shapes);
 
 		// Escribir los datos
 		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalNodes().size() +" NODOS");

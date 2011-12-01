@@ -48,37 +48,72 @@ public class NodeOsm {
 		return true;
 	}
 	
+	
 	public Coordinate getCoor(){
 		return coor;
 	}
+	
 	
 	public double getX() {
 		return coor.x;
 	}
 
+	
 	public void setX(Coordinate c) {
 		this.coor.x = c.x;
 	}
 
+	
 	public double getY() {
 		return coor.y;
 	}
 
+	
 	public List<String[]> getTags() {
 		return tags;
 	}
+	
 	
 	public void addTags(List<String[]> tags) {
 		if (this.tags == null && !tags.isEmpty())
 			this.tags = new ArrayList<String[]>();
 
-			for (String [] s : tags)
-				this.tags.add(s);
+			for (int x = 0; x < tags.size(); x++){
+
+				boolean encontrado = false;
+
+				for (int y = 0; !encontrado && y < this.tags.size(); y++)
+					if (this.tags.get(y)[0].equals(tags.get(x)[0])){
+						this.tags.get(y)[1] = tags.get(x)[1];
+						encontrado = true;
+					}
+				if (!encontrado)
+					this.tags.add(tags.get(x));
+			}
 	}
 	
+	
+	public void addTag(String[] tag){
+		if (this.tags == null)
+			this.tags = new ArrayList<String[]>();
+		
+		boolean encontrado = false;
+		
+		for (int x = 0; !encontrado && x < this.tags.size(); x++)
+			if (this.tags.get(x)[0].equals(tag[0])){
+				this.tags.get(x)[1] = tag[1];
+				encontrado = true;
+			}
+
+		if (!encontrado)
+			this.tags.add(tag);
+	}
+	
+		
 	public void setY(Coordinate c) {
 		this.coor.y = c.y;
 	}
+	
 	
 	/** Imprime en el formato Osm el nodo con la informacion
 	 * @param id Id del nodo

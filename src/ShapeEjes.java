@@ -14,7 +14,8 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
 
 public class ShapeEjes extends Shape {
-
+	
+	private Long shapeId = (long) 0; // Id del shape
 	private LineString line; // Linea que representa ese eje
 	private List<Long> nodes;
 	private List<Long> ways;
@@ -27,6 +28,9 @@ public class ShapeEjes extends Shape {
 	public ShapeEjes(SimpleFeature f) throws IOException {
 		
 		super(f);
+		
+
+		shapeId = super.newShapeId();
 
 		if (ejesNames.isEmpty()){
 			readCarvia();
@@ -67,12 +71,22 @@ public class ShapeEjes extends Shape {
 	}
 
 
+	public Long getShapeId(){
+		return shapeId;
+	}
+	
+	
+	public String getShapeIdString(){
+		return shapeId.toString();
+	}
+	
+	
 	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
 		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeId();
+		s[0] = "SHAPEID"; s[1] = getShapeIdString();
 		l.add(s);
 		
 		// Partimos el TipoVia y NombreVia
@@ -93,12 +107,18 @@ public class ShapeEjes extends Shape {
 		
 		if (tags != null)
 			l.addAll(tags);
-
+		
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
+		l.add(s);
+		
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
+		
+		// TODO
 		s = new String[2];
-		s[0] = "add:country"; s[1] = "ES";
+		s[0] = "type"; s[1] = "route";
 		l.add(s);
 		
 		return l;

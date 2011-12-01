@@ -10,7 +10,8 @@ import com.vividsolutions.jts.geom.Polygon;
 
 
 public class ShapeMasa extends Shape {
-
+	
+	private Long shapeId = (long) 0; // Id del shape
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
 	private List<List<Long>> nodes; //[0] Outer, [1..N] inner
 	private List<List<Long>> ways; //[0] Outer, [1..N] inner
@@ -25,6 +26,8 @@ public class ShapeMasa extends Shape {
 	public ShapeMasa (SimpleFeature f) {
 
 		super(f);
+		
+		shapeId = super.newShapeId();
 
 		this.poligons = new ArrayList<LineString>();
 
@@ -72,6 +75,16 @@ public class ShapeMasa extends Shape {
 	}
 
 
+	public Long getShapeId(){
+		return shapeId;
+	}
+	
+	
+	public String getShapeIdString(){
+		return shapeId.toString();
+	}
+	
+	
 	public void addNode(int pos, long nodeId){
 		if (nodes.size()>pos)
 			nodes.get(pos).add(nodeId);
@@ -122,16 +135,7 @@ public class ShapeMasa extends Shape {
 		else
 			return null;
 	}
-
 	
-	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
-	 * @param shp Shapefile a comprobar
-	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
-	 */
-	public boolean checkShapeDate(long fechaDesde, long fechaHasta){
-		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
-	}
-
 	
 	public Long getRelationId(){
 		return relation;
@@ -156,14 +160,19 @@ public class ShapeMasa extends Shape {
 		}
 
 		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeId();
+		s[0] = "SHAPEID"; s[1] = getShapeIdString();
+		l.add(s);
+		
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
 		l.add(s);
 		
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
+		
 		s = new String[2];
-		s[0] = "add:country"; s[1] = "ES";
+		s[0] = "type"; s[1] = "multipolygon";
 		l.add(s);
 		
 		return l;

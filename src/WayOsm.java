@@ -8,70 +8,84 @@ import java.util.List;
 public class WayOsm {
 
 	private List<Long> nodos; // Nodos que componen ese way
-	private List<String[]> tags; // Tags, para la simplificacion de ways
+	private List<Long> shapes; // Lista de Shapes a los que pertenece, para la simplificacion de ways
 
 	public WayOsm(List<Long> l){
 		if (l == null)
 			this.nodos = new ArrayList<Long>();
 		else
 			this.nodos = l;
-		tags = new ArrayList<String[]>();
+		shapes = new ArrayList<Long>();
 	}
+	
 	
 	public void addNode(Long l){
 		if (!nodos.contains(l))
 		nodos.add(l);
 	}
 	
+	
 	public void addNode(int pos, Long l){
 		if (!nodos.contains(l))
 		nodos.add(pos, l);
 	}
+	
 	
 	public void addNodes(List<Long> l){
 		for (int x = 0; x < l.size(); x++)
 				nodos.add(l.get(x));
 	}
 	
+	
 	public List<Long> getNodes() {
 		return nodos;
 	}
-
-	public List<String[]> getTags(){
-		return tags;
+	
+	
+	public void setShapes(List<Long> s){
+		shapes = s;
 	}
 	
-	public void setTags(List<String[]> s){
-		tags = s;
+	
+	public List<Long> getShapes(){
+		return shapes;
 	}
 	
-	public void addTags(List<String[]> s){
-		tags.addAll(s);
+	
+	public void addShapes(List<Long> s){
+		for (Long l : s)
+			if (!shapes.contains(l))
+				shapes.add(l);
 	}
 	
-	/** Metodo para comparar si dos WayOsm tienen los mismos tags, de esta forma se
+	
+	/** Metodo para comparar si dos WayOsm pertenecen a los mismos shapes, de esta forma se
 	 * iran simplificando los ways.
-	 * @param s Lista de tags del otro WayOsm a comparar
-	 * @return boolean de si tienen los mismos o no.
+	 * @param s Lista de shapes del otro WayOsm a comparar
+	 * @return boolean de si pertencen a los mismos o no.
 	 */
-	public boolean sameTags(List<String[]> s){
+	public boolean sameShapes(List<Long> s){
 		
-		if (this.tags == null || s == null)
+		if (this.shapes == null || s == null)
 			return false;
 		
-		if (this.tags.size() != s.size())
-			return false;
+		if (this.shapes.size() != s.size())
+			return false; 
+				
+		List<Long> l1 = new ArrayList<Long>();
+		List<Long> l2 = new ArrayList<Long>();
+		for (Long l : this.shapes)
+			l1.add(l);
+		Collections.sort(l1);
+		for (Long l : s)
+			l2.add(l);
+		Collections.sort(l2);
 		
-		boolean encontrado = true;
-		for (int x = 0; encontrado && x < this.tags.size(); x++){
-			encontrado = false;
-			for (int y = 0; !encontrado && y < this.tags.size(); y++){
-				if (this.tags.get(x)[0].equals(s.get(y)[0]) && this.tags.get(x)[1].equals(s.get(y)[1]))
-				encontrado = true;
-			}
-		}
-		return encontrado;
+		return l1.equals(l2);
+		
+		
 	}
+	
 	
 	/** Invierte el orden de la lista de los nodos y la devuelve.
 	 * @return La lista de nodos despues de haber invertido el orden.
@@ -80,6 +94,7 @@ public class WayOsm {
 		Collections.reverse(nodos);
 	}
 	
+	
 	public List<Long> sortNodos(){
 		List<Long> result = new ArrayList<Long>();
 		for (Long l : nodos)
@@ -87,6 +102,7 @@ public class WayOsm {
 		Collections.sort(result);
 		return result;
 	}
+	
 	
 	@Override
 	public int hashCode() {
@@ -97,6 +113,7 @@ public class WayOsm {
 		return result;
 	}
 
+	
 	/** Sobreescribir el equals, para que compare los nodos aunque estén en otro orden
 	 * para que dos ways con los mismos nodos pero en distinta direccion se detecten como iguales.
 	 */
@@ -124,6 +141,7 @@ public class WayOsm {
 		return true;
 	}
 
+	
 	/** Imprime en el formato Osm el way con la informacion
 	 * @param id Id del way
 	 * @return Devuelve en un String el way listo para imprimir
@@ -142,9 +160,9 @@ public class WayOsm {
 		for (int x = 0; x < nodos.size(); x++)
 			s += ("<nd ref=\""+ nodos.get(x) +"\"/>\n");
 		
-		if (tags != null)
-			for (int x = 0; x < tags.size(); x++)
-				s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
+		if (shapes != null)
+			for (int x = 0; x < shapes.size(); x++)
+				s += "<tag k=\"shape"+x+"\" v=\""+shapes.get(x)+"\"/>\n";
 		
 		s += ("</way>\n");
 		

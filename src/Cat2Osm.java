@@ -133,7 +133,7 @@ public class Cat2Osm {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public List<Shape> fixNodesOnWays(List <Shape> shapes){
 		
-		float valorNodeWay = Float.parseFloat(Config.get("ValorNodeWay"));
+		float valorNodeWay = Float.parseFloat(Config.get("CoeficienteNodeWay"));
 		
 		// Para cada shape
 		for (Shape shape : shapes){
@@ -144,8 +144,11 @@ public class Cat2Osm {
 				// Coger todos sus ways
 				for (Long wayId : shape.getWaysIds(x)){
 					
+					// De un way
 					WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), wayId));
-					NodeOsm nodeA = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(0))); 
+					// Cogemos su primer nodo
+					NodeOsm nodeA = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(0)));
+					// Y ultimo nodo
 					NodeOsm nodeB = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(1)));
 					
 					// Compararlo con todos los nodos existentes
@@ -162,17 +165,18 @@ public class Cat2Osm {
 							coor[1] = nodeB.getCoor();
 							
 							// Creamos un lineString para calcular si se encuentra en el "Envelope" que crea el way
-							// El envelope es el rectangulo que crearia con los ejes X e Y
+							// El envelope es el rectangulo que crearia en los ejes X e Y
 							LineString line = new LineString(coor, null , 0);
 							
 							// Formula punto-pendiente para saber si esta en la linea
-							float p = (float) Math.abs( ( ( (nodeB.getY() - nodeA.getY()) / (nodeB.getX() - nodeA.getX()) ) * (node.getX() - nodeA.getX())) + (nodeA.getY() - node.getY()) );
+							float puntoPendiente = (float) Math.abs( ( ( (nodeA.getY() - nodeB.getY()) / (nodeA.getX() - nodeB.getX()) ) * (node.getX() - nodeA.getX()) ) + (nodeA.getY() - node.getY()) );
 
 							// Ver si se cumple la formula
 							try{
-								if (valorNodeWay >= p && line.getEnvelope().intersects(line)){
-
-									System.out.println("PUNTO QUITABLE "+ utils.getNodeId(node.getCoor(), null));
+								if (puntoPendiente <= valorNodeWay && line.getEnvelope().intersects(line)){
+									
+									String[] fixme = new String[] {"fixme","fixme"};
+									node.addTag(fixme);
 								}
 							}
 							catch(Exception exc){}
@@ -203,42 +207,59 @@ public class Cat2Osm {
 
 		WayOsm way1 = null;
 		WayOsm way2 = null;
-		long removeId = 0;
+		WayOsm removeWay = null;
 		
 		for (Shape shape : shapes)
 
 			for (int x = 0; shape.getPoligons() != null && x < shape.getPoligons().size(); x++)
 
-				for(int y = 0; y < shape.getWaysIds(x).size(); y++){
-					
-					if (removeId != 0)
-						y = (int) (removeId = 0);
-					
-					for (int z = 0; z < shape.getWaysIds(x).size(); z++){
+				for(int y = -1; y < shape.getWaysIds(x).size(); y++){
 
-						Map<WayOsm, Long> ways = utils.getTotalWays();
-
-							way1 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(y)));
-							way2 = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(z)));
-
-
-						if (way1 != null && way2 != null && !way1.equals(way2) && way1.sameTags(way2.getTags())){
-
-							// Juntamos los ways y borra el way que no se va a usar de las relations
-							removeId = utils.joinWays(way1, way2);
-
-							// Borramos el way que no se va a usar de los shapes
-							for (Shape s : shapes)
-								for (int pos = 0; pos < s.getPoligons().size(); pos++)
-									s.deleteWay(pos,removeId);
-							
-							if (removeId != 0){
-								z = -1;
-							}
-							
-						}
+					if (removeWay != null){
+						removeWay = null;
+						y = -1;
 					}
 
+					Map<WayOsm, Long> ways = utils.getTotalWays();
+
+					// Formula para que compruebe tambien el way(0) con el way(size()) 
+					way1 = ((WayOsm) 
+							utils.getKeyFromValue(
+									(Map<Object, Long>) (
+											(Object)ways), 
+											shape.getWaysIds(x).get((y+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
+					way2 = ((WayOsm) 
+							utils.getKeyFromValue(
+									(Map<Object, Long>) (
+											(Object)ways), 
+											shape.getWaysIds(x).get((y+1+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
+					
+					
+					if (way1 != null && way2 != null && !way1.equals(way2) && way1.sameShapes(way2.getShapes())){
+
+						// Juntamos los ways y borra el way que no se va a usar de las relations
+						removeWay = utils.joinWays(way1, way2);
+
+						if (removeWay != null){
+
+							// Eliminamos de la lista total de ways el way a eliminar
+							long wayId = utils.getTotalWays().get(removeWay);
+							utils.getTotalWays().remove(removeWay);
+
+							// Borramos el way que no se va a usar de los shapes
+							for (int ids = 0; ids < removeWay.getShapes().size(); ids++){
+
+								long shapeId = removeWay.getShapes().get(ids);
+
+								for (Shape s : shapes)
+									if (s.getShapeId() == shapeId)
+										for (int pos = 0; pos < s.getPoligons().size(); pos++)
+											s.deleteWay(pos,wayId);
+							}
+						}
+
+					}
+					
 				}
 		
 		return shapes;

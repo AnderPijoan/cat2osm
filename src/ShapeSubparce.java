@@ -17,6 +17,7 @@ import com.vividsolutions.jts.geom.Polygon;
 
 public class ShapeSubparce extends Shape {
 
+	private Long shapeId = (long) 0; // Id del shape
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
 	private List<List<Long>> nodes; //[0] Outer, [1..N] inner
 	private List<List<Long>> ways; //[0] Outer, [1..N] inner
@@ -36,6 +37,9 @@ public class ShapeSubparce extends Shape {
 	public ShapeSubparce(SimpleFeature f) throws IOException {
 		
 		super(f);
+		
+		
+		shapeId = super.newShapeId();
 		
 		if (ruSub.isEmpty() || ruCul.isEmpty()){
 			readRusubparcelaRucultivo();
@@ -91,6 +95,16 @@ public class ShapeSubparce extends Shape {
 	}
 
 
+	public Long getShapeId(){
+		return shapeId;
+	}
+	
+	
+	public String getShapeIdString(){
+		return shapeId.toString();
+	}
+	
+	
 	public void addNode(int pos, long nodeId){
 		if (nodes.size()>pos)
 			nodes.get(pos).add(nodeId);
@@ -182,14 +196,19 @@ public class ShapeSubparce extends Shape {
 		}
 		
 		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeId();
+		s[0] = "SHAPEID"; s[1] = getShapeIdString();
 		l.add(s);
-
+		
+		s = new String[2];
+		s[0] = "add:country"; s[1] = "ES";
+		l.add(s);
+		
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
+		
 		s = new String[2];
-		s[0] = "add:country"; s[1] = "ES";
+		s[0] = "type"; s[1] = "multipolygon";
 		l.add(s);
 			
 		return l;

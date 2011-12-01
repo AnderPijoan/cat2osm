@@ -5,7 +5,7 @@
 ResultPath=result
 
 # Nombre para el archivo resultado
-ResultFileName=AldeasecaDeAlbaPruebas
+ResultFileName=Pruebas
 
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
@@ -40,7 +40,6 @@ ElemtexAConstru=1
 
 # Hacer simplificacion de Nodos de un shape que se crean sobre Ways de otro shape
 # No=0 / Si=1 (Ralentiza el proceso) (Aun en fase de desarrollo)
-FixNodesOnWays=0
-
-# Valor para el calculo de si un nodo se encuentra sobre un way (Aun en fase de desarrollo)
-ValorNodeWay=0.0000000001
+FixNodesOnWays=1
+# Coeficiente para el calculo de si un nodo se encuentra sobre un way (Aun en fase de desarrollo)
+CoeficienteNodeWay=0.000000001

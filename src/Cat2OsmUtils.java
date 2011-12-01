@@ -59,48 +59,43 @@ public class Cat2OsmUtils {
 	 * @param w2 Way2
 	 * @return long Id de way que hay que eliminar de los shapes, porque se ha juntado al otro
 	 */
-	public long joinWays(WayOsm w1, WayOsm w2){
+	public WayOsm joinWays(WayOsm w1, WayOsm w2){
 		
 		if ( !w1.getNodes().isEmpty() && !w2.getNodes().isEmpty()){
 			
 			// Caso1: w1.final = w2.primero
 			if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(0)) && totalWays.get(w1) != null && totalWays.get(w2) != null){
 				
-				System.out.println("CASO1");
-				
+				// Clonamos el way al que le anadiremos los nodos, w1
 				long l1 = totalWays.get(w1);
-				long l2 = totalWays.get(w2);
 				WayOsm w3 = new WayOsm(null);
 				for (Long lo : w1.getNodes())
 					w3.addNode(lo);
-				w3.setTags(w1.getTags());
+				w3.setShapes(w1.getShapes());
 				
-				// Copiamos la lista de nodos del way que eliminaremos
+				// Copiamos la lista de nodos del way que eliminaremos, w2
 				List<Long> nodes = new ArrayList<Long>();
 				for (Long lo : w2.getNodes())
 					nodes.add(lo);
 				
-				// Eliminamos el nodo que comparten del way2
+				// Eliminamos el nodo que comparten de la lista de nodos
 				nodes.remove(w2.getNodes().get(0));
 				
 				// Concatenamos al final del way3 (copia del way1) los nodos del way2
 				w3.addNodes(nodes);
 				
-				// Guardamos way3 en la lista de ways, manteniendo el id del way1
-				totalWays.put(w3, l1);
-				
-				// Borramos el way que cuyos nodos hemos utilizado
-				totalWays.remove(w2);
+				// Borramos el way de las relaciones
 				totalWays.remove(w1);
 				deleteWayFromRelations(w2);
 				
-				return l2;
+				// Guardamos way3 en la lista de ways, manteniendo el id del way1
+				totalWays.put(w3, l1);
+				
+				return w2;
 			}
 			
 			// Caso2: w1.primero = w2.final
 			else if (w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1)) && totalWays.get(w1) != null  && totalWays.get(w2) != null){
-				
-				System.out.println("CASO2");
 				
 				// Es igual que el Caso1 pero cambiados de orden.
 				return joinWays(w2, w1);
@@ -110,7 +105,7 @@ public class Cat2OsmUtils {
 			else if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(w2.getNodes().size()-1))  && totalWays.get(w1) != null && totalWays.get(w2) != null){
 				
 				System.out.println("CASO3");
-				
+				/*
 				long l2 = totalWays.get(w2);
 				
 				// Copiamos la lista de nodos del way que eliminaremos
@@ -130,15 +125,15 @@ public class Cat2OsmUtils {
 				totalWays.remove(w2);
 				deleteWayFromRelations(w2);
 				
-				return l2;
+				return w2;*/
 			}
 			
 			// Caso4: w1.primero = w2.primero
 			else if (w1.getNodes().get(0).equals(w2.getNodes().get(0))  && totalWays.get(w1) != null && totalWays.get(w2) != null){	
 				long l = totalWays.get(w2);
 				
-				System.out.println("CASO4");/*
-				
+				System.out.println("CASO4");
+				/*
 				// Copiamos la lista de nodos del way que eliminaremos
 				List<Long> nodes = new ArrayList<Long>();
 				for (Long lo : w2.getNodes())
@@ -156,12 +151,12 @@ public class Cat2OsmUtils {
 				System.out.println("Despues "+w1.getNodes());
 				
 				deleteWay(w2);
-				return l;*/
-				return 0;
+				return l;
+				return null;*/
 			}
 			
 		}
-		return 0;
+		return null;
 	}
 	
 	public synchronized Map<RelationOsm, Long> getTotalRelations() {
@@ -205,27 +200,26 @@ public class Cat2OsmUtils {
 	/** Mira si existe un way con los mismos nodos y en ese caso añade
 	 * los tags, de lo contrario crea uno. Despues devuelve el id
 	 * @param nodes Lista de nodos
-	 * @param tags Lista de tags
-	 * @param ways Lista de ways existentes
+	 * @param tags Lista de los shapes a los que pertenecera
 	 * @return devuelve el id del way creado o el del que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long getWayId(List<Long> nodes, List<String[]> tags ){
+	public synchronized long getWayId(List<Long> nodes, List<Long> shapes ){
 
 		Long id = null;
 		if (!totalWays.isEmpty())
 			id = totalWays.get(new WayOsm(nodes));
 		
 		if (id != null){
-			if (tags != null)
-				((WayOsm) getKeyFromValue((Map<Object, Long>) ((Object) totalWays), id)).addTags(tags);
+			if (shapes != null)
+				((WayOsm) getKeyFromValue((Map<Object, Long>) ((Object) totalWays), id)).addShapes(shapes);
 			return id;
 			}
 		else{
 			idway--;
 			WayOsm w = new WayOsm(nodes);
-			if (tags != null)
-				w.addTags(tags);
+			if (shapes != null)
+				w.addShapes(shapes);
 			totalWays.put(w, idway);
 			return idway;
 		}

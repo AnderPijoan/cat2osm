@@ -9,15 +9,20 @@ import com.vividsolutions.jts.geom.Point;
 
 
 public class ShapeElempun extends Shape {
-
+	
+	private Long shapeId = (long) 0; // Id del shape
 	private Coordinate coor;
 	private Long nodo;
 	private String ttggss; // Campo TTGGSS solo en Elempun.shp
 	private List<ShapeAttribute> atributos;
 
 	public ShapeElempun(SimpleFeature f) {
+		
 		super(f);
 
+
+		shapeId = super.newShapeId();
+		
 		// Elempun trae la geometria en formato Point
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.Point")){
 
@@ -41,12 +46,13 @@ public class ShapeElempun extends Shape {
 	}
 
 	
-	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
-	 * @param shp Shapefile a comprobar
-	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
-	 */
-	public boolean checkShapeDate(long fechaDesde, long fechaHasta){
-		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
+	public Long getShapeId(){
+		return shapeId;
+	}
+	
+	
+	public String getShapeIdString(){
+		return shapeId.toString();
 	}
 
 	
