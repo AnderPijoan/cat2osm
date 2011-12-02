@@ -27,7 +27,6 @@ public class ShapeElemlin extends Shape {
 		
 		super(f);
 		
-		
 		shapeId = super.newShapeId();
 		
 		// Elemtex trae la geometria en formato MultiLineString

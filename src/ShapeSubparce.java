@@ -38,7 +38,6 @@ public class ShapeSubparce extends Shape {
 		
 		super(f);
 		
-		
 		shapeId = super.newShapeId();
 		
 		if (ruSub.isEmpty() || ruCul.isEmpty()){

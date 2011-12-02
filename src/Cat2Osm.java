@@ -19,9 +19,9 @@ import com.vividsolutions.jts.geom.Polygon;
 
 
 public class Cat2Osm {
-	
+
 	static Cat2OsmUtils utils;
-	
+
 	/** Constructor
 	 * @param utils Clase utils en la que se almacenan los nodos, ways y relaciones 
 	 * y tiene funciones para manejarlos
@@ -29,22 +29,8 @@ public class Cat2Osm {
 	public Cat2Osm (Cat2OsmUtils utils){
 		Cat2Osm.utils = utils;
 	}
-	
-	
-	/** Crea un thread que parsea el archivo binario shp 
-	 * y crea los elementos en memoria en un List
-	 * @param f Archivo a parsear
-	 * @returns List<Shape> Lista de los elementos parseados
-	 * @throws IOException
-	 */
-	public List<Shape> shpParser(File f) throws IOException {
-		
-		List<Shape> shapeList = new ArrayList<Shape>();
-		new ShapeParser(f, utils, shapeList);
-		return shapeList;
-	}
 
-	
+
 	/** Busca en la lista de shapes los que coincidan con la ref catastral
 	 * @param ref referencia catastral a buscar
 	 * @returns List<Shape> lista de shapes que coinciden                    
@@ -57,8 +43,8 @@ public class Cat2Osm {
 
 		return shapeList;
 	}
-	
-	
+
+
 	/** Busca en la lista de shapes los que coincidan con el codigo de subparce
 	 * @param subparce codigo de subparcela a buscar
 	 * @returns List<Shape> lista de shapes que coinciden                    
@@ -74,7 +60,7 @@ public class Cat2Osm {
 		return shapeList;
 	}
 
-	
+
 	/** Los elementos textuales traen informacion sobre que hay en alguna construccion como pueden ser cementerios,
 	 * hospitales, etc. Las opciones en las construcciones son limitadas y puede hacer que cambie su landuse. 
 	 * Por eso se calcula si un elemtex se encuentra sobre una constru y se anade el landuse al constru.
@@ -82,111 +68,135 @@ public class Cat2Osm {
 	 * @return lista de shapes con los tags modificados
 	 */
 	public List<Shape> addElemtexLandusetoConstru(List<Shape> shapes){
-		
+
 		GeometryFactory factory = new GeometryFactory();
-		
+
 		for (Shape shape: shapes){
-			
+
 			// Si le hemos modificado el ttggss para que ahora cambie alguno de los tags
 			if (shape instanceof ShapeElemtex && shape.getTtggss().contains("=")){
-				
+
 				for (Shape s: shapes)
-				
+
 					if (s instanceof ShapeConstru && s.getPoligons() != null){
 						LinearRing l = factory.createLinearRing(s.getPoligons().get(0).getCoordinates());
 						Polygon parcela = factory.createPolygon(l, null);
 						Point coor = factory.createPoint(shape.getCoor());
-						
+
 						// Si cumple, cambiamos el tag de la relacion
 						if (coor.intersects(parcela)){
 							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), s.getRelationId()));
-							
+
 							// Los tags vienen como "key=value,key=value" almacenados
 							// en el ttggss
 							String[] pares = shape.getTtggss().split(",");
 							List<String[]> tags = new ArrayList<String[]>();
-							
+
 							for (String par : pares)
 								tags.add(par.split("="));
 
 							r.addTags(tags);
 						}
 					}
-				
+
 				shape.getCoor();
-				
+
 			}
-			
+
 		}
-		
+
 		return shapes;
 	}
-	
+
 	/** Se encarga de solucionar casos de nodos de un shape que se hayan creado sobre el
 	 * way de otro shape. Con un valor flexible del config decide si un nodo esta sobre
-	 * un way de otro shape, en cuyo caso partiria el way del shape en dos unidos por el nodo y
+	 * un way sin estar conectado a el, en cuyo caso partiria el way del shape en dos unidos por el nodo y
 	 * los dos shapes compartirian el way comun.
-	 * SOLO para cuando los ways tienen todavia solo dos nodos.
+	 * Esto puede solucionar casos en los que hayan creado ways de forma erronea o no los hayan
+	 * enlazado.
+	 * NO comprueba casos de ways que cortan otros ways.
 	 * @param shapes Lista de shapes 
 	 * @return La lista de shapes con los arreglos realizados
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public List<Shape> fixNodesOnWays(List <Shape> shapes){
-		
-		float valorNodeWay = Float.parseFloat(Config.get("CoeficienteNodeWay"));
-		
+
 		// Para cada shape
 		for (Shape shape : shapes){
-			
+
 			// Coger cada poligono
 			for( int x = 0; x < shape.getPoligons().size(); x++){
-				
+
 				// Coger todos sus ways
 				for (Long wayId : shape.getWaysIds(x)){
-					
+
 					// De un way
 					WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), wayId));
 					// Cogemos su primer nodo
-					NodeOsm nodeA = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(0)));
+					NodeOsm nodoPrimero = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(0)));
 					// Y ultimo nodo
-					NodeOsm nodeB = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(1)));
-					
-					// Compararlo con todos los nodos existentes
-					Iterator<Entry<NodeOsm, Long>> it = utils.getTotalNodes().entrySet().iterator();
-					
+					NodeOsm nodoFinal = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(way.getNodes().size()-1)));
+
+					// Compararlo con todos los ways existentes
+					Iterator<Entry<WayOsm, Long>> it = utils.getTotalWays().entrySet().iterator();
+
 					while(it.hasNext()){
 						Map.Entry e = (Map.Entry)it.next();
-						NodeOsm node = (NodeOsm) e.getKey();
-						
-						if (!node.getCoor().equals(nodeA.getCoor()) && !node.getCoor().equals(nodeB.getCoor())){
+						WayOsm wayEntero = (WayOsm) e.getKey();
 
-							Coordinate[] coor = new Coordinate[2];
-							coor[0] = nodeA.getCoor();
-							coor[1] = nodeB.getCoor();
-							
-							// Creamos un lineString para calcular si se encuentra en el "Envelope" que crea el way
-							// El envelope es el rectangulo que crearia en los ejes X e Y
-							LineString line = new LineString(coor, null , 0);
-							
-							// Formula punto-pendiente para saber si esta en la linea
-							float puntoPendiente = (float) Math.abs( ( ( (nodeA.getY() - nodeB.getY()) / (nodeA.getX() - nodeB.getX()) ) * (node.getX() - nodeA.getX()) ) + (nodeA.getY() - node.getY()) );
+						//Dividimos el wayEntero en sus maximos ways posibles y comparamos esos trozos con los nodos primer y final
+						List<Long> nodoIds = wayEntero.getNodes();
+						for (int y = -1; y < nodoIds.size()-1; y++ ){
 
-							// Ver si se cumple la formula
-							try{
-								if (puntoPendiente <= valorNodeWay && line.getEnvelope().intersects(line)){
-									
-									String[] fixme = new String[] {"fixme","fixme"};
-									node.addTag(fixme);
-								}
-							}
-							catch(Exception exc){}
+							// Obtenemos las coordenadas de los dos primeros nodos 
+							// (con esa formula se consigue que tambien cree un way entre el ultimo y primer nodo)
+							NodeOsm nodoA = (NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), nodoIds.get((y+nodoIds.size())%nodoIds.size()));
+							NodeOsm nodoB = (NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), nodoIds.get((y+1+nodoIds.size())%nodoIds.size()));
+
+							// Comprobacion de que no estan conectados
+							if (!(nodoPrimero.getCoor().equals(nodoA.getCoor()) || nodoPrimero.getCoor().equals(nodoB.getCoor()) ))
+							fixNode(nodoPrimero, nodoA, nodoB);
+							if (!(nodoFinal.getCoor().equals(nodoA.getCoor()) || nodoFinal.getCoor().equals(nodoB.getCoor()) ))	
+							fixNode(nodoFinal, nodoA, nodoB);
+
 						}
 					}
 				}
 			}
 		}
-		
+
 		return shapes;
+	}
+
+
+	/** Intenta calcular mediante la ecuacion punto-pendiente si ese nodo esta creado sobre un way 
+	 * y no esta conectado a el
+	 * @param nodoSuelto nodo a comparar si esta sobre un way
+	 * @param nodoA punto inicial del way
+	 * @param nodoB punto final del way
+	 */
+	public void fixNode (NodeOsm nodoSuelto, NodeOsm nodoA, NodeOsm nodoB){
+
+		float valorNodeWay = Float.parseFloat(Config.get("CoeficienteNodeWay"));
+
+		Coordinate[] coor = new Coordinate[2];
+		coor[0] = nodoA.getCoor();
+		coor[1] = nodoB.getCoor();
+
+		// Creamos un lineString para calcular si se encuentra en el "Envelope" que crea el way
+		// El envelope es el rectangulo que crearia en los ejes X e Y
+		LineString line = new LineString(coor, null , 0);
+
+		// Formula punto-pendiente para saber si esta en la linea
+		float puntoPendiente = (float) Math.abs( ( ( (nodoA.getY() - nodoB.getY()) / (nodoA.getX() - nodoB.getX()) ) * (nodoSuelto.getX() - nodoA.getX()) ) + (nodoA.getY() - nodoSuelto.getY()) );
+
+		// Ver si se cumple la formula
+		try{
+			if (puntoPendiente < valorNodeWay && line.getEnvelope().intersects(line)){
+				String[] fixme = new String[] {"fixme","fixme"};
+				nodoSuelto.addTag(fixme);
+			}
+		}catch(Exception exc){}
 	}
 	
 	
@@ -208,77 +218,78 @@ public class Cat2Osm {
 		WayOsm way1 = null;
 		WayOsm way2 = null;
 		WayOsm removeWay = null;
-		
+		Map<WayOsm, Long> ways = utils.getTotalWays();
+
 		for (Shape shape : shapes)
 
 			for (int x = 0; shape.getPoligons() != null && x < shape.getPoligons().size(); x++)
 
-				for(int y = -1; y < shape.getWaysIds(x).size(); y++){
+				for(int y = 0; y < shape.getWaysIds(x).size()+1; y++){
 
 					if (removeWay != null){
 						removeWay = null;
 						y = -1;
 					}
 
-					Map<WayOsm, Long> ways = utils.getTotalWays();
+					try{
 
-					// Formula para que compruebe tambien el way(0) con el way(size()) 
-					way1 = ((WayOsm) 
-							utils.getKeyFromValue(
-									(Map<Object, Long>) (
-											(Object)ways), 
-											shape.getWaysIds(x).get((y+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
-					way2 = ((WayOsm) 
-							utils.getKeyFromValue(
-									(Map<Object, Long>) (
-											(Object)ways), 
-											shape.getWaysIds(x).get((y+1+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
-					
-					
-					if (way1 != null && way2 != null && !way1.equals(way2) && way1.sameShapes(way2.getShapes())){
+						// Formula para que compruebe tambien el way(0) con el way(size()) 
+						way1 = ((WayOsm) 
+								utils.getKeyFromValue(
+										(Map<Object, Long>) (
+												(Object)ways), 
+												shape.getWaysIds(x).get((y+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
+						way2 = ((WayOsm) 
+								utils.getKeyFromValue(
+										(Map<Object, Long>) (
+												(Object)ways), 
+												shape.getWaysIds(x).get((y+1+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
 
-						// Juntamos los ways y borra el way que no se va a usar de las relations
-						removeWay = utils.joinWays(way1, way2);
+						if (way1 != null && way2 != null && !way1.getNodes().equals(way2.getNodes()) && way1.sameShapes(way2.getShapes()) ){
 
-						if (removeWay != null){
+							// Juntamos los ways y borra el way que no se va a usar de las relations
+							removeWay = utils.joinWays(way1, way2);
 
-							// Eliminamos de la lista total de ways el way a eliminar
-							long wayId = utils.getTotalWays().get(removeWay);
-							utils.getTotalWays().remove(removeWay);
+							if (removeWay != null){
 
-							// Borramos el way que no se va a usar de los shapes
-							for (int ids = 0; ids < removeWay.getShapes().size(); ids++){
+								// Eliminamos de la lista total de ways el way a eliminar
+								long wayId = utils.getTotalWays().get(removeWay);
+								utils.getTotalWays().remove(removeWay);
 
-								long shapeId = removeWay.getShapes().get(ids);
+								// Borramos el way que no se va a usar de los shapes
+								for (int shapeIds = 0; shapeIds < removeWay.getShapes().size(); shapeIds++){
 
-								for (Shape s : shapes)
-									if (s.getShapeId() == shapeId)
-										for (int pos = 0; pos < s.getPoligons().size(); pos++)
-											s.deleteWay(pos,wayId);
+									long shapeId = removeWay.getShapes().get(shapeIds);
+
+									for (Shape s : shapes)
+										if (s.getShapeId() == shapeId)
+											for (int pos = 0; pos < s.getPoligons().size(); pos++)
+												s.deleteWay(pos,wayId);
+								}
 							}
 						}
 
-					}
-					
+					}catch(Exception e) {System.out.println("Simplificando un way casco.");}
+
 				}
-		
+
 		return shapes;
 	}
-	
-	
+
+
 	/** Escribe el osm con todos los nodos (Del archivo totalNodes, sin orden)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
 	@SuppressWarnings("rawtypes")
 	public void printNodes(Map <NodeOsm, Long> nodes) throws IOException{
-		
+
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\tempNodes.osm");
+		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempNodes.osm");
 		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
-		
+
 		Iterator<Entry<NodeOsm, Long>> it = nodes.entrySet().iterator();
-		
+
 		// Escribimos todos los nodos
 		while(it.hasNext()){
 			Map.Entry e = (Map.Entry)it.next();
@@ -286,24 +297,21 @@ public class Cat2Osm {
 		}
 		outNodes.close();
 	}
-	
-	
+
+
 	/** Escribe el osm con unicamente los nodos de los shapes que le pasamos (MUY LENTO)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
 	public void printNodesShapesOrder(List<Shape> shapes, Map <NodeOsm, Long> nodes) throws IOException{
-		
+
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\tempNodes.osm");
+		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempNodes.osm");
 		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
-		
-		String huso = (Config.get("Huso")+ " " +Config.get("Hemisferio"));
-		
 		// Escribimos todos los nodos
 		for(Shape shape : shapes){
-			
+
 			for (int x = 0; x < shape.getPoligons().size(); x++)
 
 				for (int y = 0; y < shape.getNodesIds(x).size(); y++)
@@ -311,21 +319,21 @@ public class Cat2Osm {
 		}
 		outNodes.close();
 	}
-	
-	
+
+
 	/** Escribe el osm con todos los ways (Del archivo waysTotales, sin orden)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
 	@SuppressWarnings("rawtypes")
 	public void printWays(Map <WayOsm, Long> ways) throws IOException{
-		
+
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\tempWays.osm");
+		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempWays.osm");
 		BufferedWriter outWays = new BufferedWriter(fstreamWays);
-		
+
 		Iterator<Entry<WayOsm, Long>> it = ways.entrySet().iterator();
-		
+
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
 		while(it.hasNext()){
 			Map.Entry e = (Map.Entry)it.next();
@@ -333,30 +341,30 @@ public class Cat2Osm {
 		}
 		outWays.close();
 	}
-	
-	
+
+
 	/** Escribe el osm con unicamente los ways de los shapes que le pasamos (MUY LENTO)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
 	public void printWaysShapesOrder( List<Shape> shapes, Map <WayOsm, Long> ways) throws IOException{
-		
+
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\tempWays.osm");
+		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempWays.osm");
 		BufferedWriter outWays = new BufferedWriter(fstreamWays);
-		
+
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
 		for(Shape shape : shapes){
-			
+
 			for (int x = 0; x < shape.getPoligons().size(); x++)
 				for (int y = 0; y < shape.getWaysIds(x).size(); y++)
 					outWays.write( ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(y))).printWay((Long) shape.getWaysIds(x).get(y)));
 		}
 		outWays.close();
 	}
-	
-	
+
+
 	/** Escribe el osm con todas las relations. 
 	 * Este si que hay que hacerlo desde los shapes para saber los poligonos inner y outer
 	 * @param tF Ruta donde escribir este archivo, sera temporal
@@ -364,13 +372,13 @@ public class Cat2Osm {
 	 */
 	@SuppressWarnings("rawtypes")
 	public void printRelations( Map <RelationOsm, Long> relations) throws IOException{
-		
+
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamRelations = new FileWriter(Config.get("ResultPath") + "\\tempRelations.osm");
+		FileWriter fstreamRelations = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempRelations.osm");
 		BufferedWriter outRelations = new BufferedWriter(fstreamRelations);
-		
+
 		Iterator<Entry<RelationOsm, Long>> it = relations.entrySet().iterator();
-		
+
 		// Escribimos todos las relaciones y sus referencias a los ways en el archivo
 		while(it.hasNext()){
 			Map.Entry e = (Map.Entry) it.next();
@@ -378,60 +386,61 @@ public class Cat2Osm {
 		}
 		outRelations.close();
 	}
-	
-	
+
+
 	/** Concatena los 3 archivos, Nodos + Ways + Relations y lo deja en el OutOsm.
 	 * @param oF Ruta donde esta el archivo final
 	 * @param tF Ruta donde estan los archivos temporadles (nodos, ways y relations)
 	 * @throws IOException
 	 */
 	public void joinFiles(String filename) throws IOException{
-		
+
 		String path = Config.get("ResultPath");
-		
+
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
 		new File(path + "\\"+ filename +".osm").delete();
-		
+
 		// Archivo al que se le concatenan los nodos, ways y relations
-		FileWriter fstreamOsm = new FileWriter(path + "\\"+ filename +".osm", true);
+		FileWriter fstreamOsm = new FileWriter(path + "\\" + filename +".osm", true);
 		BufferedWriter outOsm = new BufferedWriter(fstreamOsm);
-		
+
 		// Juntamos los archivos en uno, al de los nodos le concatenamos el de ways y el de relations
 		// Cabecera del archivo Osm
 		outOsm.write("<?xml version='1.0' encoding='UTF-8'?>\n" +
-		"<osm version=\"0.6\" generator=\"cat-2-osm\" >\n");	
-		
+				"<osm version=\"0.6\" generator=\"cat-2-osm\" >\n");	
+
 		// Concatenamos todos los archivos
 		String str;
-		BufferedReader inNodes = new BufferedReader(new FileReader(path + "\\tempNodes.osm"));
+		BufferedReader inNodes = new BufferedReader(new FileReader(path + "\\"+ Config.get("ResultFileName") + "tempNodes.osm"));
 		while ((str = inNodes.readLine()) != null)
 			outOsm.write(str+"\n");
-		
-		BufferedReader inWays = new BufferedReader(new FileReader(path + "\\tempWays.osm"));
+
+		BufferedReader inWays = new BufferedReader(new FileReader(path + "\\"+ Config.get("ResultFileName") + "tempWays.osm"));
 		while ((str = inWays.readLine()) != null)
 			outOsm.write(str+"\n");
 
-		BufferedReader inRelations = new BufferedReader(new FileReader(path + "\\tempRelations.osm"));
+		BufferedReader inRelations = new BufferedReader(new FileReader(path + "\\"+ Config.get("ResultFileName") + "tempRelations.osm"));
 		while ((str = inRelations.readLine()) != null)
 			outOsm.write(str+"\n");
 
 		outOsm.write("</osm>\n");
-		
+
 		outOsm.close();
 		inNodes.close();
 		inWays.close();
 		inRelations.close();
-		
-		boolean delNodes = (new File(path+ "\\tempNodes.osm")).delete();
-		boolean delWays = (new File(path + "\\tempWays.osm")).delete();
-		boolean delRelations = (new File(path + "\\tempRelations.osm")).delete();
-		
-		if (!delNodes || !delWays || !delRelations)
-		System.out.println("(Imposible borrar alguno de los archivos temporales)");
-		
+
+		boolean borrado = true;
+		borrado = borrado && (new File(path+ "\\" + Config.get("ResultFileName") + "tempNodes.osm")).delete();
+		borrado = borrado && (new File(path + "\\" + Config.get("ResultFileName") + "tempWays.osm")).delete();
+		borrado = borrado && (new File(path + "\\" + Config.get("ResultFileName") + "tempRelations.osm")).delete();
+
+		if (!borrado)
+			System.out.println("NO se pudo BORRAR alguno de los archivos temporales");
+
 	}
-	
-	
+
+
 	/** Lee linea a linea el archivo cat, coge los shapes q coincidan 
 	 * con esa referencia catastral y los pasa a formato osm
 	 * @param car Archivo cat del que lee linea a linea
@@ -447,7 +456,7 @@ public class Cat2Osm {
 		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
 		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 		int tipoRegistro = Integer.parseInt(Config.get("TipoRegistro"));
-		
+
 		// Lectura del archivo .cat
 		while((line = bufRdr.readLine()) != null)
 		{
@@ -462,21 +471,21 @@ public class Cat2Osm {
 				// anadirle los atributos
 				if (c.getTipoRegistro() == 17)
 					matches = findSubparce(matches, c.getSubparce());
-				
+
 				// Puede que no haya shapes para esa refCatastral
 				if (!matches.isEmpty()){
 
 					for (Shape shape : matches)
-					if (shape != (null)){
+						if (shape != (null)){
 							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
 							r.addTags(c.getAttributes());
-					}
+						}
 				}
 			}
 		}
 	}
 
-	
+
 	/** Parsea el archivo .cat y crea los elementos en memoria en un List
 	 * @param f Archivo a parsear
 	 * @returns List<Cat> Lista de los elementos parseados
@@ -489,7 +498,7 @@ public class Cat2Osm {
 		String line = null;
 
 		List<Cat> l = new ArrayList<Cat>();
-		
+
 		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
 		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 		int tipoRegistro = Integer.parseInt(Config.get("tipoRegistro"));
@@ -506,7 +515,7 @@ public class Cat2Osm {
 		return l;
 	}
 
-	
+
 	/** De la lista de shapes con la misma referencia catastral (deduzco que es la
 	 * misma parcela pero puede haber cambiado algo por obras) devuelve la mas actual
 	 * del periodo indicado.
@@ -530,7 +539,7 @@ public class Cat2Osm {
 		}
 		return s;
 	}
-	
+
 
 	/** Parsea la linea del archivo .cat y devuelve un elemento Cat
 	 * @param line Linea del archivo .cat
@@ -543,7 +552,7 @@ public class Cat2Osm {
 		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
 		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 		Cat c = new Cat(Integer.parseInt(line.substring(0,2)));
-		
+
 		switch(c.getTipoRegistro()){ // Formato de los tipos distintos de registro .CAT
 		case 01: {
 
@@ -559,7 +568,7 @@ public class Cat2Osm {
 			System.out.println("CODIGO DE LA ENTIDAD DESTINATARIA           :"+line.substring(117,120));
 			System.out.println("FECHA DE INICIO DEL PERIODO (AAAAMMDD)      :"+line.substring(120,128));
 			System.out.println("FECHA DE FIN DEL PERIODO (AAAAMMDD)         :"+line.substring(128,136));
-			*/
+			 */
 			break;}
 		case 11: {
 
@@ -626,7 +635,7 @@ public class Cat2Osm {
 			c.addAttribute("catastro:ref:bice",eliminarCerosString(line.substring(581,601)));
 			//c.addAttribute("DENOMINACION DEL BICE DE LA FINCA",line.substring(601,666));
 			//c.addAttribute("HUSO GEOGRAFICO SRS",line.substring(666,676));
-			
+
 			return c;}
 		case 13: {
 
@@ -672,7 +681,7 @@ public class Cat2Osm {
 			//c.addAttribute("LONGITUD DE FACHADA",line.substring(307,312));
 			//c.addAttribute("CODIGO DE UNIDAD CONSTRUCTIVA MATRIZ",line.substring(409,413));
 
-			
+
 			return c; }
 		case 14: {
 
@@ -701,7 +710,7 @@ public class Cat2Osm {
 			//c.addAttribute("SUPERFICIE IMPUTABLE AL LOCAL SITUADA EN OTRAS PLANTAS",line.substring(97,104));
 			//c.addAttribute("TIPOLOGIA CONSTRUCTIVA SEGUN NORMAS TECNICAS DE VALORACION",line.substring(104,109));
 			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(111,114));
-			
+
 			return c;}
 		case 15: {
 
@@ -766,7 +775,7 @@ public class Cat2Osm {
 			//c.addAttribute("SUPERFICIE ASOCIADA AL INMUEBLE",line.substring(451,461));
 			//c.addAttribute("COEFICIENTE DE PROPIEDAD (3ent y 6deci)",line.substring(461,470));
 
-			
+
 			return c;}
 		case 16: {
 
@@ -783,7 +792,7 @@ public class Cat2Osm {
 			//c.addAttribute("CALIFICACION CATASTRAL DE LA SUBPARCELA",line.substring(48,50));
 			//c.addAttribute("BLOQUE REPETITIVO HASTA 15 VECES",line.substring(50,999)); //TODO ¿Necesario?
 
-			
+
 			return c;}
 		case 17: {
 
@@ -811,10 +820,10 @@ public class Cat2Osm {
 			c.addAttribute("INTENSIDAD PRODUCTIVA",line.substring(107,109));
 			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(126,129)); //TODO ¿Necesario?
 
-			
+
 			return c;}
 		case 90: {
-			
+
 			/*System.out.println("\nTIPO DE REGISTRO 90: REGISTRO DE COLA\n"); 
 			System.out.println("Numero total de registros tipo 11           :"+line.substring(9,16));
 			System.out.println("Numero total de registros tipo 13           :"+line.substring(23,30));
@@ -822,7 +831,7 @@ public class Cat2Osm {
 			System.out.println("Numero total de registros tipo 15           :"+line.substring(37,44));
 			System.out.println("Numero total de registros tipo 16           :"+line.substring(44,51));
 			System.out.println("Numero total de registros tipo 17           :"+line.substring(51,58));
-			*/
+			 */
 			break;}
 		}
 		return c;
@@ -843,8 +852,8 @@ public class Cat2Osm {
 		}
 		return temp;
 	}
-	
-	
+
+
 	/** Comprueba si solo contiene caracteres numericos
 	 * @param str String en el cual comprobar
 	 * @return boolean de si es o no
@@ -857,10 +866,10 @@ public class Cat2Osm {
 		}
 		return true;
 	}
-	
-	
+
+
 	public static String nombreTipoViaParser(String codigo){
-		
+
 		if (codigo.equals("CL"))return "Calle";
 		else if (codigo.equals("AL"))return "Aldea/Alameda";
 		else if (codigo.equals("AR"))return "Area/Arrabal";
@@ -940,10 +949,10 @@ public class Cat2Osm {
 		return codigo;
 	}
 
-	
+
 	public static List<String[]> usoInmueblesParser(String codigo){
 		List<String[]> l = new ArrayList<String[]>();
-		
+
 		switch (codigo.charAt(0)){
 		case 'A':{
 			String[] s = {"building","warehouse"};
@@ -1053,6 +1062,6 @@ public class Cat2Osm {
 			l.add(s);
 			return l;}
 	}
-	
-	
+
+
 }

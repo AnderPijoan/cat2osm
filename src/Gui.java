@@ -39,13 +39,13 @@ public class Gui extends JFrame {
 
 						System.out.println("Leyendo "+ filesU[i].getName() +" Urbano.");
 
-						parsers.add(new ShapeParser(new File(filesU[i] + "\\" + filesU[i].getName() + ".SHP"), utils, shapes));
+						parsers.add(new ShapeParser("UR", new File(filesU[i] + "\\" + filesU[i].getName() + ".SHP"), utils, shapes));
 						
 					}
 			catch(Exception e){}
 			}
 		else
-			System.out.println("UrbanoSHPDir no es un directorio valido.");
+			System.out.println("UrbanoSHPPath no es un directorio valido.");
 
 
 		// Recorrer los directorios Rusticos
@@ -66,13 +66,13 @@ public class Gui extends JFrame {
 
 						System.out.println("Leyendo "+ filesR[i].getName() +" Urbano.");
 
-						parsers.add(new ShapeParser(new File(filesR[i] + "\\" + filesR[i].getName() + ".SHP"), utils, shapes));
+						parsers.add(new ShapeParser("RU", new File(filesR[i] + "\\" + filesR[i].getName() + ".SHP"), utils, shapes));
 
 					}
 			catch(Exception e){}
 		}
 		else
-			System.out.println("RusticoSHPDir no es un directorio valido.");
+			System.out.println("RusticoSHPPath no es un directorio valido.");
 
 		for (ShapeParser sp : parsers)
 			sp.join();
@@ -95,15 +95,17 @@ public class Gui extends JFrame {
 			shapes = catastro.addElemtexLandusetoConstru(shapes);
 		}
 		
-		// Comprobamos que no haya nodos creados sobre ways
+		// Simplificamos los ways
+		System.out.println("SIMPLIFICANDO vias.");
+		shapes = catastro.simplifyWays(shapes);
+
+		
+		// Comprobamos que no haya nodos finales sobre un way distinto ya que podrian ser
+		// casos de shapes no conectados correctamente
 		if (Config.get("FixNodesOnWays").equals("1")){
 			System.out.println("COMPROBANDO nodos sueltos sobre vias.");
 			shapes = catastro.fixNodesOnWays(shapes);
 		}
-		
-		// Simplificamos los ways
-		System.out.println("SIMPLIFICANDO vias.");
-		catastro.simplifyWays(shapes);
 
 		// Escribir los datos
 		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalNodes().size() +" NODOS");

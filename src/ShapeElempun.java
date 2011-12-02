@@ -20,7 +20,6 @@ public class ShapeElempun extends Shape {
 		
 		super(f);
 
-
 		shapeId = super.newShapeId();
 		
 		// Elempun trae la geometria en formato Point

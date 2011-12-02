@@ -126,7 +126,7 @@ public class Cat2OsmUtils {
 				deleteWayFromRelations(w2);
 				
 				return w2;*/
-			}
+			/*}
 			
 			// Caso4: w1.primero = w2.primero
 			else if (w1.getNodes().get(0).equals(w2.getNodes().get(0))  && totalWays.get(w1) != null && totalWays.get(w2) != null){	
