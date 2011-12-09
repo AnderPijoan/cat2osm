@@ -74,7 +74,7 @@ public class ShapeElempun extends Shape {
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 		s = new String[2];
-		s[0] = "add:country"; s[1] = "ES";
+		s[0] = "addr:country"; s[1] = "ES";
 		l.add(s);
 		
 		return l;
@@ -134,7 +134,7 @@ public class ShapeElempun extends Shape {
 		if (ttggss.equals("115101"))
 				return false;
 		else
-			return true;
+			return false;
 	}
 	
 	

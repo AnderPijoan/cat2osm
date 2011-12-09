@@ -9,7 +9,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 public class NodeOsm {
 
 	private Coordinate coor;
-	private List<String[]> tags; // TODO Solo se usan para los Elemtex
+	private List<String[]> tags; // Se usan para los Elemtex y Elempun
 	
 	
 	public NodeOsm(Coordinate c){
@@ -125,7 +125,8 @@ public class NodeOsm {
 			
 		// Hora para el timestamp
 		Date date = new java.util.Date();
-		s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
+		//s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
+		s = ("<node id=\""+ id +"\" version=\"6\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
 		
 		
 		if (tags != null)

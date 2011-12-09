@@ -165,7 +165,7 @@ public class ShapeParcela extends Shape {
 		l.add(s);
 		
 		s = new String[2];
-		s[0] = "add:country"; s[1] = "ES";
+		s[0] = "addr:country"; s[1] = "ES";
 		l.add(s);
 		
 		s = new String[2];

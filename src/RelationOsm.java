@@ -138,7 +138,9 @@ public class RelationOsm {
 		String s = null;
 		
 		Date date = new java.util.Date();
-		s = ("<relation id=\""+ id +"\" visible=\"true\"  version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\">\n");
+		//s = ("<relation id=\""+ id +"\" visible=\"true\"  version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\">\n");
+		s = ("<relation id=\""+ id +"\" visible=\"true\"  version=\"6\">\n");
+		
 		
 		for (int x = 0; x < ids.size(); x++)
 			if (utils.getTotalWays().containsValue(ids.get(x)))

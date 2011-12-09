@@ -93,7 +93,7 @@ public class ShapeElemtex extends Shape {
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 		s = new String[2];
-		s[0] = "add:country"; s[1] = "ES";
+		s[0] = "addr:country"; s[1] = "ES";
 		l.add(s);
 		
 		return l;
@@ -253,10 +253,11 @@ public class ShapeElemtex extends Shape {
 	 * tags de OpenStreetMap. Es un mecanismo mas manual que habra que ir agrandando a medida
 	 * que aparezcan nuevos textos. A los textos les eliminamos TODOS los espacios en blanco ya
 	 * que hay poblaciones en las que han separado cada letra del texto para darle enfasis.
-	 * Tambien modificamos el ttggss almacenando en el si hay que cambiar algun tag de la parcela
-	 * sobre la que se encuentra este texto
+	 * Tambien modificamos el ttggss almacenando en el si hay que cambiar algun tag de la geometria
+	 * sobre la que se encuentra este texto. (Por ejemplo un cementerio deberia cambiar el landuse
+	 * del constru sobre el que se encuentra)
 	 * El orden es muy importante (los mas generales al final)
-	 * y distinguir entre contains y equals
+	 * y distinguir entre contains, startsWith y equals
 	 * @param rotulo Texto catalogado como informacion urbana sin clasificar.
 	 * @return Lista de los tags de OpenStreetMap que representan el texto dado
 	 */
@@ -273,7 +274,6 @@ public class ShapeElemtex extends Shape {
 		s = new String[2];
 		
 		if (rotulo.contains("AYUNTAMIENTO") || rotulo.contains("AYTO")){ 
-			l.remove(0);
 			s[0] = "amenity"; s[1] = "townhall";
 			l.add(s);
 			return l;}
@@ -299,7 +299,7 @@ public class ShapeElemtex extends Shape {
 			setTtggss("landuse=cemetery");
 			return l;}
 		
-		if ((rotulo.contains("AUTOBUS") || rotulo.contains("BUS") && (rotulo.contains("ESTACION") || rotulo.contains("ESTACIÓN ")))){ 
+		if ((rotulo.contains("AUTOBÚS") || rotulo.contains("AUTOBUS") || rotulo.contains("BUS") || rotulo.contains("GUAGUA")) && (rotulo.contains("ESTACION") || rotulo.contains("ESTACIÓN "))){ 
 			s[0] = "amenity"; s[1] = "bus_station";
 			l.add(s);
 			return l;}
@@ -314,28 +314,8 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("TEATRO")){ 
+		if (rotulo.startsWith("TEATRO")){ 
 			s[0] = "amenity"; s[1] = "theatre";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("FACULTAD") || rotulo.contains("UNIVERSIDAD") || rotulo.contains("UNIVERSITARI")){ 
-			s[0] = "amenity"; s[1] = "university";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("ESCOLAR") || rotulo.contains("ESCUELA") || rotulo.contains("COLEGIO") || rotulo.contains("INSTITUTO")){ 
-			s[0] = "amenity"; s[1] = "school";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("CLINICA")){ 
-			s[0] = "amenity"; s[1] = "doctors";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("AUDITORIO")){ 
-			s[0] = "amenity"; s[1] = "community_centre";
 			l.add(s);
 			return l;}
 		
@@ -344,14 +324,27 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
+		if (rotulo.contains("CLINICA")){ 
+			s[0] = "amenity"; s[1] = "doctors";
+			l.add(s);
+			return l;}		if (rotulo.contains("CLINICA")){ 
+				s[0] = "amenity"; s[1] = "doctors";
+				l.add(s);
+				return l;}
+		
+		if (rotulo.contains("AUDITORIO")){ 
+			s[0] = "amenity"; s[1] = "community_centre";
+			l.add(s);
+			return l;}
+		
 		if (rotulo.contains("PISCINA")){ 
 			s[0] = "leisure"; s[1] = "swimming_pool";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("FUENTE")){
+		if (rotulo.contains("ESTANQUE")){ 
 			l.remove(0);
-			s[0] = "amenity"; s[1] = "fountain";
+			s[0] = "natural"; s[1] = "water";
 			l.add(s);
 			return l;}
 			
@@ -381,12 +374,17 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
+		if (rotulo.contains("CAMPO") && rotulo.contains("GOLF")){ 
+			s[0] = "leisure"; s[1] = "golf_course";
+			l.add(s);
+			return l;}
+		
 		if (rotulo.contains("ESTADIO")){ 
 			s[0] = "leisure"; s[1] = "stadium";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("POLIDEPORTIVO") || rotulo.contains("DEPORTE")){ 
+		if (rotulo.contains("POLIDEPORTIVO") || rotulo.contains("DEPORTE") || rotulo.contains("DEPORTIVO")){ 
 			s[0] = "leisure"; s[1] = "sports_centre";
 			l.add(s);
 			return l;}
@@ -396,24 +394,8 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("IGLESIA")){ 
-			s[0] = "amenity"; s[1] = "place_of_worship";
-			l.add(s);
-			s = new String[2];
-			s[0] = "religion"; s[1] = "christian";
-			l.add(s);
-			s = new String[2];
-			s[0] = "building"; s[1] = "church";
-			l.add(s);
-			return l;}
-		
 		if (rotulo.contains("BOMBEROS")){ 
 			s[0] = "amenity"; s[1] = "fire_station";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("PARQUE")){ 
-			s[0] = "leisure"; s[1] = "park";
 			l.add(s);
 			return l;}
 		
@@ -428,7 +410,6 @@ public class ShapeElemtex extends Shape {
 			return l;}
 		
 		if (rotulo.contains("GASOLINERA")){ 
-			l.remove(0);
 			s[0] = "amenity"; s[1] = "fuel";
 			l.add(s);
 			return l;}
@@ -443,24 +424,109 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
+		if (rotulo.contains("FACULTAD") || rotulo.contains("UNIVERSIDAD") || rotulo.contains("UNIVERSITARI")){ 
+			s[0] = "amenity"; s[1] = "university";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.contains("ESCOLAR") || rotulo.contains("ESCUELA") || rotulo.contains("COLEGIO") || rotulo.contains("INSTITUTO")){ 
+			s[0] = "amenity"; s[1] = "school";
+			l.add(s);
+			return l;}
+		
 		if (rotulo.contains("CENTRO") && rotulo.contains("SOCIAL")){ 
 			s[0] = "amenity"; s[1] = "social_centre";
 			l.add(s);
 			return l;}
+		
+		if (rotulo.contains("CASA") && rotulo.contains("RURAL")){ 
+			s[0] = "tourism"; s[1] = "chalet";
+			l.add(s);
+			return l;}
 			 
+		if (rotulo.contains("IGLESIA") || rotulo.contains("ERMITA")){ 
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			s = new String[2];
+			s[0] = "religion"; s[1] = "christian";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "church";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.contains("CAPILLA")){ 
+			s[0] = "historic"; s[1] = "wayside_shrine";
+			l.add(s);
+			return l;} 
+		
 		if (rotulo.contains("TALLER")){ 
 			s[0] = "shop"; s[1] = "car_repair";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("POZO")){ 
+		if (rotulo.startsWith("POZO")){ 
 			l.remove(0);
 			s[0] = "man_made"; s[1] = "water_well";
 			l.add(s);
 			return l;}
-			 
+		
+		if (rotulo.contains("DEPOSITO") || rotulo.contains("DEPÓSITO")){ 
+			l.remove(0);
+			s[0] = "man_made"; s[1] = "water_tower";
+			l.add(s);
+			return l;} 
+		
+		if (rotulo.contains("LAVADERO")){
+			l.remove(0);
+			s[0] = "amenity"; s[1] = "car_wash";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.contains("MUELLE")){
+			s[0] = "waterway"; s[1] = "dock";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.startsWith("FUENTE")){
+			l.remove(0);
+			s[0] = "amenity"; s[1] = "fountain";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.startsWith("FARO") ){ 
+			l.remove(0);
+			s[0] = "man_made"; s[1] = "lighthouse";
+			l.add(s);
+			return l;}	 
+		
+		if (rotulo.startsWith("PARQUE")){ 
+			s[0] = "leisure"; s[1] = "park";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.startsWith("PLAYA")){ 
+			s[0] = "natural"; s[1] = "beach";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.contains("CAFETERIA") || rotulo.contains("CAFETERÍA")){ 
+			s[0] = "amenity"; s[1] = "cafe";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.contains("RESTAURANTE")){ 
+			s[0] = "amenity"; s[1] = "restaurant";
+			l.add(s);
+			return l;}
+		
+		if (rotulo.startsWith("CINE")){ 
+			s[0] = "amenity"; s[1] = "cinema";
+			l.add(s);
+			return l;}
 		
 		else {
+			//System.out.println(rotuloOriginal);
 			// Ponemos un ttggss no valido para desecharlo
 			setTtggss("0");
 			s[0] = "ttggss"; s[1] = ttggss;

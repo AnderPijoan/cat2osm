@@ -82,8 +82,6 @@ public class WayOsm {
 		Collections.sort(l2);
 		
 		return l1.equals(l2);
-		
-		
 	}
 	
 	
@@ -104,6 +102,10 @@ public class WayOsm {
 	}
 	
 	
+	/** Sobreescribir el hashcode, para que compare los nodos aunque estén en otro orden
+	 * para que dos ways con los mismos nodos pero en distinta direccion se detecten como iguales.
+	 * ATENCION: ESTO PUEDE DAR PROBLEMAS EN EL FUTURO SI ALGUIEN INTENTA COMPARAR WAYS PARA OTRO USO
+	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -116,6 +118,7 @@ public class WayOsm {
 	
 	/** Sobreescribir el equals, para que compare los nodos aunque estén en otro orden
 	 * para que dos ways con los mismos nodos pero en distinta direccion se detecten como iguales.
+	 * ATENCION: ESTO PUEDE DAR PROBLEMAS EN EL FUTURO SI ALGUIEN INTENTA COMPARAR WAYS
 	 */
 	@Override
 	public boolean equals(Object obj) {
@@ -151,7 +154,9 @@ public class WayOsm {
 		
 		// Hora para el timestamp
 		Date date = new java.util.Date();
-		s = ("<way id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" uid=\"533679\" user=\"AnderPijoan\">\n");
+		//s = ("<way id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\">\n");
+		s = ("<way id=\""+ id +"\" version=\"6\">\n");
+		
 		
 		if (nodos.size()<2)
 			System.out.println("Way con menos de dos nodos.");

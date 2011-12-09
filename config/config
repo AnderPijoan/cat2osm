@@ -5,18 +5,18 @@
 ResultPath=result
 
 # Nombre para el archivo resultado
-ResultFileName=PruebasCiudadReal
+ResultFileName=PruebasRealejoAlto
 
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
 # con su nombre original y dentro de cada una sus respectivos shapefiles.
 # Para acceder a carpetas, indicar con '\\'
-UrbanoSHPPath=files\\CiudadReal\\13_900_UA_2011-09-16_SHF
-RusticoSHPPath=files\\CiudadReal\\13_900_RA_2011-09-16_SHF
+UrbanoSHPPath=files\\RealejoAlto\\38_31_UH_2011-01-01_SHF
+RusticoSHPPath=files\\RealejoAlto\\38_31_RA_2011-09-18_SHF
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
-UrbanoCATFile=files\\CiudadReal\\13_900_U_2011-05-08.CAT
-RusticoCATFile=files\\CiudadReal\\13_900_R_2011-09-17.CAT
+UrbanoCATFile=files\\RealejoAlto\\39_900_R_2011-09-17
+RusticoCATFile=files\\RealejoAlto\\39_900_R_2011-09-17
 
 # Fecha desde la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha

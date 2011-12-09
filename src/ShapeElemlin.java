@@ -83,7 +83,7 @@ public class ShapeElemlin extends Shape {
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 		s = new String[2];
-		s[0] = "add:country"; s[1] = "ES";
+		s[0] = "addr:country"; s[1] = "ES";
 		l.add(s);
 		
 		return l;
@@ -128,8 +128,6 @@ public class ShapeElemlin extends Shape {
 		if (ttggss.equals("037102"))
 			return true;
 		if (ttggss.equals("167111"))
-			return true;
-		if (ttggss.equals("167201"))
 			return true;
 		else
 			return false;
