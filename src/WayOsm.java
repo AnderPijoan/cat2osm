@@ -1,21 +1,19 @@
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 
 public class WayOsm {
 
 	private List<Long> nodos; // Nodos que componen ese way
-	private List<Long> shapes; // Lista de Shapes a los que pertenece, para la simplificacion de ways
+	private List<String> shapes; // Lista de Shapes a los que pertenece, para la simplificacion de ways
 
 	public WayOsm(List<Long> l){
 		if (l == null)
 			this.nodos = new ArrayList<Long>();
 		else
 			this.nodos = l;
-		shapes = new ArrayList<Long>();
+		shapes = new ArrayList<String>();
 	}
 	
 	
@@ -42,20 +40,20 @@ public class WayOsm {
 	}
 	
 	
-	public void setShapes(List<Long> s){
+	public void setShapes(List<String> s){
 		shapes = s;
 	}
 	
 	
-	public List<Long> getShapes(){
+	public List<String> getShapes(){
 		return shapes;
 	}
 	
 	
-	public void addShapes(List<Long> s){
-		for (Long l : s)
-			if (!shapes.contains(l))
-				shapes.add(l);
+	public synchronized void addShapes(List<String> shapes){
+		for (String s : shapes)
+			if (!this.shapes.contains(s))
+				this.shapes.add(s);
 	}
 	
 	
@@ -64,7 +62,7 @@ public class WayOsm {
 	 * @param s Lista de shapes del otro WayOsm a comparar
 	 * @return boolean de si pertencen a los mismos o no.
 	 */
-	public boolean sameShapes(List<Long> s){
+	public synchronized boolean sameShapes(List<String> s){
 		
 		if (this.shapes == null || s == null)
 			return false;
@@ -72,12 +70,12 @@ public class WayOsm {
 		if (this.shapes.size() != s.size())
 			return false; 
 				
-		List<Long> l1 = new ArrayList<Long>();
-		List<Long> l2 = new ArrayList<Long>();
-		for (Long l : this.shapes)
+		List<String> l1 = new ArrayList<String>();
+		List<String> l2 = new ArrayList<String>();
+		for (String l : this.shapes)
 			l1.add(l);
 		Collections.sort(l1);
-		for (Long l : s)
+		for (String l : s)
 			l2.add(l);
 		Collections.sort(l2);
 		
@@ -109,8 +107,11 @@ public class WayOsm {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((sortNodos() == null) ? 0 :sortNodos().hashCode());
+		int result = 17;
+		for (long l : sortNodos())
+			result = result * prime +  (int) (l^(l>>>32));
+		
+//		result = prime * result + ((sortNodos() == null) ? 0 :sortNodos().hashCode());
 		
 		return result;
 	}
@@ -152,25 +153,23 @@ public class WayOsm {
 	public String printWay(Long id){
 		String s = null;
 		
-		// Hora para el timestamp
-		Date date = new java.util.Date();
-		//s = ("<way id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\">\n");
-		s = ("<way id=\""+ id +"\" version=\"6\">\n");
-		
-		
+		// Si un way no tiene mas de dos nodos, es incorrecto
 		if (nodos.size()<2)
-			System.out.println("Way con menos de dos nodos.");
+			System.out.println("Way id="+ id +" con menos de dos nodos. No se imprimira.");
+		else {
+		s = ("<way id=\""+ id +"\" version=\"6\">\n");
 		
 		// Referencias a los nodos
 		for (int x = 0; x < nodos.size(); x++)
 			s += ("<nd ref=\""+ nodos.get(x) +"\"/>\n");
 		
-		if (shapes != null)
+		// Mostrar los shapes que utilizan este way, para debugging
+		if (shapes != null && Config.get("PrintShapeIds").equals("1"))
 			for (int x = 0; x < shapes.size(); x++)
-				s += "<tag k=\"shape"+x+"\" v=\""+shapes.get(x)+"\"/>\n";
+				s += "<tag k=\"CAT2OSMSHAPEID"+x+"\" v=\""+shapes.get(x)+"\"/>\n";
 		
 		s += ("</way>\n");
-		
+		}
 		return s;
 	}
 	

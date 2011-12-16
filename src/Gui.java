@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -36,17 +38,13 @@ public class Gui extends JFrame {
 						filesU[i].getName().toUpperCase().equals("PARCELA") ||
 						filesU[i].getName().toUpperCase().equals("SUBPARCE"))
 					try{
-
-						System.out.println("Leyendo "+ filesU[i].getName() +" Urbano.");
-
+						System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo "+ filesU[i].getName() +" Urbano.");
 						parsers.add(new ShapeParser("UR", new File(filesU[i] + "\\" + filesU[i].getName() + ".SHP"), utils, shapes));
-						
 					}
 			catch(Exception e){}
 			}
 		else
-			System.out.println("UrbanoSHPPath no es un directorio valido.");
-
+			System.out.println("["+new Timestamp(new Date().getTime())+"] UrbanoSHPPath no es un directorio valido.");
 
 		// Recorrer los directorios Rusticos
 		File dirR = new File (Config.get("RusticoSHPPath"));
@@ -63,17 +61,15 @@ public class Gui extends JFrame {
 						filesR[i].getName().toUpperCase().equals("PARCELA") ||
 						filesR[i].getName().toUpperCase().equals("SUBPARCE"))
 					try{
-
-						System.out.println("Leyendo "+ filesR[i].getName() +" Urbano.");
-
+						System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo "+ filesR[i].getName() +" Urbano.");
 						parsers.add(new ShapeParser("RU", new File(filesR[i] + "\\" + filesR[i].getName() + ".SHP"), utils, shapes));
-
 					}
 			catch(Exception e){}
 		}
 		else
-			System.out.println("RusticoSHPPath no es un directorio valido.");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] RusticoSHPPath no es un directorio valido.");
 
+		
 		for (ShapeParser sp : parsers)
 			sp.join();
 
@@ -81,45 +77,46 @@ public class Gui extends JFrame {
 		// No todos los shapefiles tienen referencia catastral por lo que algunos
 		// no hay forma de relacionarlos con los registros de catastro.
 		try {
-		System.out.println("Leyendo CAT Urbano.");
-		catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
-		System.out.println("Leyendo CAT Rustico.");
-		catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
-		}catch(Exception e){System.out.println("Imposible leer cat");}
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo CAT Urbano.");
+			catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo CAT Rustico.");
+			catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
+		}catch(Exception e)
+		{
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Imposible leer cat");
+		}
 
 		// Anadimos si es posible tags de los Elemtex a las parcelas.
 		// Los Elemtex tienen informacion que puede determinar con mas exactitud detalles
 		// de la parcela sobre la que se encuentran.
 		if (Config.get("ElemtexAConstru").equals("1")){
-			System.out.println("TRASPASANDO posibles tags de Elemtex a Constru.");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] TRASPASANDO posibles tags de Elemtex a Constru.");
 			shapes = catastro.addElemtexLandusetoConstru(shapes);
 		}
 		
 		// Simplificamos los ways
-		System.out.println("SIMPLIFICANDO vias.");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] SIMPLIFICANDO vias.");
 		shapes = catastro.simplifyWays(shapes);
 
 		
 		// Comprobamos que no haya nodos finales sobre un way distinto ya que podrian ser
 		// casos de shapes no conectados correctamente
 		if (Config.get("FixNodesOnWays").equals("1")){
-			System.out.println("COMPROBANDO nodos sueltos sobre vias.");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] COMPROBANDO nodos sueltos sobre vias.");
 			shapes = catastro.fixNodesOnWays(shapes);
 		}
 
 		// Escribir los datos
-		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalNodes().size() +" NODOS");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo NODOS");
 		catastro.printNodes( Cat2Osm.utils.getTotalNodes());
-		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalWays().size() +" WAYS");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo WAYS");
 		catastro.printWays(Cat2Osm.utils.getTotalWays());
-		System.out.println("Escribiendo "+ Cat2Osm.utils.getTotalRelations().size() +" RELATIONS");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo RELATIONS");
 		catastro.printRelations( Cat2Osm.utils.getTotalRelations());
-		System.out.println("JUNTANDO los tres archivos");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] JUNTANDO los tres archivos");
 		catastro.joinFiles(Config.get("ResultFileName"));
-		System.out.println("TERMINADO");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] TERMINADO");
 
 	}
-
-
 
 }

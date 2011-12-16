@@ -11,7 +11,7 @@ import com.vividsolutions.jts.geom.Polygon;
 
 public class ShapeParcela extends Shape {
 	
-	private Long shapeId = (long) 0; // Id del shape
+	private String shapeId = null; // Id del shape PARCELA+long
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
 	private List<List<Long>> nodes; //[0] Outer, [1..N] inner
 	private List<List<Long>> ways; //[0] Outer, [1..N] inner
@@ -27,7 +27,7 @@ public class ShapeParcela extends Shape {
 
 		super(f);
 
-		shapeId = super.newShapeId();
+		shapeId = "PARCELA" + super.newShapeId();
 		
 		this.poligons = new ArrayList<LineString>();
 
@@ -52,7 +52,7 @@ public class ShapeParcela extends Shape {
 			}
 		}
 		else 
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile PARCELA");
+			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile PARCELA");
 
 		// Inicializamos las listas
 		this.nodes = new ArrayList<List<Long>>();
@@ -75,13 +75,8 @@ public class ShapeParcela extends Shape {
 	}
 
 
-	public Long getShapeId(){
+	public String getShapeId(){
 		return shapeId;
-	}
-	
-	
-	public String getShapeIdString(){
-		return shapeId.toString();
 	}
 	
 	
@@ -161,7 +156,7 @@ public class ShapeParcela extends Shape {
 		}
 
 		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeIdString();
+		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		l.add(s);
 		
 		s = new String[2];

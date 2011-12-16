@@ -92,9 +92,7 @@ public abstract class Shape {
 	}
 	
 	
-	public abstract Long getShapeId();
-	
-	public abstract String getShapeIdString();
+	public abstract String getShapeId();
 	
 	public abstract List<String[]> getAttributes();
 
@@ -124,6 +122,11 @@ public abstract class Shape {
 	
 	public abstract boolean shapeValido();
 
+	
+	/** Traduce el tipo de via
+	 * @param codigo Codigo de via
+	 * @return Nombre del tipo de via
+	 */
 	public static String nombreTipoViaParser(String codigo){
 		
 		if (codigo.toUpperCase().equals("CL"))return "Calle";
@@ -205,6 +208,12 @@ public abstract class Shape {
 		return codigo;
 	}
 	
+	
+	/** Traduce el ttggss de Elemlin y Elempun. Elemtex tiene en su clase su propio parser
+	 * ya que necesita mas datos suyos propios.
+	 * @param ttggss Atributo ttggss
+	 * @return Lista de los tags que genera
+	 */
 	public List<String[]> ttggssParser(String ttggss){
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
@@ -595,7 +604,10 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		else{
-			s[0] = "ttggss"; s[1] =ttggss;
+			s[0] = "fixme"; s[1] = "ttggss="+ttggss;
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Documentar si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Textos_en_Elemtex.shp";
 			l.add(s);
 			return l;
 		}
@@ -603,7 +615,7 @@ public abstract class Shape {
 	}
 
 	
-	/** Elimina los puntos  '.' en un String
+	/** Elimina los puntos '.' y espacios en un String
 	 * @param s String en el cual eliminar los puntos
 	 * @return String sin los puntos
 	 */

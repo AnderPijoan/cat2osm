@@ -4,35 +4,36 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.vividsolutions.jts.geom.Coordinate;
 
 
 public class Cat2OsmUtils {
 
-	private static long idnode = -1;    // Comienzo de id de nodos
-	private static long idway = -1;     // Comienzo de id de ways
-	private static long idrelation = -1; // Comienzo de id de relations
+	private volatile static long idnode = -1;    // Comienzo de id de nodos
+	private volatile static long idway = -1;     // Comienzo de id de ways
+	private volatile static long idrelation = -1; // Comienzo de id de relations
 	// Lista de nodos (para evitar repetidos)
-	private final Map <NodeOsm, Long> totalNodes = new HashMap <NodeOsm, Long>();
+	private final ConcurrentHashMap <NodeOsm, Long> totalNodes = new ConcurrentHashMap <NodeOsm, Long>();
 	// Listaa de ways (para manejar los que se comparten)
-	private final Map <WayOsm, Long> totalWays = new HashMap <WayOsm, Long>();
+	private final ConcurrentHashMap <WayOsm, Long> totalWays = new ConcurrentHashMap <WayOsm, Long>();
 	// Listaa de relations
-	private final Map <RelationOsm, Long> totalRelations = new HashMap <RelationOsm, Long>();
+	private final ConcurrentHashMap <RelationOsm, Long> totalRelations = new ConcurrentHashMap <RelationOsm, Long>();
 	
-	public synchronized Map<NodeOsm, Long> getTotalNodes() {
+	public synchronized ConcurrentHashMap<NodeOsm, Long> getTotalNodes() {
 		return totalNodes;
 	}
 	
-	public void addNode(NodeOsm n, Long idnode){
+	public synchronized void addNode(NodeOsm n, Long idnode){
 		totalNodes.put(n, idnode);
 	}
 	
-	public synchronized Map<WayOsm, Long> getTotalWays() {
+	public synchronized ConcurrentHashMap<WayOsm, Long> getTotalWays() {
 		return totalWays;
 	}
 	
-	public void addWay(WayOsm w, Long idway){
+	public synchronized void addWay(WayOsm w, Long idway){
 		totalWays.put(w, idway);
 	}
 	
@@ -42,7 +43,7 @@ public class Cat2OsmUtils {
 	 * @param w Way a borrar
 	 */
 	@SuppressWarnings("rawtypes")
-	public void deleteWayFromRelations(WayOsm w){
+	public synchronized void deleteWayFromRelations(WayOsm w){
 		Iterator<Entry<RelationOsm, Long>> it = totalRelations.entrySet().iterator();
 		
 		while(it.hasNext()){
@@ -53,13 +54,13 @@ public class Cat2OsmUtils {
 	}
 	
 	
-	/** Junta dos ways en uno. Hay que tener en cuenta los 5 casos que se pueden
+	/** Junta dos ways en uno.
 	 * dar.
 	 * @param w1 Way1 Dependiendo del caso se eliminara un way o el otro
 	 * @param w2 Way2
 	 * @return long Id de way que hay que eliminar de los shapes, porque se ha juntado al otro
 	 */
-	public WayOsm joinWays(WayOsm w1, WayOsm w2){
+	public synchronized WayOsm joinWays(WayOsm w1, WayOsm w2){
 		
 		if ( !w1.getNodes().isEmpty() && !w2.getNodes().isEmpty()){
 			
@@ -99,67 +100,12 @@ public class Cat2OsmUtils {
 				
 				// Es igual que el Caso1 pero cambiados de orden.
 				return joinWays(w2, w1);
-			}
-			
-			// Caso3: w1.ultimo = w2.ultimo
-			else if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(w2.getNodes().size()-1))  && totalWays.get(w1) != null && totalWays.get(w2) != null){
-				
-				System.out.println("CASO3");
-				/*
-				long l2 = totalWays.get(w2);
-				
-				// Copiamos la lista de nodos del way que eliminaremos
-				List<Long> nodes = new ArrayList<Long>();
-				for (Long lo : w2.getNodes())
-					nodes.add(lo);
-				
-				// Eliminamos el nodo que comparten del way2
-				nodes.remove(w2.getNodes().get(w2.getNodes().size()-1));
-				
-				// Se van anadiendo al final del way1 los nodos del way 2 pero ordenados de atras
-				// a adelante
-				for(int x = nodes.size()-1; x > -1; x--)
-					w1.getNodes().add(nodes.get(x));
-				
-				// Borramos el way que cuyos nodos hemos utilizado
-				totalWays.remove(w2);
-				deleteWayFromRelations(w2);
-				
-				return w2;*/
-			/*}
-			
-			// Caso4: w1.primero = w2.primero
-			else if (w1.getNodes().get(0).equals(w2.getNodes().get(0))  && totalWays.get(w1) != null && totalWays.get(w2) != null){	
-				long l = totalWays.get(w2);
-				
-				System.out.println("CASO4");
-				/*
-				// Copiamos la lista de nodos del way que eliminaremos
-				List<Long> nodes = new ArrayList<Long>();
-				for (Long lo : w2.getNodes())
-					nodes.add(lo);
-				
-				// Eliminamos el nodo que comparten del way2
-				nodes.remove(w2.getNodes().get(0));
-				
-				// Se van anadiendo al principio del way1 los nodos del way 2 en orden normal
-				for(int x = 0; x < nodes.size(); x++){
-					System.out.println("nodo "+nodes.get(x));
-					w1.getNodes().add(0,nodes.get(x));
-				}
-						
-				System.out.println("Despues "+w1.getNodes());
-				
-				deleteWay(w2);
-				return l;
-				return null;*/
-			}
-			
+			}			
 		}
 		return null;
 	}
 	
-	public synchronized Map<RelationOsm, Long> getTotalRelations() {
+	public synchronized ConcurrentHashMap<RelationOsm, Long> getTotalRelations() {
 		return totalRelations;
 	} 
 	
@@ -191,7 +137,7 @@ public class Cat2OsmUtils {
 			NodeOsm n = new NodeOsm(coor);
 			if (tags != null)
 				n.addTags(tags);
-			totalNodes.put(n, idnode);
+			totalNodes.putIfAbsent(n, idnode);
 			return idnode;
 		}
 	}
@@ -200,11 +146,11 @@ public class Cat2OsmUtils {
 	/** Mira si existe un way con los mismos nodos y en ese caso añade
 	 * los tags, de lo contrario crea uno. Despues devuelve el id
 	 * @param nodes Lista de nodos
-	 * @param tags Lista de los shapes a los que pertenecera
+	 * @param shapes Lista de los shapes a los que pertenecera
 	 * @return devuelve el id del way creado o el del que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long getWayId(List<Long> nodes, List<Long> shapes ){
+	public synchronized long getWayId(List<Long> nodes, List<String> shapes ){
 
 		Long id = null;
 		if (!totalWays.isEmpty())
@@ -220,7 +166,7 @@ public class Cat2OsmUtils {
 			WayOsm w = new WayOsm(nodes);
 			if (shapes != null)
 				w.addShapes(shapes);
-			totalWays.put(w, idway);
+			totalWays.putIfAbsent(w, idway);
 			return idway;
 		}
 	}
@@ -251,7 +197,7 @@ public class Cat2OsmUtils {
 			RelationOsm r = new RelationOsm(ids,types,roles);
 			if (tags != null)
 				r.addTags(tags);
-			totalRelations.put(r, idrelation);
+			totalRelations.putIfAbsent(r, idrelation);
 			return idrelation;
 		}
 	}

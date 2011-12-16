@@ -11,7 +11,7 @@ import com.vividsolutions.jts.geom.Polygon;
 
 public class ShapeConstru extends Shape {
 
-	private Long shapeId = (long) 0; // Id del shape
+	private String shapeId = null; // Id del shape CONSTRU+long
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
 	private List<List<Long>> nodes; //[0] Outer, [1..N] inner
 	private List<List<Long>> ways; //[0] Outer, [1..N] inner
@@ -23,8 +23,8 @@ public class ShapeConstru extends Shape {
 	public ShapeConstru(SimpleFeature f) {
 		super(f);
 
-		shapeId = super.newShapeId();
-		
+		shapeId = "CONSTRU" + super.newShapeId();
+
 		this.poligons = new ArrayList<LineString>();
 
 		// Constru.shp trae la geometria en formato MultiPolygon
@@ -48,7 +48,7 @@ public class ShapeConstru extends Shape {
 			}
 		}
 		else
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile CONSTRU");
+			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile CONSTRU");
 
 		// Inicializamos las listas
 		this.nodes = new ArrayList<List<Long>>();
@@ -72,45 +72,39 @@ public class ShapeConstru extends Shape {
 		}*/
 	}
 
-	
-	public Long getShapeId(){
+	public String getShapeId(){
 		return shapeId;
 	}
-	
-	
-	public String getShapeIdString(){
-		return shapeId.toString();
-	}
-	
-	
+
+
 	public void addNode(int pos, long nodeId){
 		if (poligons.size()>pos)
 			nodes.get(pos).add(nodeId);
 	}
-	
-	
+
+
 	public void addWay(int pos, long wayId){
 		if (poligons.size()>pos && !ways.get(pos).contains(wayId))
 			ways.get(pos).add(wayId);
 	}
-	
-	
+
+
 	public synchronized void deleteWay(int pos, long wayId){
 		if (poligons.size()>pos)
 			ways.get(pos).remove(wayId);
 	}
-	
-	
+
+
 	public void setRelation(long relationId){
 		relation = relationId;
 	}
-	
-	
+
+
 	public List<LineString> getPoligons(){
 		return poligons;
 	}
-	
-	
+
+
 	/** Devuelve la lista de ids de nodos del poligono en posicion pos
 	 * @param pos posicion que ocupa el poligono en la lista
 	 * @return Lista de ids de nodos del poligono en posicion pos
@@ -121,8 +115,8 @@ public class ShapeConstru extends Shape {
 		else
 			return null;
 	}
-	
-	
+
+
 	/** Devuelve la lista de ids de ways
 	 * del poligono en posicion pos
 	 * @param pos posicion que ocupa el poligono en la lista
@@ -134,8 +128,8 @@ public class ShapeConstru extends Shape {
 		else
 			return null;
 	}
-	
-	
+
+
 	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
 	 * @param shp Shapefile a comprobar
 	 * @return boolean Devuelve si se ha creado entre fechaAlta y fechaBaja o no
@@ -144,90 +138,371 @@ public class ShapeConstru extends Shape {
 		return (fechaAlta >= fechaDesde && fechaAlta < fechaHasta && fechaBaja >= fechaHasta);
 	}
 
-	
+
 	public synchronized Long getRelationId(){
 		return relation;
 	}
-	
-	
+
+
 	public ShapeAttribute getAttribute(int x){	
 		return atributos.get(x);
 	}
-	
-	
+
+
 	/** Devuelve los atributos del shape
 	 * @return Lista de atributos
 	 */
 	public List<String[]> getAttributes(){
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
-		
+
 		if (refCatastral != null){
-		s[0] = "catastro:ref"; s[1] = refCatastral;
-		l.add(s);
+			s[0] = "catastro:ref"; s[1] = refCatastral;
+			l.add(s);
 		}
-		
+
 		if (constru != null){
-			s = new String[2];
-			s[0] = "CONSTRU"; s[1] = constru;
+			l.addAll(construParser(constru));
+		}
+
+		s = new String[2];
+		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
+		l.add(s);
+
+		s = new String[2];
+		s[0] = "addr:country"; s[1] = "ES";
+		l.add(s);
+
+		s = new String[2];
+		s[0] = "source"; s[1] = "catastro";
+		l.add(s);
+
+		return l;
+	}
+
+
+	public String getRefCat(){
+		return refCatastral;
+	}
+
+
+	public String getConstru() {
+		return constru;
+	}
+
+
+	public Coordinate[] getCoordenadas(int i){
+		return poligons.get(i).getCoordinates();
+	}
+
+
+	public Coordinate getCoor(){
+		return null;
+	}
+
+
+	public String getTtggss() {
+		return null;
+	}
+
+
+	public boolean shapeValido (){
+		return true;
+	}
+
+	/** Parsea el atributo constru entero, este se compone de distintos
+	 * elementos separados por el caracter '+'
+	 * @param constru Atributo constru
+	 * @return Lista con los tags que genera
+	 */
+	public List<String[]> construParser(String constru){
+
+		List<String[]> l = new ArrayList<String[]>();
+		constru = constru.trim();
+		String[] construs = constru.split("\\+");
+
+		for (String s: construs)
+			l.addAll(construElemParser(s.toUpperCase()));
+
+		return l;
+	}
+
+	/** Parsea cada elemento que ha sido separado
+	 * @param elem Elemto a parsear
+	 * @return Lista con los tags que genera cada elemento
+	 */
+	private List<String[]> construElemParser(String elem){
+
+		List<String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
+
+		if (elem.equals("B")){
+			return l;
+		}
+		if (elem.equals("T")){
+			return l;
+		}
+		if (elem.equals("TZA")){
+			return l;
+		}
+		if (elem.equals("POR")){
+			return l;
+		}
+		if (elem.equals("SOP")){
+			return l;
+		}
+		if (elem.equals("PJE")){
+			return l;
+		}
+		if (elem.equals("MAR")){
+			return l;
+		}
+		if (elem.equals("P")){
+			return l;
+		}
+		if (elem.equals("CO")){
+			s[0] = "building"; s[1] = "warehouse";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
-			s = new String[2];
-			s[0] = "type"; s[1] = "multipolygon";
+			return l;
+		}
+		if (elem.equals("EPT")){
+			return l;
+		}
+		if (elem.equals("SS")){
+			return l;
+		}
+		if (elem.equals("ALT")){
+			return l;
+		}
+		if (elem.equals("PI")){
+			s[0] = "leisure"; s[1] = "swimming_pool";
 			l.add(s);
+			return l;
+		}
+		if (elem.equals("TEN")){
+			s[0] = "leisure"; s[1] = "pitch";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("ETQ")){
+			return l;
+		}
+		if (elem.equals("SILO")){
+			s[0] = "man_made"; s[1] = "silo";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("SUELO") || elem.equals("TERRENY") || elem.equals("SOLAR")){
+			s[0] = "landuse"; s[1] = "greenfield";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("PRG")){
+			return l;
+		}
+		if (elem.equals("DEP")){
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("ESC")){
+			s[0] = "highway"; s[1] ="steps";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("TRF")){
+			s[0] = "power"; s[1] ="sub_station";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("JD")){
+			s[0] = "leisure"; s[1] = "garden";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("YJD")){
+			s[0] = "leisure"; s[1] = "garden";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("FUT")){
+			s[0] = "leisure"; s[1] = "stadium";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("VOL")){
+			return l;
+		}
+		if (elem.equals("ZD")){
+			s[0] = "leisure"; s[1] = "sports_centre";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("RUINA")){
+			s[0] = "ruins"; s[1] = "yes";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("CONS")){
+			s[0] = "landuse"; s[1] = "construction";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("PRESA")){
+			s[0] = "waterway"; s[1] = "dam";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("ZBE")){
+			return l;
+		}
+		if (elem.equals("ZPAV")){
+			return l;
+		}
+		if (elem.equals("GOLF")){
+			s[0] = "leisure"; s[1] = "golf_course";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("CAMPING")){
+			s[0] = "tourism"; s[1] = "camp_site";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("HORREO")){
+			return l;
+		}
+		if (elem.equals("PTLAN")){
+			s[0] = "man_made"; s[1] = "pier";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		if (elem.equals("DARSENA")){
+			s[0] = "waterway"; s[1] = "dock";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			return l;
+		}
+		else {
+			l.addAll(numRomanoParser(elem));
+		}
+
+		return l;
+
+	}
+
+	/** Parsea los numeros romanos del atributo constru
+	 * @param elem numero romano a parsear
+	 * @return equivalente en numero decimal
+	 */
+	public List<String[]> numRomanoParser(String elem){
+
+		List<String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
+		String numRomano = elem;
+		int sumaTotal = 0;
+		boolean negativo = numRomano.startsWith("-");
+
+		for (int x = 0; x < numRomano.length()-2; x++){
+			if (numRomano.substring(x, x+3).toUpperCase().equals("III")){
+				sumaTotal += 3;
+				numRomano = numRomano.replace("III", "");
 			}
-		
-		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeIdString();
+			else if (numRomano.substring(x, x+3).toUpperCase().equals("XXX")){
+				sumaTotal += 30;
+				numRomano = numRomano.replace("XXX", "");
+			}
+			else if (numRomano.substring(x, x+3).toUpperCase().equals("CCC")){
+				sumaTotal += 300;
+				numRomano = numRomano.replace("CCC", "");
+			}
+			else if (numRomano.substring(x, x+3).toUpperCase().equals("MMM")){
+				sumaTotal += 3000;
+				numRomano = numRomano.replace("MMM", "");
+			}
+		}
+
+		for (int x = 0; x < numRomano.length()-1; x++){
+			if (numRomano.substring(x, x+2).toUpperCase().equals("IV")){
+				sumaTotal += 4;				
+				numRomano = numRomano.replace("IV", "");
+			}
+			else if (elem.substring(x, x+2).toUpperCase().equals("IX")){
+				sumaTotal += 9;				
+				numRomano = numRomano.replace("IX", "");
+			}
+			else if (elem.substring(x, x+2).toUpperCase().equals("XL")){
+				sumaTotal += 40;				
+				numRomano = numRomano.replace("XL", "");
+			}
+			else if (numRomano.substring(x, x+2).toUpperCase().equals("XC")){
+				sumaTotal += 90;				
+				numRomano = numRomano.replace("XC", "");
+			}
+			else if (numRomano.substring(x, x+2).toUpperCase().equals("CD")){
+				sumaTotal += 400;				
+				numRomano = numRomano.replace("CD", "");
+			}
+			else if (numRomano.substring(x, x+2).toUpperCase().equals("CM")){
+				sumaTotal += 900;				
+				numRomano = numRomano.replace("CM", "");
+			}
+		}
+
+		for (int x = 0; x < numRomano.length(); x++){
+			if (numRomano.substring(x, x+1).toUpperCase().equals("I"))
+				sumaTotal += 1;
+			else if (numRomano.substring(x, x+1).toUpperCase().equals("V"))
+				sumaTotal += 5;
+			else if (numRomano.substring(x, x+1).toUpperCase().equals("X"))
+				sumaTotal += 10;
+			else if (numRomano.substring(x, x+1).toUpperCase().equals("L"))
+				sumaTotal += 50;
+			else if (numRomano.substring(x, x+1).toUpperCase().equals("C"))
+				sumaTotal += 100;
+			else if (numRomano.substring(x, x+1).toUpperCase().equals("D"))
+				sumaTotal += 500;
+			else if (numRomano.substring(x, x+1).toUpperCase().equals("M"))
+				sumaTotal += 1000;
+		}
+
+		if (negativo)
+			sumaTotal = (0 - sumaTotal);
+
+		s[0] = "CONSTRUALTURAS"; s[1] = sumaTotal+"";
 		l.add(s);
-		
-		s = new String[2];
-		s[0] = "addr:country"; s[1] = "ES";
-		l.add(s);
-		
-		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
-		
-		s = new String[2];
-		s[0] = "type"; s[1] = "multipolygon";
-		l.add(s);
-		
 		return l;
 	}
-	
-	
-	public String getRefCat(){
-		return refCatastral;
-	}
-	
-	
-	public String getConstru() {
-		return constru;
-	}
-	
-	
-	public Coordinate[] getCoordenadas(int i){
-		return poligons.get(i).getCoordinates();
-	}
-	
-	
-	public Coordinate getCoor(){
-		return null;
-	}
-	
-	
-	public String getTtggss() {
-		return null;
-	}
-	
-	
-	public boolean shapeValido (){
-		return true;
-	}
-	
+
 }
 
 

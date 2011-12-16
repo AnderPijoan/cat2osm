@@ -1,6 +1,4 @@
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -32,7 +30,7 @@ public class NodeOsm {
 
 
 	@Override
-	public boolean equals(Object obj) {
+	public synchronized boolean equals(Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -81,7 +79,8 @@ public class NodeOsm {
 			for (int x = 0; x < tags.size(); x++){
 
 				boolean encontrado = false;
-
+				tags.get(x)[1] = tags.get(x)[1].replaceAll("\"", "");
+				
 				for (int y = 0; !encontrado && y < this.tags.size(); y++)
 					if (this.tags.get(y)[0].equals(tags.get(x)[0])){
 						this.tags.get(y)[1] = tags.get(x)[1];
@@ -98,6 +97,7 @@ public class NodeOsm {
 			this.tags = new ArrayList<String[]>();
 		
 		boolean encontrado = false;
+		tag[1] = tag[1].replaceAll("\"", "");
 		
 		for (int x = 0; !encontrado && x < this.tags.size(); x++)
 			if (this.tags.get(x)[0].equals(tag[0])){
@@ -119,13 +119,11 @@ public class NodeOsm {
 	 * @param id Id del nodo
 	 * @param huso Huso geografico para la conversion UTM a Lat/Long
 	 * @return Devuelve en un String el nodo listo para imprimir
+	 * @throws UnsupportedEncodingException 
 	 */
 	public String printNode(Long id){
 		String s = null;
 			
-		// Hora para el timestamp
-		Date date = new java.util.Date();
-		//s = ("<node id=\""+ id +"\" version=\"6\" timestamp=\""+ new Timestamp(date.getTime()) +"\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
 		s = ("<node id=\""+ id +"\" version=\"6\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
 		
 		

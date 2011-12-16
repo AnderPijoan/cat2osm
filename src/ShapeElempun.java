@@ -10,7 +10,7 @@ import com.vividsolutions.jts.geom.Point;
 
 public class ShapeElempun extends Shape {
 	
-	private Long shapeId = (long) 0; // Id del shape
+	private String shapeId = null; // Id del shape ELEMPUN+long
 	private Coordinate coor;
 	private Long nodo;
 	private String ttggss; // Campo TTGGSS solo en Elempun.shp
@@ -20,7 +20,7 @@ public class ShapeElempun extends Shape {
 		
 		super(f);
 
-		shapeId = super.newShapeId();
+		shapeId = "ELEMPUN" + super.newShapeId();
 		
 		// Elempun trae la geometria en formato Point
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.Point")){
@@ -30,7 +30,7 @@ public class ShapeElempun extends Shape {
 			coor = p.getCoordinate();
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMPUN");
+			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMPUN");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
@@ -45,15 +45,10 @@ public class ShapeElempun extends Shape {
 	}
 
 	
-	public Long getShapeId(){
+	public String getShapeId(){
 		return shapeId;
 	}
 	
-	
-	public String getShapeIdString(){
-		return shapeId.toString();
-	}
-
 	
 	public ShapeAttribute getAttribute(int x){	
 		return atributos.get(x);

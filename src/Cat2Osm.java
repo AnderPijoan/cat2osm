@@ -1,16 +1,17 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
@@ -259,7 +260,7 @@ public class Cat2Osm {
 								// Borramos el way que no se va a usar de los shapes
 								for (int shapeIds = 0; shapeIds < removeWay.getShapes().size(); shapeIds++){
 
-									long shapeId = removeWay.getShapes().get(shapeIds);
+									String shapeId = removeWay.getShapes().get(shapeIds);
 
 									for (Shape s : shapes)
 										if (s.getShapeId() == shapeId)
@@ -401,13 +402,14 @@ public class Cat2Osm {
 		new File(path + "\\"+ filename +".osm").delete();
 
 		// Archivo al que se le concatenan los nodos, ways y relations
-		FileWriter fstreamOsm = new FileWriter(path + "\\" + filename +".osm", true);
-		BufferedWriter outOsm = new BufferedWriter(fstreamOsm);
+		String fstreamOsm = path + "\\" + filename +".osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outOsm = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
 
 		// Juntamos los archivos en uno, al de los nodos le concatenamos el de ways y el de relations
 		// Cabecera del archivo Osm
 		outOsm.write("<?xml version='1.0' encoding='UTF-8'?>\n" +
-				"<osm version=\"0.6\" generator=\"cat-2-osm\" >\n");	
+				"<osm version=\"0.6\" generator=\"cat2osm\" >\n");	
 
 		// Concatenamos todos los archivos
 		String str;
@@ -950,115 +952,103 @@ public class Cat2Osm {
 	}
 
 
+	/** Traduce el codigo de uso de inmueble que traen los .cat a sus tags en OSM
+	 * Como los cat se leen despues de los shapefiles, hay tags que los shapefiles traen
+	 * mas concretos, que esto los machacaria. Es por eso que si al tag le ponemos un '*'
+	 * por delante, comprueba que no exista ese tag antes de meterlo. En caso de existir
+	 * dejaria el que ya estaba.
+	 * @param codigo Codigo de uso de inmueble
+	 * @return Lista de tags que genera
+	 */
 	public static List<String[]> usoInmueblesParser(String codigo){
 		List<String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
 
 		switch (codigo.charAt(0)){
 		case 'A':{
-			String[] s = {"building","warehouse"};
+			s[0] = "building"; s[1] = "warehouse";
 			l.add(s);
 			s = new String[2];
-			s[0] =  "landuse"; s[1] = "industrial";
+			s[0] =  "*landuse"; s[1] = "industrial";
 			l.add(s);
 			return l;}
 		case 'V':{
-			String[] s = {"building","residential"};
-			l.add(s);
-			s = new String[2];
-			s[0] =  "landuse"; s[1] = "residential";
+			s[0] = "*landuse"; s[1] = "residential";
 			l.add(s);
 			return l;}
 		case 'I':{
-			String[] s = {"building","industrial"};
-			l.add(s);
-			s = new String[2];
-			s[0] =  "landuse"; s[1] = "industrial";
+			s[0] = "*landuse"; s[1] = "industrial";
 			l.add(s);
 			return l;}
 		case 'O':{
-			String[] s = {"building","office"};
-			l.add(s);
-			s = new String[2];
-			s[0] =  "landuse"; s[1] = "office";
+			s[0] = "*landuse"; s[1] = "commercial";
 			l.add(s);
 			return l;}
 		case 'C':{
-			String[] s = {"building","commercial"};
-			l.add(s);
-			s = new String[2];
-			s[0] =  "landuse"; s[1] = "commercial";
+			s[0] = "*landuse"; s[1] = "retail";
 			l.add(s);
 			return l;}
 		case 'K':{
-			String[] s = {"landuse","recreation_ground"};
+			s[0] = "*landuse"; s[1] = "recreation_ground";
 			l.add(s);
 			s = new String[2];
-			s[0] =  "recreation_type"; s[1] = "sports";
+			s[0] = "recreation_type"; s[1] = "sports";
 			l.add(s);
 			return l;}
 		case 'T':{
-			String[] s = {"landuse","recreation_ground"};
+			s[0] = "*landuse"; s[1] = "recreation_ground";
 			l.add(s);
 			s = new String[2];
-			s[0] =  "recreation_type"; s[1] = "entertainment";
+			s[0] = "recreation_type"; s[1] = "entertainment";
 			l.add(s);
 			return l;}
 		case 'G':{
-			String[] s = {"building","retail"};
-			l.add(s);
-			s = new String[2];
-			s[0] =  "landuse"; s[1] = "retail";
+			s[0] = "*landuse"; s[1] = "retail";
 			l.add(s);
 			return l;}
 		case 'Y':{
-			String[] s = {"building","health"};
-			l.add(s);
-			s = new String[2];
-			s[0] =  "landuse"; s[1] = "health";
+			s[0] = "*landuse"; s[1] = "health";
 			l.add(s);
 			return l;}
 		case 'E':{
-			String[] s = {"landuse","recreation_ground"};
+			s[0] = "*landuse"; s[1] = "recreation_ground";
 			l.add(s);
 			s = new String[2];
 			s[0] =  "recreation_type"; s[1] = "culture";
 			l.add(s);
 			return l;}
 		case 'R':{
-			String[] s = {"building","church"};
+			s[0] = "building"; s[1] = "church";
 			l.add(s);
 			return l;}
 		case 'M':{
-			String[] s = {"landuse","greenfield"};
-			l.add(s);
-			s = new String[2];
-			s[0] ="building"; s[1] ="industrial";
+			s[0] = "*landuse"; s[1] = "greenfield";
 			l.add(s);
 			return l;}
 		case 'P':{
-			String[] s = {"tourism","attraction"};
+			s[0] = "tourism"; s[1] = "attraction";
 			l.add(s);
 			s = new String[2];
 			s[0] ="building"; s[1] ="yes";
 			l.add(s);
 			return l;}
 		case 'B':{
-			String[] s = {"building","warehouse"};
+			s[0] = "building"; s[1] = "warehouse";
 			l.add(s);
 			s = new String[2];
-			s[0] ="landuse"; s[1] ="farmyard";
+			s[0] = "*landuse"; s[1] ="farmyard";
 			l.add(s);
 			return l;}
 		case 'J':{
-			String[] s = {"landuse","industrial"};
+			s[0] = "*landuse"; s[1] = "industrial";
 			l.add(s);
 			return l;}
 		case 'Z':{
-			String[] s = {"landuse","farm"};
+			s[0] = "*landuse"; s[1] = "farm";
 			l.add(s);
 			return l;}
 		default:
-			String[] s = {codigo,codigo};
+			s[0] = "fixme"; s[1] = "codigo="+codigo;
 			l.add(s);
 			return l;}
 	}

@@ -17,7 +17,7 @@ import com.vividsolutions.jts.geom.Polygon;
 
 public class ShapeSubparce extends Shape {
 
-	private Long shapeId = (long) 0; // Id del shape
+	private String shapeId = null; // Id del shape SUBPARCE+long
 	private List<LineString> poligons; //[0] Outer, [1..N] inner
 	private List<List<Long>> nodes; //[0] Outer, [1..N] inner
 	private List<List<Long>> ways; //[0] Outer, [1..N] inner
@@ -38,7 +38,7 @@ public class ShapeSubparce extends Shape {
 		
 		super(f);
 		
-		shapeId = super.newShapeId();
+		shapeId = "SUBPARCE" + super.newShapeId();
 		
 		if (ruSub.isEmpty() || ruCul.isEmpty()){
 			readRusubparcelaRucultivo();
@@ -94,13 +94,8 @@ public class ShapeSubparce extends Shape {
 	}
 
 
-	public Long getShapeId(){
+	public String getShapeId(){
 		return shapeId;
-	}
-	
-	
-	public String getShapeIdString(){
-		return shapeId.toString();
 	}
 	
 	
@@ -189,13 +184,11 @@ public class ShapeSubparce extends Shape {
 		}
 
 		if (cultivo != null){
-			s = new String[2];
-			s[0] = "CULTIVO"; s[1] = cultivo;
-			l.add(s);
+			l.addAll(cultivoParser(cultivo));
 		}
 		
 		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeIdString();
+		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		l.add(s);
 		
 		s = new String[2];
@@ -289,4 +282,49 @@ public class ShapeSubparce extends Shape {
 		return true;
 	}
 	
+	/** Parsea el tipo de cultivo con la nomenclatura de catastro y lo convierte
+	 * a los tags de OSM
+	 * @param cultivo Cultivo con la nomenclatura de catastro
+	 * @return Lista de los tags que genera
+	 */
+	public List<String[]> cultivoParser(String cultivo){
+		List <String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
+		
+		if (cultivo.toUpperCase().contains("PASTOS")){
+			s[0] = "landuse"; s[1] = "meadow";
+			l.add(s);
+			s = new String[2];
+			s[0] = "meadow"; s[1] = "perpetual";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("PRADOS") || cultivo.toUpperCase().contains("PRADERAS")){
+			s[0] = "landuse"; s[1] = "meadow";
+			l.add(s);
+			s = new String[2];
+			s[0] = "meadow"; s[1] = "agricultural";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("LABOR") || (cultivo.toUpperCase().contains("LABRADIO") && cultivo.toUpperCase().contains("SECANO"))){
+			s[0] = "landuse"; s[1] = "farmland";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("IMPRODUCTIVO")){
+			s[0] = "landuse"; s[1] = "brownfield";
+			l.add(s);
+			return l;
+		}
+		else {
+			s[0] = "fixme"; s[1] = "landuse="+cultivo;
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Documentar nuevo cultivo en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Tipos_de_cultivo";
+			l.add(s);
+		}
+		
+		return l;
+	}
 }

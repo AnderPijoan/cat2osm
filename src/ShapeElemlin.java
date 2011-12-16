@@ -14,7 +14,7 @@ import com.vividsolutions.jts.geom.MultiLineString;
 
 public class ShapeElemlin extends Shape {
 	
-	private Long shapeId = (long) 0; // Id del shape
+	private String shapeId = null; // Id del shape ELEMLIN+long
 	private LineString line; // Linea que representa ese elemlin
 	private List<Long> nodes;
 	private List<Long>  ways;
@@ -27,7 +27,7 @@ public class ShapeElemlin extends Shape {
 		
 		super(f);
 		
-		shapeId = super.newShapeId();
+		shapeId = "ELEMLIN" + super.newShapeId();
 		
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
@@ -37,7 +37,7 @@ public class ShapeElemlin extends Shape {
 
 		}
 		else {
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMLIN");
+			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMLIN");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos
@@ -55,13 +55,8 @@ public class ShapeElemlin extends Shape {
 	}
 	
 	
-	public Long getShapeId(){
+	public String getShapeId(){
 		return shapeId;
-	}
-	
-	
-	public String getShapeIdString(){
-		return shapeId.toString();
 	}
 	
 	
@@ -70,13 +65,11 @@ public class ShapeElemlin extends Shape {
 		String[] s = new String[2];
 
 		s = new String[2];
-		s[0] = "SHAPEID"; s[1] = getShapeIdString();
+		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		l.add(s);
 		
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
-			s[0] = "ttggss"; s[1] =ttggss;
-			l.add(s);
 			}
 		
 		s = new String[2];

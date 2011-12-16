@@ -5,18 +5,18 @@
 ResultPath=result
 
 # Nombre para el archivo resultado
-ResultFileName=PruebasRealejoAlto
+ResultFileName=AldeasecaDeAlba
 
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
 # con su nombre original y dentro de cada una sus respectivos shapefiles.
 # Para acceder a carpetas, indicar con '\\'
-UrbanoSHPPath=files\\RealejoAlto\\38_31_UH_2011-01-01_SHF
-RusticoSHPPath=files\\RealejoAlto\\38_31_RA_2011-09-18_SHF
+UrbanoSHPPath=files\\AldeasecaDeAlba\\37_21_UA_2011-09-16_SHF
+RusticoSHPPath=files\\AldeasecaDeAlba\\37_21_RA_2011-09-16_SHF
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
-UrbanoCATFile=files\\RealejoAlto\\39_900_R_2011-09-17
-RusticoCATFile=files\\RealejoAlto\\39_900_R_2011-09-17
+UrbanoCATFile=files\\AldeasecaDeAlba\\37_21_U_2011-09-18.CAT
+RusticoCATFile=files\\AldeasecaDeAlba\\37_21_R_2011-09-17.CAT
 
 # Fecha desde la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
@@ -35,8 +35,13 @@ TipoRegistro=0
 # Cambiar tags de las construcciones si contienen sobre ellas un texto (Elemtex)
 # al cual se le puede asociar un tag distinto. Como por ejemplo si es un cementerio modificar
 # el landuse a landuse=cemetery
-# No=0 / Si=1 (Ralentiza el proceso)
+# No=0 / Si=1 (Ralentiza un poco el proceso)
 ElemtexAConstru=1
+
+# Imprimir tanto en las vias como en las relaciones, la lista de shapes que las componen o las
+# utilizan. Es para casos de debugging si se quiere tener los detalles.
+# No=0 / Si=1
+PrintShapeIds=0
 
 # Hacer simplificacion de Nodos de un shape que se crean sobre Ways de otro shape
 # No=0 / Si=1 (Ralentiza el proceso) (Aun en fase de desarrollo)
