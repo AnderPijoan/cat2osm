@@ -146,6 +146,22 @@ public class WayOsm {
 	}
 
 	
+	/** Comprueba si este way esta conectado en alguno de sus nodos a el
+	 * way dado 
+	 * @param way Way al que comprobar si esta conectado
+	 * @return boolean de si lo esta o no
+	 */
+	public boolean connectedTo(WayOsm way){
+		
+		boolean encontrado = false;
+		
+		for (int x = 0; !encontrado && x < this.nodos.size(); x++)
+			encontrado = way.getNodes().contains(this.nodos.get(x));
+		
+		return encontrado;
+	}
+	
+	
 	/** Imprime en el formato Osm el way con la informacion
 	 * @param id Id del way
 	 * @return Devuelve en un String el way listo para imprimir

@@ -98,14 +98,6 @@ public class Gui extends JFrame {
 		System.out.println("["+new Timestamp(new Date().getTime())+"] SIMPLIFICANDO vias.");
 		shapes = catastro.simplifyWays(shapes);
 
-		
-		// Comprobamos que no haya nodos finales sobre un way distinto ya que podrian ser
-		// casos de shapes no conectados correctamente
-		if (Config.get("FixNodesOnWays").equals("1")){
-			System.out.println("["+new Timestamp(new Date().getTime())+"] COMPROBANDO nodos sueltos sobre vias.");
-			shapes = catastro.fixNodesOnWays(shapes);
-		}
-
 		// Escribir los datos
 		System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo NODOS");
 		catastro.printNodes( Cat2Osm.utils.getTotalNodes());

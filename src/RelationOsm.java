@@ -3,6 +3,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.MultiPolygon;
+
 
 public class RelationOsm {
 
@@ -177,7 +182,25 @@ public class RelationOsm {
 			return false;
 		return true;
 	}
-
+	
+	
+	/** Para evitar que elementos lineales compuestos de varios
+	 * ways que no cierran un area tengan el tag multipoligono.
+	 * @param utils Clase utils para acceder a la lista de ways
+	 * @return si es un area sin cerrar o no
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean AreaCerrada(Cat2OsmUtils utils){
+		
+		/*List<WayOsm> ways = new ArrayList<WayOsm>();
+		
+		LineString geometria = new LineString(coor, null , 0);
+		
+		return geometria.isClosed();
+		*/
+		return true;
+	}
+	
 	
 	/** Imprime en el formato Osm la relation con la informacion. En caso de que
 	 * la relacion solo tenga un way, la devuelve como way ya que sino es
@@ -260,9 +283,11 @@ public class RelationOsm {
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 			}
 			
-			// Al tener varios ways, sera un multipoligono
-			
+			// Al tener varios ways si forman un area cerrada
+			//sera un multipolygono
+			if (AreaCerrada(utils))
 			s += "<tag k=\"type\" v=\"multipolygon\"/>\n";
+			
 			s += ("</relation>\n");
 		}
 		

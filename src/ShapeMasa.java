@@ -166,10 +166,6 @@ public class ShapeMasa extends Shape {
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 		
-		s = new String[2];
-		s[0] = "type"; s[1] = "multipolygon";
-		l.add(s);
-		
 		return l;
 	}
 

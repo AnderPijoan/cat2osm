@@ -10,13 +10,22 @@ ResultFileName=AldeasecaDeAlba
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
 # con su nombre original y dentro de cada una sus respectivos shapefiles.
-# Para acceder a carpetas, indicar con '\\'
-UrbanoSHPPath=files\\AldeasecaDeAlba\\37_21_UA_2011-09-16_SHF
-RusticoSHPPath=files\\AldeasecaDeAlba\\37_21_RA_2011-09-16_SHF
+UrbanoSHPPath=files/AldeasecaDeAlba/37_21_UA_2011-09-16_SHF
+RusticoSHPPath=files/AldeasecaDeAlba/37_21_RA_2011-09-16_SHF
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
-UrbanoCATFile=files\\AldeasecaDeAlba\\37_21_U_2011-09-18.CAT
-RusticoCATFile=files\\AldeasecaDeAlba\\37_21_R_2011-09-17.CAT
+UrbanoCATFile=files/AldeasecaDeAlba/37_21_U_2011-09-18.CAT
+RusticoCATFile=files/AldeasecaDeAlba/37_21_R_2011-09-17.CAT
+
+# Script de la carpeta scripts a usar para hacer la reproyeccion.
+# ogr2ogr32628.bat para WGS84/ Zona UTM 29N
+# ogr2ogr23029.bat para ED50/ Zona UTM 29N
+# ogr2ogr23030.bat para ED50/ Zona UTM 30N
+# ogr2ogr23031.bat para ED50/ Zona UTM 31N
+# ogr2ogr25829.bat para ETRS89/ Zona UTM 29N
+# ogr2ogr25830.bat para ETRS89/ Zona UTM 30N
+# ogr2ogr25831.bat para ETRS89/ Zona UTM 31N
+ScriptOgr2Ogr=ogr2ogr23030.bat
 
 # Fecha desde la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
@@ -42,9 +51,3 @@ ElemtexAConstru=1
 # utilizan. Es para casos de debugging si se quiere tener los detalles.
 # No=0 / Si=1
 PrintShapeIds=0
-
-# Hacer simplificacion de Nodos de un shape que se crean sobre Ways de otro shape
-# No=0 / Si=1 (Ralentiza el proceso) (Aun en fase de desarrollo)
-FixNodesOnWays=0
-# Coeficiente para el calculo de si un nodo se encuentra sobre un way (Aun en fase de desarrollo)
-CoeficienteNodeWay=0.00000001

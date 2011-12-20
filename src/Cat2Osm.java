@@ -602,7 +602,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DE VIA PUBLICA",line.substring(153,158));
 			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
 			//c.addAttribute("TIPO DE VIA O SIGLA PUBLICA",line.substring(158,163));
-			c.addAttribute("name:type",nombreTipoViaParser(line.substring(158,163).trim()));
+			c.addAttribute("addr:street:type",nombreTipoViaParser(line.substring(158,163).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
 			c.addAttribute("addr:street",line.substring(163,188));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
@@ -663,7 +663,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DE VIA PUBLICA DGC",line.substring(153,158));
 			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
 			//c.addAttribute("TIPO DE VIA O SIBLA PUBLICA",line.substring(158,163));
-			c.addAttribute("name:type",nombreTipoViaParser(line.substring(158,163).trim()));
+			c.addAttribute("addr:street:type",nombreTipoViaParser(line.substring(158,163).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
 			c.addAttribute("addr:street",line.substring(163,188));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
@@ -743,7 +743,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DE VIA PUBLICA",line.substring(195,200));
 			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(195,200)));
 			//c.addAttribute("TIPO DE VIA O SIGLA PUBLICA",line.substring(200,205));
-			c.addAttribute("name:type",nombreTipoViaParser(line.substring(200,205).trim()));
+			c.addAttribute("addr:street:type",nombreTipoViaParser(line.substring(200,205).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(205,230));
 			c.addAttribute("addr:street",line.substring(205,230));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(230,234));
