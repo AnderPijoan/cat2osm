@@ -189,15 +189,8 @@ public class RelationOsm {
 	 * @param utils Clase utils para acceder a la lista de ways
 	 * @return si es un area sin cerrar o no
 	 */
-	@SuppressWarnings("unchecked")
 	public boolean AreaCerrada(Cat2OsmUtils utils){
-		
-		/*List<WayOsm> ways = new ArrayList<WayOsm>();
-		
-		LineString geometria = new LineString(coor, null , 0);
-		
-		return geometria.isClosed();
-		*/
+
 		return true;
 	}
 	
