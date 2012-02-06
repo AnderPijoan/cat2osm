@@ -1,51 +1,63 @@
+################################################################################
+#
 # Autor: Ander Pijoan Lamas (ander.pijoan@deusto.es)
-# Readme: http://wiki.openstreetmap.org/wiki/Catastro_Espa%C3%B1a
+#
+#
+# Readme y guía de uso: http://wiki.openstreetmap.org/wiki/Catastro_Espa%C3%B1a
+#
+################################################################################
 
-# Ruta donde se guardaran los resultados
+# Ruta donde se guardaran los resultados y los archivos temporales que genere cat2osm 
+# (la carpeta requiere permisos lectura/escritura)
 ResultPath=result
 
 # Nombre para el archivo resultado
 ResultFileName=RealejoAlto
 
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
-# En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
-# con su nombre original y dentro de cada una sus respectivos shapefiles.
+# Normalmente suele ser una carpeta con el siguiente formato XX_XXX_UA_XXXX-XX-XX_SHF.
+# Dentro tendrán que estar las subcarpetas extraidas tal cual vienen en catastro,
+# es decir dentro de la carpeta que indicamos debería haber una carpeta CONSTRU, ELEMLIN, ELEMPUN...
+# y dentro de estas (generalmente) 4 archivos.
 UrbanoSHPPath=files/RealejoAlto/38_31_UH_2011-01-01_SHF
 RusticoSHPPath=files/RealejoAlto/38_31_RA_2011-09-18_SHF
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
+# Tiene que ser el archivo extraido con extensión .CAT
 UrbanoCATFile=files/RealejoAlto/38_31_U_2011-09-18.CAT
 RusticoCATFile=files/RealejoAlto/38_31_R_2011-09-17.CAT
 
-# Ruta a la carpeta base de FWTools.
+# Ruta a la carpeta base de FWTools. (No necesario de momento)
+# FWTools debe estar instalado y la consola reconocer el comando ogr2ogr porque sino no podra reproyectar.
 FWToolsPath=C:\Program Files (x86)\FWTools2.4.7
 
 # Ruta a la cuadricula de reproyeccion (peninsula.gsb):
+# Este archvivo puede encontrarlo en la siguiente dirección: http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM
 NadgridsPath=peninsula.gsb
 
-# Proyeccion en la que estan los shapefiles para hacer la reproyeccion. Se puede encontrar abriendo
-# con un procesador de texto cualquier archivo .prj de los shapefiles.
+# Proyeccion en la que estan los shapefiles para hacer la reproyeccion. 
+# (Se puede comprobar abriendo con un editor de texto cualquiera de los archivos .PRJ)
 # 32628 para WGS84/ Zona UTM 29N
-# 23029 para ED50/ Zona UTM 29N
-# 23030 para ED50/ Zona UTM 30N
-# 23031 para ED50/ Zona UTM 31N
-# 25829 para ETRS89/ Zona UTM 29N
-# 25830 para ETRS89/ Zona UTM 30N
-# 25831 para ETRS89/ Zona UTM 31N
+# 23029 para ED_1950/ Zona UTM 29N
+# 23030 para ED_1950/ Zona UTM 30N
+# 23031 para ED_1950/ Zona UTM 31N
+# 25829 para ETRS_1989/ Zona UTM 29N
+# 25830 para ETRS_1989/ Zona UTM 30N
+# 25831 para ETRS_1989/ Zona UTM 31N
 Proyeccion=32628
 
-# Fecha desde la cual coger los datos (Formato AAAAMMDD)
+# Si se quiere delimitar una fecha desde la cual coger los datos de catastro (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
 # Ejemeplo: FechaDesde=20050101
 FechaDesde=0
 
-# Fecha hasta la cual coger los datos (Formato AAAAMMDD)
-# Tomara los shapes que se han dado de alta hasta esta fecha
+# Si se quiere delimitar una fecha hasta la cual coger los datos de catastro (Formato AAAAMMDD)
+# Tomara los shapes que se han dado de alta hasta esta fecha y siguen sin darse de baja despues
 # Ejemeplo: FechaHasta=20060101
 FechaHasta=99999999
 
 # Tipo de Registro de catastro a usar (0 = todos)
-# Los registros de catastro, traen informacion adicional a la que tienen los shapefiles
+# Los registros de catastro tienen la mayoría de la información necesaria para los shapefiles.
 TipoRegistro=0
 
 # Cambiar tags de las construcciones si contienen sobre ellas un texto (Elemtex)

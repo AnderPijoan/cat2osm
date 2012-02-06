@@ -33,10 +33,10 @@ public class NodeOsm {
 
 	@Override
 	public synchronized boolean equals(Object obj) {
-		if (this == obj)
-			return true;
 		if (obj == null)
 			return false;
+		if (this == obj)
+			return true;
 		if (getClass() != obj.getClass())
 			return false;
 		NodeOsm other = (NodeOsm) obj;
