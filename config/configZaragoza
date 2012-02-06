@@ -1,0 +1,60 @@
+# Autor: Ander Pijoan Lamas (ander.pijoan@deusto.es)
+# Readme: http://wiki.openstreetmap.org/wiki/Catastro_Espa%C3%B1a
+
+# Ruta donde se guardaran los resultados
+ResultPath=result
+
+# Nombre para el archivo resultado
+ResultFileName=Zaragoza
+
+# Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
+# En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
+# con su nombre original y dentro de cada una sus respectivos shapefiles.
+UrbanoSHPPath=files/Zaragoza/50_900_UA_2012-01-20_SHF
+RusticoSHPPath=files/Zaragoza/50_900_RA_2012-01-20_SHF
+
+# Ruta a los archivos con los datos Cat de Catastro (.CAT)
+UrbanoCATFile=files/Zaragoza/50_900_U_2012-01-23.CAT
+RusticoCATFile=files/Zaragoza/50_900_R_2012-01-22.CAT
+
+# Ruta a la carpeta base de FWTools.
+FWToolsPath=C:\Program Files (x86)\FWTools2.4.7
+
+# Ruta a la cuadricula de reproyeccion (peninsula.gsb):
+NadgridsPath=peninsula.gsb
+
+# Proyeccion en la que estan los shapefiles para hacer la reproyeccion. Se puede encontrar abriendo
+# con un procesador de texto cualquier archivo .prj de los shapefiles.
+# 32628 para WGS84/ Zona UTM 29N
+# 23029 para ED50/ Zona UTM 29N
+# 23030 para ED50/ Zona UTM 30N
+# 23031 para ED50/ Zona UTM 31N
+# 25829 para ETRS89/ Zona UTM 29N
+# 25830 para ETRS89/ Zona UTM 30N
+# 25831 para ETRS89/ Zona UTM 31N
+Proyeccion=23030
+
+# Fecha desde la cual coger los datos (Formato AAAAMMDD)
+# Tomara los shapes que se han dado de alta a partir de esta fecha
+# Ejemeplo: FechaDesde=20050101
+FechaDesde=0
+
+# Fecha hasta la cual coger los datos (Formato AAAAMMDD)
+# Tomara los shapes que se han dado de alta hasta esta fecha
+# Ejemeplo: FechaHasta=20060101
+FechaHasta=99999999
+
+# Tipo de Registro de catastro a usar (0 = todos)
+# Los registros de catastro, traen informacion adicional a la que tienen los shapefiles
+TipoRegistro=0
+
+# Cambiar tags de las construcciones si contienen sobre ellas un texto (Elemtex)
+# al cual se le puede asociar un tag distinto. Como por ejemplo si es un cementerio modificar
+# el landuse a landuse=cemetery
+# No=0 / Si=1 (Ralentiza un poco el proceso)
+ElemtexAConstru=1
+
+# Imprimir tanto en las vias como en las relaciones, la lista de shapes que las componen o las
+# utilizan. Es para casos de debugging si se quiere tener los detalles.
+# No=0 / Si=1
+PrintShapeIds=0

@@ -6,7 +6,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +38,7 @@ public class Cat2Osm {
 	 * @param ref referencia catastral a buscar
 	 * @returns List<Shape> lista de shapes que coinciden                    
 	 */
-	private static List<Shape> findRefCat(List<Shape> shapes, String ref){
+	private static List<Shape> buscarRefCat(List<Shape> shapes, String ref){
 		List<Shape> shapeList = new ArrayList<Shape>();
 
 		for(Shape shape : shapes) 
@@ -50,7 +52,7 @@ public class Cat2Osm {
 	 * @param subparce codigo de subparcela a buscar
 	 * @returns List<Shape> lista de shapes que coinciden                    
 	 */
-	private static List<Shape> findSubparce(List<Shape> shapes, String subparce){
+	private static List<Shape> buscarSubparce(List<Shape> shapes, String subparce){
 		List<Shape> shapeList = new ArrayList<Shape>();
 
 		for(Shape shape : shapes) 
@@ -68,7 +70,7 @@ public class Cat2Osm {
 	 * @param shapes Lista de shapes original
 	 * @return lista de shapes con los tags modificados
 	 */
-	public List<Shape> addElemtexLandusetoConstru(List<Shape> shapes){
+	public List<Shape> pasarElemtexLanduseAConstru(List<Shape> shapes){
 
 		GeometryFactory factory = new GeometryFactory();
 
@@ -108,97 +110,6 @@ public class Cat2Osm {
 
 		return shapes;
 	}
-
-	/** Se encarga de solucionar casos de nodos de un shape que se hayan creado sobre el
-	 * way de otro shape. Con un valor flexible del config decide si un nodo esta sobre
-	 * un way sin estar conectado a el, en cuyo caso partiria el way del shape en dos unidos por el nodo y
-	 * los dos shapes compartirian el way comun.
-	 * Esto puede solucionar casos en los que hayan creado ways de forma erronea o no los hayan
-	 * enlazado.
-	 * NO comprueba casos de ways que cortan otros ways.
-	 * @param shapes Lista de shapes 
-	 * @return La lista de shapes con los arreglos realizados
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public List<Shape> fixNodesOnWays(List <Shape> shapes){
-
-		// Para cada shape
-		for (Shape shape : shapes){
-
-			// Coger cada poligono
-			for( int x = 0; x < shape.getPoligons().size(); x++){
-
-				// Coger todos sus ways
-				for (Long wayId : shape.getWaysIds(x)){
-
-					// De un way
-					WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), wayId));
-					// Cogemos su primer nodo
-					NodeOsm nodoPrimero = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(0)));
-					// Y ultimo nodo
-					NodeOsm nodoFinal = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), way.getNodes().get(way.getNodes().size()-1)));
-
-					// Compararlo con todos los ways existentes
-					Iterator<Entry<WayOsm, Long>> it = utils.getTotalWays().entrySet().iterator();
-
-					while(it.hasNext()){
-						Map.Entry e = (Map.Entry)it.next();
-						WayOsm wayEntero = (WayOsm) e.getKey();
-
-						//Dividimos el wayEntero en sus maximos ways posibles y comparamos esos trozos con los nodos primer y final
-						List<Long> nodoIds = wayEntero.getNodes();
-						for (int y = -1; y < nodoIds.size()-1; y++ ){
-
-							// Obtenemos las coordenadas de los dos primeros nodos 
-							// (con esa formula se consigue que tambien cree un way entre el ultimo y primer nodo)
-							NodeOsm nodoA = (NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), nodoIds.get((y+nodoIds.size())%nodoIds.size()));
-							NodeOsm nodoB = (NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), nodoIds.get((y+1+nodoIds.size())%nodoIds.size()));
-
-							// Comprobacion de que no estan conectados
-							if (!(nodoPrimero.getCoor().equals(nodoA.getCoor()) || nodoPrimero.getCoor().equals(nodoB.getCoor()) ))
-							fixNode(nodoPrimero, nodoA, nodoB);
-							if (!(nodoFinal.getCoor().equals(nodoA.getCoor()) || nodoFinal.getCoor().equals(nodoB.getCoor()) ))	
-							fixNode(nodoFinal, nodoA, nodoB);
-
-						}
-					}
-				}
-			}
-		}
-
-		return shapes;
-	}
-
-
-	/** Intenta calcular mediante la ecuacion punto-pendiente si ese nodo esta creado sobre un way 
-	 * y no esta conectado a el
-	 * @param nodoSuelto nodo a comparar si esta sobre un way
-	 * @param nodoA punto inicial del way
-	 * @param nodoB punto final del way
-	 */
-	public void fixNode (NodeOsm nodoSuelto, NodeOsm nodoA, NodeOsm nodoB){
-
-		float valorNodeWay = Float.parseFloat(Config.get("CoeficienteNodeWay"));
-
-		Coordinate[] coor = new Coordinate[2];
-		coor[0] = nodoA.getCoor();
-		coor[1] = nodoB.getCoor();
-
-		// Creamos un lineString para calcular si se encuentra en el "Envelope" que crea el way
-		// El envelope es el rectangulo que crearia en los ejes X e Y
-		LineString line = new LineString(coor, null , 0);
-
-		// Formula punto-pendiente para saber si esta en la linea
-		float puntoPendiente = (float) Math.abs( ( ( (nodoA.getY() - nodoB.getY()) / (nodoA.getX() - nodoB.getX()) ) * (nodoSuelto.getX() - nodoA.getX()) ) + (nodoA.getY() - nodoSuelto.getY()) );
-
-		// Ver si se cumple la formula
-		try{
-			if (puntoPendiente < valorNodeWay && line.getEnvelope().intersects(line)){
-				String[] fixme = new String[] {"fixme","fixme"};
-				nodoSuelto.addTag(fixme);
-			}
-		}catch(Exception exc){}
-	}
 	
 	
 	/** Los ways inicialmente estan divididos lo maximo posible, es decir un way por cada
@@ -214,7 +125,7 @@ public class Cat2Osm {
 	 * @throws InterruptedException 
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> simplifyWays(List<Shape> shapes) throws InterruptedException{
+	public List<Shape> simplificarWays(List<Shape> shapes) throws InterruptedException{
 
 		WayOsm way1 = null;
 		WayOsm way2 = null;
@@ -234,7 +145,7 @@ public class Cat2Osm {
 
 					try{
 
-						// Formula para que compruebe tambien el way(0) con el way(size()) 
+						// Formula para que compruebe tambien el way(0) con el ultimo way o way(size()) 
 						way1 = ((WayOsm) 
 								utils.getKeyFromValue(
 										(Map<Object, Long>) (
@@ -249,7 +160,7 @@ public class Cat2Osm {
 						if (way1 != null && way2 != null && !way1.getNodes().equals(way2.getNodes()) && way1.sameShapes(way2.getShapes()) ){
 
 							// Juntamos los ways y borra el way que no se va a usar de las relations
-							removeWay = utils.joinWays(way1, way2);
+							removeWay = utils.unirWays(way1, way2);
 
 							if (removeWay != null){
 
@@ -270,7 +181,7 @@ public class Cat2Osm {
 							}
 						}
 
-					}catch(Exception e) {System.out.println("Simplificando un way casco.");}
+					}catch(Exception e) {System.out.println("["+new Timestamp(new Date().getTime())+"] Error simplificando v铆a. " + e.getMessage());}
 
 				}
 
@@ -285,8 +196,15 @@ public class Cat2Osm {
 	@SuppressWarnings("rawtypes")
 	public void printNodes(Map <NodeOsm, Long> nodes) throws IOException{
 
+	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+	    if (!dir.exists()) 
+	    {
+	      try                { dir.mkdirs(); }
+	      catch (Exception e){ e.printStackTrace(); }
+	    }
+		
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempNodes.osm");
+		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm");
 		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
 
 		Iterator<Entry<NodeOsm, Long>> it = nodes.entrySet().iterator();
@@ -305,10 +223,17 @@ public class Cat2Osm {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public void printNodesShapesOrder(List<Shape> shapes, Map <NodeOsm, Long> nodes) throws IOException{
+	public void printNodesOrdenShapes(List<Shape> shapes, Map <NodeOsm, Long> nodes) throws IOException{
 
+	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+	    if (!dir.exists()) 
+	    {
+	      try                { dir.mkdirs(); }
+	      catch (Exception e){ e.printStackTrace(); }
+	    }
+	    
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempNodes.osm");
+		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm");
 		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
 		// Escribimos todos los nodos
 		for(Shape shape : shapes){
@@ -329,8 +254,15 @@ public class Cat2Osm {
 	@SuppressWarnings("rawtypes")
 	public void printWays(Map <WayOsm, Long> ways) throws IOException{
 
+	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+	    if (!dir.exists()) 
+	    {
+	      try                { dir.mkdirs(); }
+	      catch (Exception e){ e.printStackTrace(); }
+	    }
+
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempWays.osm");
+		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm");
 		BufferedWriter outWays = new BufferedWriter(fstreamWays);
 
 		Iterator<Entry<WayOsm, Long>> it = ways.entrySet().iterator();
@@ -349,10 +281,17 @@ public class Cat2Osm {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public void printWaysShapesOrder( List<Shape> shapes, Map <WayOsm, Long> ways) throws IOException{
+	public void printWaysOrdenShapes( List<Shape> shapes, Map <WayOsm, Long> ways) throws IOException{
+		
+	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+	    if (!dir.exists()) 
+	    {
+	      try                { dir.mkdirs(); }
+	      catch (Exception e){ e.printStackTrace(); }
+	    }
 
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempWays.osm");
+		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm");
 		BufferedWriter outWays = new BufferedWriter(fstreamWays);
 
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
@@ -373,9 +312,16 @@ public class Cat2Osm {
 	 */
 	@SuppressWarnings("rawtypes")
 	public void printRelations( Map <RelationOsm, Long> relations) throws IOException{
+		
+	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+	    if (!dir.exists()) 
+	    {
+	      try                { dir.mkdirs(); }
+	      catch (Exception e){ e.printStackTrace(); }
+	    }
 
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamRelations = new FileWriter(Config.get("ResultPath") + "\\" + Config.get("ResultFileName") + "tempRelations.osm");
+		FileWriter fstreamRelations = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm");
 		BufferedWriter outRelations = new BufferedWriter(fstreamRelations);
 
 		Iterator<Entry<RelationOsm, Long>> it = relations.entrySet().iterator();
@@ -394,38 +340,42 @@ public class Cat2Osm {
 	 * @param tF Ruta donde estan los archivos temporadles (nodos, ways y relations)
 	 * @throws IOException
 	 */
-	public void joinFiles(String filename) throws IOException{
+	public void juntarFiles(String filename) throws IOException{
 
 		String path = Config.get("ResultPath");
 
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
-		new File(path + "\\"+ filename +".osm").delete();
+		new File(path + "/"+ filename +".osm").delete();
 
 		// Archivo al que se le concatenan los nodos, ways y relations
-		String fstreamOsm = path + "\\" + filename +".osm";
+		String fstreamOsm = path + "/" + filename + ".osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outOsm = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
 
 		// Juntamos los archivos en uno, al de los nodos le concatenamos el de ways y el de relations
 		// Cabecera del archivo Osm
-		outOsm.write("<?xml version='1.0' encoding='UTF-8'?>\n" +
-				"<osm version=\"0.6\" generator=\"cat2osm\" >\n");	
+		outOsm.write("<?xml version='1.0' encoding='UTF-8'?>");outOsm.newLine();
+		outOsm.write("<osm version=\"0.6\" generator=\"cat2osm\">");outOsm.newLine();	
 
 		// Concatenamos todos los archivos
 		String str;
-		BufferedReader inNodes = new BufferedReader(new FileReader(path + "\\"+ Config.get("ResultFileName") + "tempNodes.osm"));
-		while ((str = inNodes.readLine()) != null)
-			outOsm.write(str+"\n");
-
-		BufferedReader inWays = new BufferedReader(new FileReader(path + "\\"+ Config.get("ResultFileName") + "tempWays.osm"));
-		while ((str = inWays.readLine()) != null)
-			outOsm.write(str+"\n");
-
-		BufferedReader inRelations = new BufferedReader(new FileReader(path + "\\"+ Config.get("ResultFileName") + "tempRelations.osm"));
-		while ((str = inRelations.readLine()) != null)
-			outOsm.write(str+"\n");
-
-		outOsm.write("</osm>\n");
+		BufferedReader inNodes = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempNodes.osm"));
+		while ((str = inNodes.readLine()) != null){
+			outOsm.write(str);
+			outOsm.newLine();
+		}
+		BufferedReader inWays = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempWays.osm"));
+		while ((str = inWays.readLine()) != null){
+			outOsm.write(str);
+			outOsm.newLine();
+		}
+		BufferedReader inRelations = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempRelations.osm"));
+		while ((str = inRelations.readLine()) != null){
+			outOsm.write(str);
+			outOsm.newLine();
+		}
+		outOsm.write("</osm>");
+		outOsm.newLine();
 
 		outOsm.close();
 		inNodes.close();
@@ -433,12 +383,13 @@ public class Cat2Osm {
 		inRelations.close();
 
 		boolean borrado = true;
-		borrado = borrado && (new File(path+ "\\" + Config.get("ResultFileName") + "tempNodes.osm")).delete();
-		borrado = borrado && (new File(path + "\\" + Config.get("ResultFileName") + "tempWays.osm")).delete();
-		borrado = borrado && (new File(path + "\\" + Config.get("ResultFileName") + "tempRelations.osm")).delete();
+		borrado = borrado && (new File(path+ "/" + Config.get("ResultFileName") + "tempNodes.osm")).delete();
+		borrado = borrado && (new File(path + "/" + Config.get("ResultFileName") + "tempWays.osm")).delete();
+		borrado = borrado && (new File(path + "/" + Config.get("ResultFileName") + "tempRelations.osm")).delete();
 
 		if (!borrado)
-			System.out.println("NO se pudo BORRAR alguno de los archivos temporales");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] NO se pudo borrar alguno de los archivos temporales." +
+					" Estos estaran en la carpeta "+ path +".");
 
 	}
 
@@ -462,28 +413,31 @@ public class Cat2Osm {
 		// Lectura del archivo .cat
 		while((line = bufRdr.readLine()) != null)
 		{
-			Cat c = catLineParser(line);
+			try {
+				Cat c = catLineParser(line);
 
-			if ( c.getFechaAlta() >= fechaDesde && c.getFechaAlta() < fechaHasta && c.getFechaBaja() >= fechaHasta && (c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0)){
+				if ( c.getFechaAlta() >= fechaDesde && c.getFechaAlta() < fechaHasta && c.getFechaBaja() >= fechaHasta && (c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0)){
 
-				// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
-				List <Shape> matches = findRefCat(shapesTotales, c.getRefCatastral());
+					// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
+					List <Shape> matches = buscarRefCat(shapesTotales, c.getRefCatastral());
 
-				// Para los tipos de registro de subparcelas, buscamos la subparcela concreta para
-				// anadirle los atributos
-				if (c.getTipoRegistro() == 17)
-					matches = findSubparce(matches, c.getSubparce());
+					// Para los tipos de registro de subparcelas, buscamos la subparcela concreta para
+					// anadirle los atributos
+					if (c.getTipoRegistro() == 17)
+						matches = buscarSubparce(matches, c.getSubparce());
 
-				// Puede que no haya shapes para esa refCatastral
-				if (!matches.isEmpty()){
+					// Puede que no haya shapes para esa refCatastral
+					if (!matches.isEmpty()){
 
-					for (Shape shape : matches)
-						if (shape != (null)){
-							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
-							r.addTags(c.getAttributes());
-						}
+						for (Shape shape : matches)
+							if (shape != (null)){
+								RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
+								r.addTags(c.getAttributes());
+							}
+					}
 				}
 			}
+			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
 		}
 	}
 
@@ -525,7 +479,7 @@ public class Cat2Osm {
 	 * @returns El shape que hay para el periodo indicado porque hay shapes que 
 	 * tienen distintas versiones a lo largo de los anos
 	 */
-	public static Shape getShapesForYear(List<Shape> shapes){
+	public static Shape buscarShapesParaFecha(List<Shape> shapes){
 
 		// Lo habitual es que venga ordenado de mas reciente a mas antiguo
 		Shape s = shapes.get(shapes.size()-1);
@@ -583,28 +537,27 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2)); 
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DEL MUNICIPIO",line.substring(25,28));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
 			//c.addAttribute("BLANCO EXCEPTO INMUEBLES ESPECIALES",line.substring(28,30));
-			c.addAttribute("catastro:special",line.substring(28,30));
+			c.addAttribute("catastro:special",eliminarComillas(line.substring(28,30)));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44)); 
 			//c.addAttribute("CODIGO DE PROVINCIA",line.substring(50,52));
-			c.addAttribute("catastro:ref:province",eliminarCerosString(line.substring(50,52)));
+			//c.addAttribute("catastro:ref:province",eliminarCerosString(line.substring(50,52)));
 			//c.addAttribute("NOMBRE DE PROVINCIA",line.substring(52,77));
-			c.addAttribute("is_in_province",line.substring(52,77));
+			//c.addAttribute("is_in:province",line.substring(52,77));
 			//c.addAttribute("CODIGO DE MUNICIPIO",line.substring(77,80));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(77,80)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(77,80)));
 			//c.addAttribute("CODIGO DE MUNICIPIO (INE). EXCLUIDO ULTIMO DIGITO DE CONTROL:",line.substring(80,83));
-			c.addAttribute("ine:ref:municipality",eliminarCerosString(line.substring(80,83)));
+			//c.addAttribute("ine:ref:municipality",eliminarCerosString(line.substring(80,83)));
 			//c.addAttribute("NOMBRE DE MUNICIPIO",line.substring(83,123));
-			c.addAttribute("is_in:municipality",line.substring(83,123));
+			//c.addAttribute("is_in:municipality",eliminarComillas(line.substring(83,123)));
 			//c.addAttribute("NOMBRE DE LA ENTIDAD MENOR EN CASO DE EXISTIR",line.substring(123,153));
 			//c.addAttribute("CODIGO DE VIA PUBLICA",line.substring(153,158));
-			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
+			//c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
 			//c.addAttribute("TIPO DE VIA O SIGLA PUBLICA",line.substring(158,163));
-			c.addAttribute("addr:street:type",nombreTipoViaParser(line.substring(158,163).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
-			c.addAttribute("addr:street",line.substring(163,188));
+			c.addAttribute("addr:street",nombreTipoViaParser(line.substring(158,163).trim())+" "+formatearNombreCalle(eliminarComillas(line.substring(163,188).trim())));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
 			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(188,192)));
 			//c.addAttribute("PRIMERA LETRA (CARACTER DE DUPLICADO)",line.substring(192,193));
@@ -613,7 +566,7 @@ public class Cat2Osm {
 			//c.addAttribute("KILOMETRO (3enteros y 2decimales)",line.substring(198,203));
 			//c.addAttribute("BLOQUE",line.substring(203,207));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(215,240));
-			c.addAttribute("addr:full",line.substring(215,240));
+			c.addAttribute("addr:full",eliminarComillas(line.substring(215,240)));
 			//c.addAttribute("CODIGO POSTAL",line.substring(240,245));
 			c.addAttribute("addr:postcode",eliminarCerosString(line.substring(240,245)));
 			//c.addAttribute("DISTRITO MUNICIPAL",line.substring(245,247));
@@ -644,28 +597,27 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DE MUNICIPIO",line.substring(25,28));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
 			//c.addAttribute("CLASE DE LA UNIDAD CONSTRUCTIVA",line.substring(28,30));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA",line.substring(44,48)); 
 			//c.addAttribute("CODIGO DE PROVINCIA",line.substring(50,52));
-			c.addAttribute("catastro:ref:province",eliminarCerosString(line.substring(50,52)));
+			//c.addAttribute("catastro:ref:province",eliminarCerosString(line.substring(50,52)));
 			//c.addAttribute("NOMBRE PROVINCIA",line.substring(52,77));
-			c.addAttribute("is_in_province",line.substring(52,77));
+			//c.addAttribute("is_in_province",line.substring(52,77));
 			//c.addAttribute("CODIGO DEL MUNICIPIO DGC",line.substring(77,80));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(77,80)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(77,80)));
 			//c.addAttribute("CODIGO DE MUNICIPIO (INE) EXCLUIDO EL ULTIMO DIGITO DE CONTROL",line.substring(80,83));
-			c.addAttribute("ine:ref:municipality",eliminarCerosString(line.substring(80,83)));
+			//c.addAttribute("ine:ref:municipality",eliminarCerosString(line.substring(80,83)));
 			//c.addAttribute("NOMBRE DEL MUNICIPIO",line.substring(83,123));
-			c.addAttribute("is_in:municipality",line.substring(83,123));
+			//c.addAttribute("is_in:municipality",eliminarComillas(line.substring(83,123)));
 			//c.addAttribute("NOMBRE DE LA ENTIDAD MENOR EN CASO DE EXISTIR",line.substring(123,153));
 			//c.addAttribute("CODIGO DE VIA PUBLICA DGC",line.substring(153,158));
-			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
+			//c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(153,158)));
 			//c.addAttribute("TIPO DE VIA O SIBLA PUBLICA",line.substring(158,163));
-			c.addAttribute("addr:street:type",nombreTipoViaParser(line.substring(158,163).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
-			c.addAttribute("addr:street",line.substring(163,188));
+			c.addAttribute("addr:street",nombreTipoViaParser(line.substring(158,163).trim())+" "+formatearNombreCalle(eliminarComillas(line.substring(163,188).trim())));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
 			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(188,192)));
 			//c.addAttribute("PRIMERA LETRA (CARACTER DE DUPLICADO)",line.substring(192,193));
@@ -673,7 +625,7 @@ public class Cat2Osm {
 			//c.addAttribute("SEGUNDA LETRA (CARACTER DE DUPLICADO)",line.substring(197,198));
 			//c.addAttribute("KILOMETRO (3enteros y 2decimales)",line.substring(198,203));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(215,240));
-			c.addAttribute("addr:full",line.substring(215,240));
+			c.addAttribute("addr:full",eliminarComillas(line.substring(215,240).trim()));
 			//c.addAttribute("ANO DE CONSTRUCCION (AAAA)",line.substring(295,299));
 			c.setFechaAlta(Long.parseLong(line.substring(295,299)+"0101")); 
 			c.setFechaBaja(fechaHasta);
@@ -690,7 +642,7 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2)); 
 			//c.addAttribute("CODIGO DE DELEGACION DEL MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DEL MUNICIPIO",line.substring(25,28));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("NUMERO DE ORDEN DEL ELEMENTO DE CONSTRUCCION",line.substring(44,48));
@@ -719,7 +671,7 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DEL MUNICIPIO",line.substring(25,28));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(25,28)));
 			//c.addAttribute("CLASE DE BIEN INMUEBLE (UR, RU, BI)",line.substring(28,30));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
@@ -730,22 +682,21 @@ public class Cat2Osm {
 			//c.addAttribute("CAMPO PARA LA IDENTIFICACION DEL BIEN INMUEBLE ASIGNADO POR EL AYTO",line.substring(58,73));
 			//c.addAttribute("NUMERO DE FINCA REGISTRAL",line.substring(73,92));
 			//c.addAttribute("CODIGO DE PROVINCIA",line.substring(92,94));
-			c.addAttribute("catastro:ref:province",eliminarCerosString(line.substring(92,94)));
+			//c.addAttribute("catastro:ref:province",eliminarCerosString(line.substring(92,94)));
 			//c.addAttribute("NOMBRE DE PROVINCIA",line.substring(94,119));
-			c.addAttribute("is_in:province",line.substring(94,119));
+			//c.addAttribute("is_in:province",eliminarComillas(line.substring(94,119)));
 			//c.addAttribute("CODIGO DE MUNICIPIO",line.substring(119,122));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(119,122)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(119,122)));
 			//c.addAttribute("CODIGO DE MUNICIPIO (INE) EXCLUIDO EL ULTIMO DIGITO DE CONTROL",line.substring(122,125));
-			c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(122,125)));
+			//c.addAttribute("catastro:ref:municipality",eliminarCerosString(line.substring(122,125)));
 			//c.addAttribute("NOMBRE DE MUNICIPIO",line.substring(125,165));
-			c.addAttribute("is_in:municipality",line.substring(125,165));
+			//c.addAttribute("is_in:municipality",eliminarComillas(line.substring(125,165)));
 			//c.addAttribute("NOMBRE DE LA ENTIDAD MENOR EN CASO DE EXISTIR",line.substring(165,195));
 			//c.addAttribute("CODIGO DE VIA PUBLICA",line.substring(195,200));
-			c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(195,200)));
+			//c.addAttribute("catastro:ref:way",eliminarCerosString(line.substring(195,200)));
 			//c.addAttribute("TIPO DE VIA O SIGLA PUBLICA",line.substring(200,205));
-			c.addAttribute("addr:street:type",nombreTipoViaParser(line.substring(200,205).trim()));
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(205,230));
-			c.addAttribute("addr:street",line.substring(205,230));
+			c.addAttribute("addr:street",nombreTipoViaParser(line.substring(200,205).trim())+" "+formatearNombreCalle(eliminarComillas(line.substring(205,230).trim())));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(230,234));
 			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(230,234)));
 			//c.addAttribute("PRIMERA LETRA (CARACTER DE DUPLICADO)",line.substring(234,235));
@@ -757,7 +708,7 @@ public class Cat2Osm {
 			//c.addAttribute("PLANTA",line.substring(251,254));
 			//c.addAttribute("PUERTA",line.substring(254,257));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(257,282));
-			c.addAttribute("addr:full",line.substring(257,282));
+			c.addAttribute("addr:full",eliminarComillas(line.substring(257,282).trim()));
 			//c.addAttribute("CODIGO POSTAL",line.substring(282,287));
 			c.addAttribute("addr:postcode",eliminarCerosString(line.substring(282,287)));
 			//c.addAttribute("DISTRITO MUNICIPAL",line.substring(287,289));
@@ -792,7 +743,7 @@ public class Cat2Osm {
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("NUMERO DE ORDEN DEL ELEMENTO CUYO VALOR SE REPARTE",line.substring(44,48));
 			//c.addAttribute("CALIFICACION CATASTRAL DE LA SUBPARCELA",line.substring(48,50));
-			//c.addAttribute("BLOQUE REPETITIVO HASTA 15 VECES",line.substring(50,999)); //TODO 縉ecesario?
+			//c.addAttribute("BLOQUE REPETITIVO HASTA 15 VECES",line.substring(50,999));
 
 
 			return c;}
@@ -815,12 +766,9 @@ public class Cat2Osm {
 			//c.addAttribute("SUPERFICIE DE LA SUBPARCELA (m cuadrad)",line.substring(55,65));
 			c.addAttribute("catastro:surface",eliminarCerosString(line.substring(55,65)));
 			//c.addAttribute("CALIFICACION CATASTRAL/CLASE DE CULTIVO",line.substring(65,67));
-			c.addAttribute("CALIFICACION CATASTRAL/CLASE DE CULTIVO",line.substring(65,67));
 			//c.addAttribute("DENOMINACION DE LA CLASE DE CULTIVO",line.substring(67,107));
-			c.addAttribute("DENOMINACION DE LA CLASE DE CULTIVO",line.substring(67,107));
 			//c.addAttribute("INTENSIDAD PRODUCTIVA",line.substring(107,109));
-			c.addAttribute("INTENSIDAD PRODUCTIVA",line.substring(107,109));
-			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(126,129)); //TODO 縉ecesario?
+			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(126,129));
 
 
 			return c;}
@@ -868,6 +816,19 @@ public class Cat2Osm {
 		}
 		return true;
 	}
+	
+	
+	/** Eliminar las comillas '"' de los textos, sino al leerlo JOSM devuelve error
+	 * pensando que ha terminado un valor antes de tiempo.
+	 * @param s String al que quitar las comillas
+	 * @return String sin las comillas
+	 */
+	public static String eliminarComillas(String s){
+		String ret = new String();
+		for (int x = 0; x < s.length(); x++)
+			if (s.charAt(x) != '"') ret += s.charAt(x);
+		return ret;
+	}
 
 
 	public static String nombreTipoViaParser(String codigo){
@@ -881,21 +842,21 @@ public class Cat2Osm {
 		else if (codigo.equals("BJ"))return "Bajada";
 		else if (codigo.equals("BO"))return "Barrio";
 		else if (codigo.equals("BR"))return "Barranco";
-		else if (codigo.equals("CA"))return "Ca馻da";
+		else if (codigo.equals("CA"))return "Ca帽ada";
 		else if (codigo.equals("CG"))return "Colegio/Cigarral";
 		else if (codigo.equals("CH"))return "Chalet";
 		else if (codigo.equals("CI"))return "Cinturon";
-		else if (codigo.equals("CJ"))return "Calleja/Callej髇";
+		else if (codigo.equals("CJ"))return "Calleja/Callej贸n";
 		else if (codigo.equals("CM"))return "Camino";
 		else if (codigo.equals("CN"))return "Colonia";
 		else if (codigo.equals("CO"))return "Concejo/Colegio";
 		else if (codigo.equals("CP"))return "Campa/Campo";
 		else if (codigo.equals("CR"))return "Carretera/Carrera";
-		else if (codigo.equals("CS"))return "Caser韔";
+		else if (codigo.equals("CS"))return "Caser铆o";
 		else if (codigo.equals("CT"))return "Cuesta/Costanilla";
 		else if (codigo.equals("CU"))return "Conjunto";
-		else if (codigo.equals("DE"))return "Detr醩";
-		else if (codigo.equals("DP"))return "Diputaci髇";
+		else if (codigo.equals("DE"))return "Detr谩s";
+		else if (codigo.equals("DP"))return "Diputaci贸n";
 		else if (codigo.equals("DS"))return "Diseminados";
 		else if (codigo.equals("ED"))return "Edificios";
 		else if (codigo.equals("EM"))return "Extramuros";
@@ -907,7 +868,7 @@ public class Cat2Osm {
 		else if (codigo.equals("FN"))return "Finca";
 		else if (codigo.equals("GL"))return "Glorieta";
 		else if (codigo.equals("GR"))return "Grupo";
-		else if (codigo.equals("GV"))return "Gran V韆";
+		else if (codigo.equals("GV"))return "Gran V铆a";
 		else if (codigo.equals("HT"))return "Huerta/Huerto";
 		else if (codigo.equals("JR"))return "Jardines";
 		else if (codigo.equals("LD"))return "Lado/Ladera";
@@ -921,16 +882,16 @@ public class Cat2Osm {
 		else if (codigo.equals("PB"))return "Poblado";
 		else if (codigo.equals("PD"))return "Partida";
 		else if (codigo.equals("PJ"))return "Pasaje/Pasadizo";
-		else if (codigo.equals("PL"))return "Pol韌ono";
+		else if (codigo.equals("PL"))return "Pol铆gono";
 		else if (codigo.equals("PM"))return "Paramo";
 		else if (codigo.equals("PQ"))return "Parroquia/Parque";
-		else if (codigo.equals("PR"))return "Prolongaci髇/Continuaci髇";
+		else if (codigo.equals("PR"))return "Prolongaci贸n/Continuaci贸n";
 		else if (codigo.equals("PS"))return "Paseo";
 		else if (codigo.equals("PT"))return "Puente";
 		else if (codigo.equals("PZ"))return "Plaza";
 		else if (codigo.equals("QT"))return "Quinta";
 		else if (codigo.equals("RB"))return "Rambla";
-		else if (codigo.equals("RC"))return "Rinc髇/Rincona";
+		else if (codigo.equals("RC"))return "Rinc贸n/Rincona";
 		else if (codigo.equals("RD"))return "Ronda";
 		else if (codigo.equals("RM"))return "Ramal";
 		else if (codigo.equals("RP"))return "Rampa";
@@ -939,12 +900,12 @@ public class Cat2Osm {
 		else if (codigo.equals("SA"))return "Salida";
 		else if (codigo.equals("SD"))return "Senda";
 		else if (codigo.equals("SL"))return "Solar";
-		else if (codigo.equals("SN"))return "Sal髇";
+		else if (codigo.equals("SN"))return "Sal贸n";
 		else if (codigo.equals("SU"))return "Subida";
 		else if (codigo.equals("TN"))return "Terrenos";
 		else if (codigo.equals("TO"))return "Torrente";
-		else if (codigo.equals("TR"))return "Traves韆";
-		else if (codigo.equals("UR"))return "Urbanizaci髇";
+		else if (codigo.equals("TR"))return "Traves铆a";
+		else if (codigo.equals("UR"))return "Urbanizaci贸n";
 		else if (codigo.equals("VR"))return "Vereda";
 		else if (codigo.equals("CY"))return "Caleya";
 
@@ -1048,10 +1009,32 @@ public class Cat2Osm {
 			l.add(s);
 			return l;}
 		default:
-			s[0] = "fixme"; s[1] = "codigo="+codigo;
+			s[0] = "fixme"; s[1] = "Documentar nuevo codificaci贸n de los usos de los vienes inmuebles en catastro c贸digo="+ codigo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
 			l.add(s);
 			return l;}
 	}
 
+	
+	/** Pasa todo el nombre de la calle a minusculas y luego va poniendo en mayusculas las primeras
+	 * letras de todas las palabras a menos que sean DE|DEL|EL|LA|LOS|LAS
+	 * @param s El nombre de la calle
+	 * @return String con el nombre de la calle pasando los articulos a minusculas.
+	 */
+	public static String formatearNombreCalle(String c){
+		
+		String[] l = c.toLowerCase().split(" ");
+		String ret = "";
+		
+		for (String s : l){
+			if (!s.isEmpty() && !s.equals("de") && !s.equals("del") && !s.equals("la") && !s.equals("las") && !s.equals("el") && !s.equals("los")){
+				char mayus = Character.toUpperCase(s.charAt(0));
+				ret += mayus + s.substring(1, s.length())+" ";
+			}
+			else
+				ret += s+" ";
+		}
+		
+		return ret.trim();
+	}
 
 }

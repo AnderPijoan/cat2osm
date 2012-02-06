@@ -8,4 +8,4 @@ set GEOTIFF_CSV=%FWTOOLS_DIR%\data
 set GDAL_DATA=%FWTOOLS_DIR%\data
 set GDAL_DRIVER_PATH=%FWTOOLS_DIR%\gdal_plugins
 
-ogr2ogr.exe -s_srs "+init=epsg:25830 +nadgrids=./peninsula.gsb +wktext" -t_srs EPSG:4326 %2 %3
+ogr2ogr.exe -s_srs "epsg:25830 +nadgrids=./peninsula.gsb +wktext" -t_srs EPSG:4326 %2 %3

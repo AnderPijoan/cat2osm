@@ -1,4 +1,6 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.opengis.feature.simple.SimpleFeature;
@@ -20,8 +22,8 @@ public class ShapeConstru extends Shape {
 	private String constru; // Campo Constru solo en Constru.shp
 	private List<ShapeAttribute> atributos;
 
-	public ShapeConstru(SimpleFeature f) {
-		super(f);
+	public ShapeConstru(SimpleFeature f, String tipo) {
+		super(f, tipo);
 
 		shapeId = "CONSTRU" + super.newShapeId();
 
@@ -48,7 +50,8 @@ public class ShapeConstru extends Shape {
 			}
 		}
 		else
-			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile CONSTRU");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "
+		+ f.getDefaultGeometry().getClass().getName() +" desconocido del shapefile CONSTRU");
 
 		// Inicializamos las listas
 		this.nodes = new ArrayList<List<Long>>();
@@ -170,10 +173,6 @@ public class ShapeConstru extends Shape {
 		l.add(s);
 
 		s = new String[2];
-		s[0] = "addr:country"; s[1] = "ES";
-		l.add(s);
-
-		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 
@@ -210,6 +209,7 @@ public class ShapeConstru extends Shape {
 		return true;
 	}
 
+	
 	/** Parsea el atributo constru entero, este se compone de distintos
 	 * elementos separados por el caracter '+'
 	 * @param constru Atributo constru
@@ -220,13 +220,53 @@ public class ShapeConstru extends Shape {
 		List<String[]> l = new ArrayList<String[]>();
 		constru = constru.trim();
 		String[] construs = constru.split("\\+");
+		int alturaMax = -9999;
+		int alturaMin = 9999;
 
-		for (String s: construs)
-			l.addAll(construElemParser(s.toUpperCase()));
+		for (String s: construs){
+			
+			List<String[]> temp = construElemParser(s.toUpperCase());
+			
+			// Si es un numero, no sabemos si es el de altura superior o inferior
+			// por eso lo almacenamos hasta el final.
+			if (!temp.isEmpty() && temp.get(0)[0].equals("NUM")) {
+				String[] num = temp.get(0);
+				alturaMax = (alturaMax>Integer.parseInt(num[1]))? alturaMax : Integer.parseInt(num[1]);
+				alturaMin = (alturaMin<Integer.parseInt(num[1]))? alturaMin : Integer.parseInt(num[1]);
+			}
+			else
+			l.addAll(temp);
+			}
 
+		// Comparamos si tenemos algun numero almacenado
+		if (alturaMax != -9999 && alturaMin != 9999){
+
+			// Si los dos valores han quedado iguales, es que solo se
+			// ha recogido un numero, se entiende si es mayor que 0, que alturaMin
+			// es 0 y si menor que 0, entonces alturaMax sera 0
+			if (alturaMax == alturaMin) {
+				alturaMax = (alturaMax>0)? alturaMax : 0;
+				alturaMin = (alturaMin<0)? alturaMin : 0;
+			}
+
+			String[] s = new String[2];
+			s[0] = "building:levels"; s[1] = alturaMax+""; 
+			l.add(s);
+			s = new String[2];
+			s[0] ="building"; s[1] ="yes";
+			l.add(s);
+			
+			if(alturaMin != 0) {
+				s = new String[2];
+				s[0] = "building:min_level"; s[1] = alturaMin+"";
+				l.add(s);
+			}
+		}
+		
 		return l;
 	}
 
+	
 	/** Parsea cada elemento que ha sido separado
 	 * @param elem Elemto a parsear
 	 * @return Lista con los tags que genera cada elemento
@@ -498,7 +538,7 @@ public class ShapeConstru extends Shape {
 		if (negativo)
 			sumaTotal = (0 - sumaTotal);
 
-		s[0] = "CONSTRUALTURAS"; s[1] = sumaTotal+"";
+		s[0] = "NUM"; s[1] = sumaTotal+"";
 		l.add(s);
 		return l;
 	}

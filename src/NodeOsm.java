@@ -1,4 +1,6 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -124,7 +126,7 @@ public class NodeOsm {
 	public String printNode(Long id){
 		String s = null;
 			
-		s = ("<node id=\""+ id +"\" version=\"6\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
+		s = ("<node id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
 		
 		
 		if (tags != null)

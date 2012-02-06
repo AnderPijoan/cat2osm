@@ -5,17 +5,17 @@
 ResultPath=result
 
 # Nombre para el archivo resultado
-ResultFileName=CiudadReal
+ResultFileName=AldeasecaDeAlba
 
 # Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
 # En ese directorio deben estar las carpetas que vienen dentro del archivo comprimido de catastro
 # con su nombre original y dentro de cada una sus respectivos shapefiles.
-UrbanoSHPPath=files/CiudadReal/13_900_UA_2011-09-16_SHF
-RusticoSHPPath=files/CiudadReal/13_900_RA_2011-09-16_SHF
+UrbanoSHPPath=files/AldeasecaDeAlba/37_21_UA_2011-09-16_SHF
+RusticoSHPPath=files/AldeasecaDeAlba/37_21_RA_2011-09-16_SHF
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
-UrbanoCATFile=files/CiudadReal/13_900_U_2011-05-08.CAT
-RusticoCATFile=files/CiudadReal/13_900_R_2011-09-17.CAT
+UrbanoCATFile=files/AldeasecaDeAlba/37_21_U_2011-09-18.CAT
+RusticoCATFile=files/AldeasecaDeAlba/37_21_R_2011-09-17.CAT
 
 # Ruta a la carpeta base de FWTools.
 FWToolsPath=C:\Program Files (x86)\FWTools2.4.7
@@ -32,7 +32,7 @@ NadgridsPath=peninsula.gsb
 # 25829 para ETRS89/ Zona UTM 29N
 # 25830 para ETRS89/ Zona UTM 30N
 # 25831 para ETRS89/ Zona UTM 31N
-Proyeccion=25830
+Proyeccion=23030
 
 # Fecha desde la cual coger los datos (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha

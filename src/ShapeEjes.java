@@ -1,7 +1,9 @@
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,15 +27,15 @@ public class ShapeEjes extends Shape {
 	private static final Map<Long,String> ejesNames = new HashMap<Long,String>(); // Lista de codigos y nombres de vias (para el Ejes.shp)
 
 
-	public ShapeEjes(SimpleFeature f) throws IOException {
+	public ShapeEjes(SimpleFeature f, String tipo) throws IOException {
 		
-		super(f);
+		super(f, tipo);
 		
 
 		shapeId = "EJES" + super.newShapeId();
 
 		if (ejesNames.isEmpty()){
-			readCarvia();
+			readCarvia(tipo);
 		}
 		
 		// Ejes trae la geometria en formato MultiLineString
@@ -44,7 +46,8 @@ public class ShapeEjes extends Shape {
 
 		}
 		else {
-			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile EJES");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "+
+		f.getDefaultGeometry().getClass().getName() +" desconocido del shapefile EJES");
 		}
 
 		if (f.getAttribute("VIA") instanceof Double){
@@ -58,7 +61,7 @@ public class ShapeEjes extends Shape {
 			int v = (Integer) f.getAttribute("VIA");
 			via = getVia((long) v);
 		}
-		else System.out.println("No se encuentra el tipo de VIA "+ f.getAttribute("VIA").getClass().getName() );	
+		else System.out.println("["+new Timestamp(new Date().getTime())+"] No se reconoce el tipo del atributo VIA "+ f.getAttribute("VIA").getClass().getName() );	
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -102,10 +105,6 @@ public class ShapeEjes extends Shape {
 		
 		if (tags != null)
 			l.addAll(tags);
-		
-		s = new String[2];
-		s[0] = "addr:country"; s[1] = "ES";
-		l.add(s);
 		
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
@@ -303,9 +302,13 @@ public class ShapeEjes extends Shape {
 	 * @throws IOException 
 	 * @throws IOException
 	 */
-	public void readCarvia() throws IOException{
+	public void readCarvia(String tipo) throws IOException{
 		
-		InputStream inputStream = new FileInputStream(Config.get("UrbanoSHPPath") + "\\CARVIA\\CARVIA.DBF");
+		InputStream inputStream = null;
+		if (tipo.equals("UR"))
+		inputStream = new FileInputStream(Config.get("UrbanoSHPPath") + "/CARVIA/CARVIA.DBF");
+		else if (tipo.equals("RU"))
+		inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "/CARVIA/CARVIA.DBF");
 		DBFReader reader = new DBFReader(inputStream);
 		
 		Object[] rowObjects;

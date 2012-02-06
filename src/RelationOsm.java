@@ -1,13 +1,12 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.MultiPolygon;
-
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RelationOsm {
 
@@ -207,15 +206,41 @@ public class RelationOsm {
 		
 		
 		if (ids.size()<1)
-			System.out.println("Relation id="+ id +" con menos de un way. No se imprimira.");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Relation id="+ id +" con menos de un way. No se imprimira.");
 	
 		// Si una relation tiene menos de dos ways, deberia quedarse como way
-		// Ya que sino es redundante.
+		// ya que sino es redundante.
 		else if (ids.size()==1){
+			
+			// Un way que va a ser inner en una relation solo tiene que tener los tags distintos
+			// respecto a sus outter
+			Iterator<Entry<RelationOsm, Long>> it = utils.getTotalRelations().entrySet().iterator();
+			
+			// Para todas las relaciones que hay
+			while(it.hasNext()){
+				Map.Entry e = (Map.Entry) it.next();
+				
+				// Si una tiene el id del way que vamos a imprimir
+				if ( ((RelationOsm) e.getKey()).getIds().contains(ids.get(0))){
+					
+					// Cogemos la posicion que ocupa ese id en la lista de ids de la relacion
+					int pos = ((RelationOsm) e.getKey()).getIds().indexOf(ids.get(0));
+
+					// Si tiene un role de inner
+					if (((RelationOsm) e.getKey()).getRoles().get(pos).equals("inner")) 
+						for (int y = 0; y < ((RelationOsm) e.getKey()).getIds().size(); y++)
+							if ( y != pos)
+								for (int z = 0; z < ((RelationOsm) e.getKey()).getTags().size(); z++)
+									for (int w = 0; w < this.tags.size(); w++)
+										if ( (this.tags.get(w)[0]) .equals ( ((RelationOsm) e.getKey()).getTags().get(z)[0] ))
+										this.tags.remove(w);
+
+				}
+			}
 			
 			WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), ids.get(0)));
 			
-			s = ("<way id=\""+ ids.get(0) +"\" version=\"6\">\n");
+			s = ("<way id=\""+ ids.get(0) +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\">\n");
 			
 			// Referencias a los nodos
 			for (int x = 0; x < way.getNodes().size(); x++)
@@ -228,17 +253,19 @@ public class RelationOsm {
 			
 			for (int x = 0; x < tags.size(); x++) {
 				
-				// Filtramos para que no salgan todos los tags
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
+				// Filtramos para que no salgan todos los tags, siguiente bucle se explica el porque
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
 				s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				
-				// El tag housenumber solo se puede asignar a parcelas. Por eso habra
+				// El tag addr:housenumber, addr:street,  addr:full y add:country 
+				// solo se puede asignar a parcelas. Por eso habra
 				// que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela
-				else if (tags.get(x)[0].equals("addr:housenumber")){
+				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
 					for (String[] tag : tags)
 						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
+					s += "<tag k=\"addr:country\" v=\"ES\"/>\n";
 				}
 				
 				// Mostrar los shapes que utilizan esta relacion, para debugging
@@ -250,7 +277,7 @@ public class RelationOsm {
 		}
 		// En caso de que tenga varios ways, si que se imprime como una relacion de ways.
 		else {
-			s = ("<relation id=\""+ id +"\" visible=\"true\"  version=\"6\">\n");
+			s = ("<relation id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" visible=\"true\"  version=\"6\">\n");
 			
 			for (int x = 0; x < ids.size(); x++)
 				if (utils.getTotalWays().containsValue(ids.get(x)))
@@ -258,17 +285,18 @@ public class RelationOsm {
 			
 			for (int x = 0; x < tags.size(); x++){
 				
-				// Filtramos para que no salgan todos los tags
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
+				// Filtramos para que no salgan todos los tags, abajo se explica el porque
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
 				s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				
 				// El tag housenumber solo se puede asignar a parcelas. Por eso habra
 				// que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela	
-				else if (tags.get(x)[0].equals("addr:housenumber")){
+				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
 					for (String[] tag : tags)
 						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
+					s += "<tag k=\"addr:country\" v=\"ES\"/>\n";
 				}
 				
 				// Mostrar los shapes que utilizan esta relacion, para debugging

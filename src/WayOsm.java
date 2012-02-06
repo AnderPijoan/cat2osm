@@ -1,5 +1,7 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 
@@ -7,7 +9,12 @@ public class WayOsm {
 
 	private List<Long> nodos; // Nodos que componen ese way
 	private List<String> shapes; // Lista de Shapes a los que pertenece, para la simplificacion de ways
-
+	// Esta clase no tiene tags porque al leer los shapefiles, se parte la geometria en el
+	// numero maximo posible de ways de dos nodos. Los tags de esa geometria se almacenan en una relacion
+	// que estara compuesta por los ways que hemos partido y a la hora de imprimir si se ve que una 
+	// relacion solo tiene un mienbro, entonces esa relacion se imprime como way. 
+	
+	
 	public WayOsm(List<Long> l){
 		if (l == null)
 			this.nodos = new ArrayList<Long>();
@@ -15,8 +22,8 @@ public class WayOsm {
 			this.nodos = l;
 		shapes = new ArrayList<String>();
 	}
-	
-	
+
+
 	public void addNode(Long l){
 		if (!nodos.contains(l))
 		nodos.add(l);
@@ -38,6 +45,7 @@ public class WayOsm {
 	public List<Long> getNodes() {
 		return nodos;
 	}
+	
 	
 	
 	public void setShapes(List<String> s){
@@ -81,17 +89,9 @@ public class WayOsm {
 		
 		return l1.equals(l2);
 	}
+		
 	
-	
-	/** Invierte el orden de la lista de los nodos y la devuelve.
-	 * @return La lista de nodos despues de haber invertido el orden.
-	 */
-	public void reverseNodes(){
-		Collections.reverse(nodos);
-	}
-	
-	
-	public List<Long> sortNodos(){
+	public List<Long> sortNodes(){
 		List<Long> result = new ArrayList<Long>();
 		for (Long l : nodos)
 			result.add(l);
@@ -100,33 +100,37 @@ public class WayOsm {
 	}
 	
 	
-	/** Sobreescribir el hashcode, para que compare los nodos aunque estén en otro orden
+	/** Sobreescribir el hashcode, para que compare los nodos aunque estan en otro orden
 	 * para que dos ways con los mismos nodos pero en distinta direccion se detecten como iguales.
 	 * ATENCION: ESTO PUEDE DAR PROBLEMAS EN EL FUTURO SI ALGUIEN INTENTA COMPARAR WAYS PARA OTRO USO
+	 * DOS WAYS IGUALES PERO EN DISTINTO SENTIDO ESTE LO DA COMO QUE SON EL MISMO, YA QUE A EFECTOS DE
+	 * SIMPLIFICACIÃ“N, TIENEN QUE SER IGUALES.
 	 */
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 17;
-		for (long l : sortNodos())
+	public synchronized int hashCode() {
+		final int prime = 31 + nodos.size();
+		long result = 17;
+		for (long l : sortNodes())
 			result = result * prime +  (int) (l^(l>>>32));
 		
 //		result = prime * result + ((sortNodos() == null) ? 0 :sortNodos().hashCode());
 		
-		return result;
+		return (int)result;
 	}
 
 	
-	/** Sobreescribir el equals, para que compare los nodos aunque estén en otro orden
+	/** Sobreescribir el equals, para que compare los nodos aunque estan en otro orden
 	 * para que dos ways con los mismos nodos pero en distinta direccion se detecten como iguales.
-	 * ATENCION: ESTO PUEDE DAR PROBLEMAS EN EL FUTURO SI ALGUIEN INTENTA COMPARAR WAYS
+	 * ATENCION: ESTO PUEDE DAR PROBLEMAS EN EL FUTURO SI ALGUIEN INTENTA COMPARAR WAYS PARA OTRO USO
+	 * DOS WAYS IGUALES PERO EN DISTINTO SENTIDO ESTE LO DA COMO QUE SON EL MISMO, YA QUE A EFECTOS DE
+	 * SIMPLIFICACIÃ“N, TIENEN QUE SER IGUALES.
 	 */
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
+	public synchronized boolean equals(Object obj) {
 		if (obj == null)
 			return false;
+		if (this == obj)
+			return true;
 		if (getClass() != obj.getClass())
 			return false;
 
@@ -135,10 +139,10 @@ public class WayOsm {
 		if (nodos == null) {
 			if (other.nodos != null)
 				return false;
-		} else if (this.sortNodos().size() == other.sortNodos().size()){
+		} else if (this.sortNodes().size() == other.sortNodes().size()){
 			boolean equal = true;
-			for(int x = 0; equal && x < this.sortNodos().size(); x++)
-				equal = this.sortNodos().get(x).equals(other.sortNodos().get(x));
+			for(int x = 0; equal && x < this.sortNodes().size(); x++)
+				equal = this.sortNodes().get(x).equals(other.sortNodes().get(x));
 				return equal;
 			}
 
@@ -173,11 +177,12 @@ public class WayOsm {
 		if (nodos.size()<2)
 			System.out.println("Way id="+ id +" con menos de dos nodos. No se imprimira.");
 		else {
-		s = ("<way id=\""+ id +"\" version=\"6\">\n");
+		s = ("<way id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\">\n");
 		
 		// Referencias a los nodos
 		for (int x = 0; x < nodos.size(); x++)
 			s += ("<nd ref=\""+ nodos.get(x) +"\"/>\n");
+		
 		
 		// Mostrar los shapes que utilizan este way, para debugging
 		if (shapes != null && Config.get("PrintShapeIds").equals("1"))

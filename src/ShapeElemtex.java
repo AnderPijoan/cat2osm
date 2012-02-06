@@ -1,4 +1,6 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.opengis.feature.simple.SimpleFeature;
@@ -19,9 +21,9 @@ public class ShapeElemtex extends Shape {
 	private List<ShapeAttribute> atributos;
 	private List<String[]> tags;
 
-	public ShapeElemtex(SimpleFeature f) {
+	public ShapeElemtex(SimpleFeature f, String tipo) {
 		
-		super(f);
+		super(f, tipo);
 
 		shapeId = "ELEMTEX" + super.newShapeId();
 		
@@ -34,16 +36,14 @@ public class ShapeElemtex extends Shape {
 			coor = line.getEnvelopeInternal().centre();
 		}
 		else {
-			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMTEX");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "+ 
+		f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMTEX");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
 		ttggss = (String) f.getAttribute("TTGGSS");
 		
-		rotulo = new String();
-		String r = (String) f.getAttribute("ROTULO");
-		for (int x = 0; x < r.length(); x++)
-			if (r.charAt(x) != '"') rotulo += r.charAt(x);
+		rotulo = eliminarComillas((String) f.getAttribute("ROTULO"));
 
 		// Hay que comprobar el texto para saber si es un shapeValido. Con los demas shapes
 		// se suele hacer a la hora de obtener los atributos.
@@ -86,9 +86,6 @@ public class ShapeElemtex extends Shape {
 
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
-		s = new String[2];
-		s[0] = "addr:country"; s[1] = "ES";
 		l.add(s);
 		
 		return l;
@@ -220,13 +217,7 @@ public class ShapeElemtex extends Shape {
 			return l;}
 		
 		else{
-			s[0] = "fixme"; s[1] = "ttggss="+ttggss;
-			l.add(s);
-			s = new String[2];
-			s[0] = "fixme"; s[1] = "rotulo="+rotulo;
-			l.add(s);
-			s = new String[2];
-			s[0] = "fixme"; s[1] = "Documentar nuevo elemento textual si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Textos_en_Elemtex.shp";
+			s[0] = "fixme"; s[1] = "Documentar nuevo elemento textual ttggss="+ttggss+" y rotulo="+rotulo+" si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Textos_en_Elemtex.shp";
 			l.add(s);
 			return l;
 		}
@@ -306,7 +297,7 @@ public class ShapeElemtex extends Shape {
 			setTtggss("landuse=cemetery");
 			return l;}
 		
-		if ((rotulo.contains("AUTOBÚS") || rotulo.contains("AUTOBUS") || rotulo.contains("BUS") || rotulo.contains("GUAGUA")) && (rotulo.contains("ESTACION") || rotulo.contains("ESTACIÓN "))){ 
+		if ((rotulo.contains("AUTOBï¿½S") || rotulo.contains("AUTOBUS") || rotulo.contains("BUS") || rotulo.contains("GUAGUA")) && (rotulo.contains("ESTACION") || rotulo.contains("ESTACIï¿½N "))){ 
 			s[0] = "amenity"; s[1] = "bus_station";
 			l.add(s);
 			return l;}
@@ -320,7 +311,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if ((rotulo.contains("TREN") || rotulo.contains("FERROCARRIL") || rotulo.contains("FFCC") || rotulo.contains("FF.CC.")) && (rotulo.contains("ESTACION") || rotulo.contains("ESTACIÓN"))){ 
+		if ((rotulo.contains("TREN") || rotulo.contains("FERROCARRIL") || rotulo.contains("FFCC") || rotulo.contains("FF.CC.")) && (rotulo.contains("ESTACION") || rotulo.contains("ESTACIï¿½N"))){ 
 			s[0] = "railway"; s[1] = "station";
 			l.add(s);
 			return l;}
@@ -330,7 +321,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("FRONTON") || rotulo.contains("FRONTÓN")){ 
+		if (rotulo.contains("FRONTON") || rotulo.contains("FRONTï¿½N")){ 
 			s[0] = "sport"; s[1] = "pelota";
 			l.add(s);
 			return l;}
@@ -345,7 +336,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CLINICA") || rotulo.contains("CLÍNICA")){ 
+		if (rotulo.contains("CLINICA") || rotulo.contains("CLï¿½NICA")){ 
 			s[0] = "amenity"; s[1] = "doctors";
 			l.add(s);
 			return l;}		
@@ -387,7 +378,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if ((rotulo.contains("CAMPO") && (rotulo.contains("FUTBOL") || rotulo.contains("FÚTBOL"))) || (rotulo.contains("PISTA") && (rotulo.contains("PADEL") || rotulo.contains("PÁDEL")  || rotulo.contains("TENIS"))) || rotulo.contains("CANCHA")){ 
+		if ((rotulo.contains("CAMPO") && (rotulo.contains("FUTBOL") || rotulo.contains("Fï¿½TBOL"))) || (rotulo.contains("PISTA") && (rotulo.contains("PADEL") || rotulo.contains("Pï¿½DEL")  || rotulo.contains("TENIS"))) || rotulo.contains("CANCHA")){ 
 			s[0] = "leisure"; s[1] = "pitch";
 			l.add(s);
 			return l;}
@@ -442,7 +433,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("GUARDERIA") || rotulo.contains("GUARDERÍA")){ 
+		if (rotulo.contains("GUARDERIA") || rotulo.contains("GUARDERï¿½A")){ 
 			s[0] = "amenity"; s[1] = "kindergarten";
 			l.add(s);
 			return l;}
@@ -529,7 +520,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("ALMACEN") || rotulo.contains("ALMACÉN") || rotulo.equals("NAVE")){ 
+		if (rotulo.contains("ALMACEN") || rotulo.contains("ALMACï¿½N") || rotulo.equals("NAVE")){ 
 			s[0] = "building"; s[1] = "warehouse";
 			l.add(s);
 			return l;}
@@ -562,7 +553,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("DEPOSITO") || rotulo.contains("DEPÓSITO")){ 
+		if (rotulo.contains("DEPOSITO") || rotulo.contains("DEPï¿½SITO")){ 
 			l.remove(0);
 			s[0] = "man_made"; s[1] = "storage_tank";
 			l.add(s);
@@ -614,7 +605,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CAFETERIA") || rotulo.contains("CAFETERÍA")){ 
+		if (rotulo.contains("CAFETERIA") || rotulo.contains("CAFETERï¿½A")){ 
 			s[0] = "amenity"; s[1] = "cafe";
 			l.add(s);
 			return l;}
@@ -629,7 +620,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("BASCULA") || rotulo.contains("BÁSCULA")){ 
+		if (rotulo.contains("BASCULA") || rotulo.contains("Bï¿½SCULA")){ 
 			s[0] = "man_made"; s[1] = "weighbridge";
 			l.add(s);
 			return l;}
@@ -662,11 +653,6 @@ public class ShapeElemtex extends Shape {
 		
 		else {
 			setTtggss("0");
-			s[0] = "fixme"; s[1] = "ttggss="+ttggss;
-			l.add(s);
-			s = new String[2];
-			s[0] = "fixme"; s[1] = "Documentar nuevo elemento textual si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Textos_en_Elemtex.shp";
-			l.add(s);
 			return l;
 		}
 	}

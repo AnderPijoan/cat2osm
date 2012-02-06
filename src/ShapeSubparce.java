@@ -1,13 +1,17 @@
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.opengis.feature.simple.SimpleFeature;
 
+import com.linuxense.javadbf.DBFException;
 import com.linuxense.javadbf.DBFReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
@@ -26,22 +30,22 @@ public class ShapeSubparce extends Shape {
 	private String subparce; // Clave de Subparcela
 	private String cultivo; // Tipo de cultivo de la subparcela
 	private List<ShapeAttribute> atributos;
-	private static final Map<String,String> ruSub = new HashMap<String,String>(); // Lista de subparce y calificacion (para el Subparce.shp)
-	private static final Map<String,String> ruCul = new HashMap<String,String>(); // Lista de cc y denominacion (para el Subparce.shp)
+	private static final Map<String,String> lSub = new HashMap<String,String>(); // Lista de subparce y calificacion (para el Subparce.shp)
+	private static final Map<String,String> lCul = new HashMap<String,String>(); // Lista de cc y denominacion (para el Subparce.shp)
 
 
 	/** Constructor
 	 * @param f Linea del archivo shp
 	 * @throws IOException 
 	 */
-	public ShapeSubparce(SimpleFeature f) throws IOException {
+	public ShapeSubparce(SimpleFeature f, String tipo) throws IOException {
 		
-		super(f);
+		super(f, tipo);
 		
 		shapeId = "SUBPARCE" + super.newShapeId();
 		
-		if (ruSub.isEmpty() || ruCul.isEmpty()){
-			readRusubparcelaRucultivo();
+		if (lSub.isEmpty() || lCul.isEmpty()){
+			readSubparceDetails(tipo);
 		}
 		
 		this.poligons = new ArrayList<LineString>();
@@ -67,7 +71,8 @@ public class ShapeSubparce extends Shape {
 			}
 		}
 		else
-			System.out.println("Formato geométrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile SUBPARCE");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "+ 
+		f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile SUBPARCE");
 
 		// Inicializamos las listas
 		this.nodes = new ArrayList<List<Long>>();
@@ -192,10 +197,6 @@ public class ShapeSubparce extends Shape {
 		l.add(s);
 		
 		s = new String[2];
-		s[0] = "addr:country"; s[1] = "ES";
-		l.add(s);
-		
-		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 			
@@ -225,36 +226,38 @@ public class ShapeSubparce extends Shape {
 	
 	/** Lee el archivo Rusubparcela.dbf y lo almacena para despues relacionar la clave subparce 
 	 * de Subparce.shp con la calificacion catastral que trae Rusubparcela.dbf. Con la cc se accedera
-	 * al rucultivo.dbf.
+	 * al rucultivo.dbf. Se supone que estos archivos solo existen en el caso de subparcelas rusticas,
+	 * por si acaso se pasa el tipo para futuras mejoras.
 	 * @throws IOException 
 	 */
-	public void readRusubparcelaRucultivo() throws IOException{
+	public void readSubparceDetails(String tipo) throws IOException {
 		
-		InputStream inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "\\RUSUBPARCELA\\RUSUBPARCELA.DBF");
-		DBFReader reader = new DBFReader(inputStream);
-		Object[] rowObjects;
+		if (tipo.equals("RU")){
+			InputStream inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "/RUSUBPARCELA/RUSUBPARCELA.DBF");
+			DBFReader reader = new DBFReader(inputStream);
+			Object[] rowObjects;
 
-		while((rowObjects = reader.nextRecord()) != null) {
-			
-			// La posicion 6 es el codigo subparce
-			// La posicion 8 es la calificacion catastral
-			ruSub.put(((String) rowObjects[6]).trim(), ((String) rowObjects[8]).trim());
-		
+			while((rowObjects = reader.nextRecord()) != null) {
+
+				// La posicion 6 es el codigo subparce
+				// La posicion 8 es la calificacion catastral
+				lSub.put(((String) rowObjects[6]).trim(), ((String) rowObjects[8]).trim());
+
+			}
+			inputStream.close();
+
+			inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "/RUCULTIVO/RUCULTIVO.DBF");
+			reader = new DBFReader(inputStream);
+
+			while((rowObjects = reader.nextRecord()) != null) {
+
+				// La posicion 1 es la calificacion catastral
+				// La posicion 2 es la denominacion
+				lCul.put(((String) rowObjects[1]).trim(), ((String) rowObjects[2]).trim());
+
+			}
+			inputStream.close();
 		}
-		inputStream.close();
-		
-		inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "\\RUCULTIVO\\RUCULTIVO.DBF");
-		reader = new DBFReader(inputStream);
-		
-		while((rowObjects = reader.nextRecord()) != null) {
-
-			// La posicion 1 es la calificacion catastral
-			// La posicion 2 es la denominacion
-			ruCul.put(((String) rowObjects[1]).trim(), ((String) rowObjects[2]).trim());
-		
-		}
-		inputStream.close();
-
 	}  
 	
 	
@@ -265,7 +268,7 @@ public class ShapeSubparce extends Shape {
 	 * @return String tipo de cultivo
 	 */
 	public String getCultivo(String s){
-		return ruCul.get(ruSub.get(s));
+		return lCul.get(lSub.get(s));
 	} 
 
 	
@@ -309,15 +312,22 @@ public class ShapeSubparce extends Shape {
 			return l;
 		}
 		if (cultivo.toUpperCase().contains("IMPRODUCTIVO")){
-			s[0] = "landuse"; s[1] = "brownfield";
+			s[0] = "natural"; s[1] = "scree";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("MATORRAL")){
+			s[0] = "natural"; s[1] = "scrub";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("OLIVOS")){
+			s[0] = "natural"; s[1] = "orchard";
 			l.add(s);
 			return l;
 		}
 		else {
-			s[0] = "fixme"; s[1] = "landuse="+cultivo;
-			l.add(s);
-			s = new String[2];
-			s[0] = "fixme"; s[1] = "Documentar nuevo cultivo en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Tipos_de_cultivo";
+			s[0] = "fixme"; s[1] = "Documentar nuevo cultivo landuse="+ cultivo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Tipos_de_cultivo";
 			l.add(s);
 		}
 		

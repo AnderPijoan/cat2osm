@@ -1,7 +1,11 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class Config {
@@ -43,8 +47,10 @@ public class Config {
 				}
 				temp = br.readLine();
 			}
-		} catch (Exception e) { System.out.println("Linea inadecuada en el archivo de configuracion: \""+ temp +"\"");
-		System.out.println("Los comentarios deben estar indicados con el caracter '#' al inicio.");}
+		} catch (Exception e) { System.out.println("["+new Timestamp(new Date().getTime())+"] Linea inadecuada" +
+				" en el archivo de configuracion: \""+ temp +"\"." +
+				"\n Los comentarios en el archivo de" +
+				" configuracion deben estar indicados con el caracter '#' al inicio.");}
 		finally
 		{
 			try                  {if (null != fr) fr.close();}
@@ -66,6 +72,15 @@ public class Config {
 	 * @param value  Nuevo valor a poner. */
 	public static void set(String option, String value){ 
 		map.put(option,value);
+	}
+	
+	
+	/** Anade la lista al hashMap de configuracion.
+	 * @param l Lista de pares de strings*/
+	public static void set(List<String[]> l){
+
+		for (String[] s : l)
+			map.put(s[0], s[1]);
 	}
 
 }

@@ -1,4 +1,6 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.opengis.feature.simple.SimpleFeature;
@@ -13,12 +15,12 @@ public class ShapeElempun extends Shape {
 	private String shapeId = null; // Id del shape ELEMPUN+long
 	private Coordinate coor;
 	private Long nodo;
-	private String ttggss; // Campo TTGGSS solo en Elempun.shp
+	private String ttggss; // Campo TTGGSS en Elempun.shp
 	private List<ShapeAttribute> atributos;
 
-	public ShapeElempun(SimpleFeature f) {
+	public ShapeElempun(SimpleFeature f, String tipo) {
 		
-		super(f);
+		super(f, tipo);
 
 		shapeId = "ELEMPUN" + super.newShapeId();
 		
@@ -30,7 +32,8 @@ public class ShapeElempun extends Shape {
 			coor = p.getCoordinate();
 		}
 		else {
-			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMPUN");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "+ 
+		f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMPUN");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
@@ -67,9 +70,6 @@ public class ShapeElempun extends Shape {
 			}
 
 		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
-		s = new String[2];
-		s[0] = "addr:country"; s[1] = "ES";
 		l.add(s);
 		
 		return l;
@@ -110,11 +110,27 @@ public class ShapeElempun extends Shape {
 			return true;
 		if (ttggss.equals("037101"))
 			return true;
+		if (ttggss.equals("038101"))
+			return true;
+		if (ttggss.equals("038102"))
+			return true;
 		if (ttggss.equals("037102"))
+			return true;
+		if (ttggss.equals("068401"))
 			return true;
 		if (ttggss.equals("167111"))
 			return true;
 		if (ttggss.equals("167201"))
+			return true;
+		if (ttggss.equals("168103"))
+			return true;
+		if (ttggss.equals("168116"))
+			return true;
+		if (ttggss.equals("168153"))
+			return true;
+		if (ttggss.equals("168168"))
+			return true;
+		if (ttggss.equals("168113"))
 			return true;
 		if (ttggss.equals("060402"))
 			return false;
@@ -127,9 +143,11 @@ public class ShapeElempun extends Shape {
 		if (ttggss.equals("160101"))
 			return false;
 		if (ttggss.equals("115101"))
-				return false;
-		else
 			return false;
+		if (ttggss.equals("168100"))
+			return false;
+		else
+			return true;
 	}
 	
 	

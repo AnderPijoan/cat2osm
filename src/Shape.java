@@ -1,4 +1,6 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.opengis.feature.simple.SimpleFeature;
@@ -18,7 +20,7 @@ public abstract class Shape {
 	/**Constructor
 	 * @param f Linea del archivo shp
 	 */
-	public Shape(SimpleFeature f){
+	public Shape(SimpleFeature f, String tipo){
 		
 		// Algunos conversores de DATUM cambian el formato de double a int en el .shp
 		// FECHAALATA y FECHABAJA siempre existen
@@ -33,7 +35,8 @@ public abstract class Shape {
 			int fa = (Integer) f.getAttribute("FECHAALTA");
 			fechaAlta = (long) fa;
 		}
-		else System.out.println("No se encuentra el tipo de FECHAALTA "+ f.getAttribute("FECHAALTA").getClass().getName() );	
+		else System.out.println("["+new Timestamp(new Date().getTime())+"] No se reconoce el tipo del atributo FECHAALTA "
+		+ f.getAttribute("FECHAALTA").getClass().getName());	
 
 		if (f.getAttribute("FECHABAJA") instanceof Integer){
 			int fb = (Integer) f.getAttribute("FECHABAJA");
@@ -46,7 +49,8 @@ public abstract class Shape {
 		else if (f.getAttribute("FECHABAJA") instanceof Long){
 			fechaBaja = (Long) f.getAttribute("FECHABAJA");
 		}
-		else System.out.println("No se encuentra el tipo de FECHABAJA"+ f.getAttribute("FECHABAJA").getClass().getName());
+		else System.out.println("["+new Timestamp(new Date().getTime())+"] No se reconoce el tipo del atributo FECHABAJA"
+		+ f.getAttribute("FECHABAJA").getClass().getName());
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -138,21 +142,21 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("BJ"))return "Bajada";
 		else if (codigo.toUpperCase().equals("BO"))return "Barrio";
 		else if (codigo.toUpperCase().equals("BR"))return "Barranco";
-		else if (codigo.toUpperCase().equals("CA"))return "Cañada";
+		else if (codigo.toUpperCase().equals("CA"))return "Caï¿½ada";
 		else if (codigo.toUpperCase().equals("CG"))return "Colegio/Cigarral";
 		else if (codigo.toUpperCase().equals("CH"))return "Chalet";
 		else if (codigo.toUpperCase().equals("CI"))return "Cinturon";
-		else if (codigo.toUpperCase().equals("CJ"))return "Calleja/Callejón";
+		else if (codigo.toUpperCase().equals("CJ"))return "Calleja/Callejï¿½n";
 		else if (codigo.toUpperCase().equals("CM"))return "Camino";
 		else if (codigo.toUpperCase().equals("CN"))return "Colonia";
 		else if (codigo.toUpperCase().equals("CO"))return "Concejo/Colegio";
 		else if (codigo.toUpperCase().equals("CP"))return "Campa/Campo";
 		else if (codigo.toUpperCase().equals("CR"))return "Carretera/Carrera";
-		else if (codigo.toUpperCase().equals("CS"))return "Caserío";
+		else if (codigo.toUpperCase().equals("CS"))return "Caserï¿½o";
 		else if (codigo.toUpperCase().equals("CT"))return "Cuesta/Costanilla";
 		else if (codigo.toUpperCase().equals("CU"))return "Conjunto";
-		else if (codigo.toUpperCase().equals("DE"))return "Detrás";
-		else if (codigo.toUpperCase().equals("DP"))return "Diputación";
+		else if (codigo.toUpperCase().equals("DE"))return "Detrï¿½s";
+		else if (codigo.toUpperCase().equals("DP"))return "Diputaciï¿½n";
 		else if (codigo.toUpperCase().equals("DS"))return "Diseminados";
 		else if (codigo.toUpperCase().equals("ED"))return "Edificios";
 		else if (codigo.toUpperCase().equals("EM"))return "Extramuros";
@@ -164,7 +168,7 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("FN"))return "Finca";
 		else if (codigo.toUpperCase().equals("GL"))return "Glorieta";
 		else if (codigo.toUpperCase().equals("GR"))return "Grupo";
-		else if (codigo.toUpperCase().equals("GV"))return "Gran Vía";
+		else if (codigo.toUpperCase().equals("GV"))return "Gran Vï¿½a";
 		else if (codigo.toUpperCase().equals("HT"))return "Huerta/Huerto";
 		else if (codigo.toUpperCase().equals("JR"))return "Jardines";
 		else if (codigo.toUpperCase().equals("LD"))return "Lado/Ladera";
@@ -178,16 +182,16 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("PB"))return "Poblado";
 		else if (codigo.toUpperCase().equals("PD"))return "Partida";
 		else if (codigo.toUpperCase().equals("PJ"))return "Pasaje/Pasadizo";
-		else if (codigo.toUpperCase().equals("PL"))return "Polígono";
+		else if (codigo.toUpperCase().equals("PL"))return "Polï¿½gono";
 		else if (codigo.toUpperCase().equals("PM"))return "Paramo";
 		else if (codigo.toUpperCase().equals("PQ"))return "Parroquia/Parque";
-		else if (codigo.toUpperCase().equals("PR"))return "Prolongación/Continuación";
+		else if (codigo.toUpperCase().equals("PR"))return "Prolongaciï¿½n/Continuaciï¿½n";
 		else if (codigo.toUpperCase().equals("PS"))return "Paseo";
 		else if (codigo.toUpperCase().equals("PT"))return "Puente";
 		else if (codigo.toUpperCase().equals("PZ"))return "Plaza";
 		else if (codigo.toUpperCase().equals("QT"))return "Quinta";
 		else if (codigo.toUpperCase().equals("RB"))return "Rambla";
-		else if (codigo.toUpperCase().equals("RC"))return "Rincón/Rincona";
+		else if (codigo.toUpperCase().equals("RC"))return "Rincï¿½n/Rincona";
 		else if (codigo.toUpperCase().equals("RD"))return "Ronda";
 		else if (codigo.toUpperCase().equals("RM"))return "Ramal";
 		else if (codigo.toUpperCase().equals("RP"))return "Rampa";
@@ -196,12 +200,12 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("SA"))return "Salida";
 		else if (codigo.toUpperCase().equals("SD"))return "Senda";
 		else if (codigo.toUpperCase().equals("SL"))return "Solar";
-		else if (codigo.toUpperCase().equals("SN"))return "Salón";
+		else if (codigo.toUpperCase().equals("SN"))return "Salï¿½n";
 		else if (codigo.toUpperCase().equals("SU"))return "Subida";
 		else if (codigo.toUpperCase().equals("TN"))return "Terrenos";
 		else if (codigo.toUpperCase().equals("TO"))return "Torrente";
-		else if (codigo.toUpperCase().equals("TR"))return "Travesía";
-		else if (codigo.toUpperCase().equals("UR"))return "Urbanización";
+		else if (codigo.toUpperCase().equals("TR"))return "Travesï¿½a";
+		else if (codigo.toUpperCase().equals("UR"))return "Urbanizaciï¿½n";
 		else if (codigo.toUpperCase().equals("VR"))return "Vereda";
 		else if (codigo.toUpperCase().equals("CY"))return "Caleya";
 
@@ -301,6 +305,14 @@ public abstract class Shape {
 			s[0] = "man_made"; s[1] ="water_well";
 			l.add(s);
 			return l;}
+		if (ttggss.equals("038101")){ 
+			s[0] = "man_made"; s[1] ="water_well";
+			l.add(s);
+			return l;}
+		if (ttggss.equals("038102")){ 
+			s[0] = "man_made"; s[1] ="water_well";
+			l.add(s);
+			return l;}
 		if (ttggss.equals("037102")){ 
 			s[0] = "natural"; s[1] ="water";
 			l.add(s);
@@ -349,12 +361,6 @@ public abstract class Shape {
 			return l;}
 		if (ttggss.equals("068401")){ 
 			s[0] = "highway"; s[1] ="milestone";
-			l.add(s);
-			s = new String[2];
-			s[0] = "pk"; s[1] ="milestone"; //TODO
-			l.add(s);
-			s = new String[2];
-			s[0] = "ref"; s[1] ="milestone"; //TODO
 			l.add(s);
 			return l;}
 
@@ -604,10 +610,7 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		else{
-			s[0] = "fixme"; s[1] = "ttggss="+ttggss;
-			l.add(s);
-			s = new String[2];
-			s[0] = "fixme"; s[1] = "Documentar si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Textos_en_Elemtex.shp";
+			s[0] = "fixme"; s[1] = "Documentar ttggss="+ttggss+" si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
 			l.add(s);
 			return l;
 		}
@@ -625,6 +628,19 @@ public abstract class Shape {
 			s = s.replace(" ", "");
 		}
 		return s.trim();
+	}
+	
+	
+	/** Eliminar las comillas '"' de los textos, sino al leerlo JOSM devuelve error
+	 * pensando que ha terminado un valor antes de tiempo.
+	 * @param s String al que quitar las comillas
+	 * @return String sin las comillas
+	 */
+	public static String eliminarComillas(String s){
+		String ret = new String();
+		for (int x = 0; x < s.length(); x++)
+			if (s.charAt(x) != '"') ret += s.charAt(x);
+		return ret;
 	}
 	
 }

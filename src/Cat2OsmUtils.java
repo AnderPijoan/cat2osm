@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ public class Cat2OsmUtils {
 		return totalWays;
 	}
 	
+	
 	public synchronized void addWay(WayOsm w, Long idway){
 		totalWays.put(w, idway);
 	}
@@ -60,7 +60,7 @@ public class Cat2OsmUtils {
 	 * @param w2 Way2
 	 * @return long Id de way que hay que eliminar de los shapes, porque se ha juntado al otro
 	 */
-	public synchronized WayOsm joinWays(WayOsm w1, WayOsm w2){
+	public synchronized WayOsm unirWays(WayOsm w1, WayOsm w2){
 		
 		if ( !w1.getNodes().isEmpty() && !w2.getNodes().isEmpty()){
 			
@@ -99,7 +99,7 @@ public class Cat2OsmUtils {
 			else if (w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1)) && totalWays.get(w1) != null  && totalWays.get(w2) != null){
 				
 				// Es igual que el Caso1 pero cambiados de orden.
-				return joinWays(w2, w1);
+				return unirWays(w2, w1);
 			}			
 		}
 		return null;
@@ -143,7 +143,7 @@ public class Cat2OsmUtils {
 	}
 	
 	
-	/** Mira si existe un way con los mismos nodos y en ese caso añade
+	/** Mira si existe un way con los mismos nodos y en ese caso aï¿½ade
 	 * los tags, de lo contrario crea uno. Despues devuelve el id
 	 * @param nodes Lista de nodos
 	 * @param shapes Lista de los shapes a los que pertenecera
@@ -172,7 +172,7 @@ public class Cat2OsmUtils {
 	}
 	
 	
-	/** Mira si existe una relation con los mismos ways y en ese caso añade 
+	/** Mira si existe una relation con los mismos ways y en ese caso aï¿½ade 
 	 * los tags, de lo contrario crea una. Despues devuelve el id
 	 * @param ids Lista de ids de los members q componen la relacion
 	 * @param types Lista de los tipos de los members de la relacion (por lo general ways)
@@ -232,5 +232,20 @@ public class Cat2OsmUtils {
 		
 		return ways;
 	}
+	
+	
+	/** Dada una lista de identificadores de nodes, devuelve una lista con esos
+     * nodes
+     * @return nodes lista de NodeOsm
+     */
+    @SuppressWarnings("unchecked")
+    public synchronized List<NodeOsm> getNodes(List<Long> ids){
+        List<NodeOsm> nodes = new ArrayList<NodeOsm>();
+        
+        for (Long l: ids)
+            nodes.add(((NodeOsm) getKeyFromValue((Map<Object, Long>) ((Object)totalNodes), l)));
+        
+        return nodes;
+    }
 	
 }

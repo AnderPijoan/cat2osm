@@ -1,4 +1,6 @@
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.opengis.feature.simple.SimpleFeature;
@@ -23,9 +25,9 @@ public class ShapeMasa extends Shape {
 	/** Constructor
 	 * @param f Linea del archivo shp
 	 */
-	public ShapeMasa (SimpleFeature f) {
+	public ShapeMasa (SimpleFeature f, String tipo) {
 
-		super(f);
+		super(f, tipo);
 		
 		shapeId = "MASA" + super.newShapeId();
 
@@ -52,7 +54,8 @@ public class ShapeMasa extends Shape {
 			}
 		}
 		else 
-			System.out.println("Formato geometrico "+ f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile MASA");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "+ 
+		f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile MASA");
 
 		// Inicializamos las listas
 		this.nodes = new ArrayList<List<Long>>();
@@ -156,10 +159,6 @@ public class ShapeMasa extends Shape {
 
 		s = new String[2];
 		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
-		l.add(s);
-		
-		s = new String[2];
-		s[0] = "addr:country"; s[1] = "ES";
 		l.add(s);
 		
 		s = new String[2];
