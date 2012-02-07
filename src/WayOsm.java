@@ -143,9 +143,11 @@ public class WayOsm {
 			boolean equal = true;
 			for(int x = 0; equal && x < this.sortNodes().size(); x++)
 				equal = this.sortNodes().get(x).equals(other.sortNodes().get(x));
-				return equal;
+			return equal;
 			}
-
+			else 
+				return false; 
+		
 		return true;
 	}
 

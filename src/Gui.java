@@ -71,7 +71,7 @@ public class Gui extends JFrame {
 				"Ruta al ARCHIVO EXTRAIDO .CAT URBANO.",
 				"Ruta al ARCHIVO EXTRAIDO .CAT RÚSTICO.", 
 				"Ruta al directorio principal de FWTools.\n(De momento no es necesario)", 
-				"Ruta al ARCHIVO de la rejilla de la península (peninsula.gsb).\n(Necesario para reprojectar, se puede descargar en http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM)",
+				"Ruta al ARCHIVO de la rejilla de la península (PENR2009.gsb o peninsula.gsb).\n(Necesario para reprojectar, se puede descargar en http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM)",
 				"Projección en la que se encuentran los archivos shapefile." +
 						"\n32628 para WGS84/ Zona UTM 29N"+
 						"\n23029 para ED_1950/ Zona UTM 29N,"+
@@ -297,7 +297,7 @@ public class Gui extends JFrame {
 			}
 
 			if (fcGsb.getSelectedFile() == null){
-				popupText.append("No ha seleccionado el archivo de rejilla para la reproyección (península.gsb). Este archvivo puede encontrarlo en la siguiente dirección: http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM\n\n");	
+				popupText.append("No ha seleccionado el archivo de rejilla para la reproyección (PENR2009.gsb o península.gsb). Este archvivo puede encontrarlo en la siguiente dirección: http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM\n\n");	
 			}
 
 			if (fdesde.getText().equals(null)){

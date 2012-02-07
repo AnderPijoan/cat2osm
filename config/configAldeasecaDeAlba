@@ -31,9 +31,9 @@ RusticoCATFile=files/AldeasecaDeAlba/37_21_R_2011-09-17.CAT
 # FWTools debe estar instalado y la consola reconocer el comando ogr2ogr porque sino no podra reproyectar.
 FWToolsPath=C:\Program Files (x86)\FWTools2.4.7
 
-# Ruta a la cuadricula de reproyeccion (peninsula.gsb):
+# Ruta a la cuadricula de reproyeccion (peninsula.gsb). Si es una ruta relativa necesita "./" por delante
 # Este archvivo puede encontrarlo en la siguiente dirección: http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM
-NadgridsPath=peninsula.gsb
+NadgridsPath=./peninsula.gsb
 
 # Proyeccion en la que estan los shapefiles para hacer la reproyeccion. 
 # (Se puede comprobar abriendo con un editor de texto cualquiera de los archivos .PRJ)

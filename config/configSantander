@@ -31,7 +31,7 @@ RusticoCATFile=files/Santander/39_900_R_2011-09-17.CAT
 # FWTools debe estar instalado y la consola reconocer el comando ogr2ogr porque sino no podra reproyectar.
 FWToolsPath=C:\Program Files (x86)\FWTools2.4.7
 
-# Ruta a la cuadricula de reproyeccion (peninsula.gsb):
+# Ruta a la cuadricula de reproyeccion (peninsula.gsb). Si es una ruta relativa necesita "./" por delante
 # Este archvivo puede encontrarlo en la siguiente dirección: http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM
 NadgridsPath=./peninsula.gsb
 

@@ -254,14 +254,14 @@ public class RelationOsm {
 			for (int x = 0; x < tags.size(); x++) {
 				
 				// Filtramos para que no salgan todos los tags, siguiente bucle se explica el porque
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
 				s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				
-				// El tag addr:housenumber, addr:street,  addr:full y add:country 
+				// El tag addr:housenumber, addr:street,  addr:full, addr:postcode y addr:country 
 				// solo se puede asignar a parcelas. Por eso habra
 				// que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela
-				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
+				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country")|| tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
 					for (String[] tag : tags)
 						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
@@ -286,17 +286,17 @@ public class RelationOsm {
 			for (int x = 0; x < tags.size(); x++){
 				
 				// Filtramos para que no salgan todos los tags, abajo se explica el porque
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
 				s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				
-				// El tag housenumber solo se puede asignar a parcelas. Por eso habra
+				// El tag addr:housenumber, addr:street,  addr:full, addr:postcode y addr:country 
+				// solo se puede asignar a parcelas. Por eso habra
 				// que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela	
-				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
+				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
 					for (String[] tag : tags)
 						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
-					s += "<tag k=\"addr:country\" v=\"ES\"/>\n";
 				}
 				
 				// Mostrar los shapes que utilizan esta relacion, para debugging

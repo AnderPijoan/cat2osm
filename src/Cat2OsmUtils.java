@@ -143,7 +143,7 @@ public class Cat2OsmUtils {
 	}
 	
 	
-	/** Mira si existe un way con los mismos nodos y en ese caso a�ade
+	/** Mira si existe un way con los mismos nodos y en ese caso anade
 	 * los tags, de lo contrario crea uno. Despues devuelve el id
 	 * @param nodes Lista de nodos
 	 * @param shapes Lista de los shapes a los que pertenecera
@@ -172,7 +172,7 @@ public class Cat2OsmUtils {
 	}
 	
 	
-	/** Mira si existe una relation con los mismos ways y en ese caso a�ade 
+	/** Mira si existe una relation con los mismos ways y en ese caso anade 
 	 * los tags, de lo contrario crea una. Despues devuelve el id
 	 * @param ids Lista de ids de los members q componen la relacion
 	 * @param types Lista de los tipos de los members de la relacion (por lo general ways)

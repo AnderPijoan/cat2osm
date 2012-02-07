@@ -312,7 +312,7 @@ public class ShapeSubparce extends Shape {
 			return l;
 		}
 		if (cultivo.toUpperCase().contains("IMPRODUCTIVO")){
-			s[0] = "natural"; s[1] = "scree";
+			s[0] = "natural"; s[1] = "scrub";
 			l.add(s);
 			return l;
 		}
