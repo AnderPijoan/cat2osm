@@ -574,7 +574,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DEL MUNICIPIO ORIGEN EN CASO DE AGREGACION",line.substring(247,250));
 			//c.addAttribute("CODIGO DE LA ZONA DE CONCENTRACION",line.substring(250,252));
 			//c.addAttribute("CODIGO DE POLIGONO",line.substring(252,255));
-			c.addAttribute("catastro:ref:polygon",eliminarCerosString(line.substring(252,255)));
+			//c.addAttribute("catastro:ref:polygon",eliminarCerosString(line.substring(252,255)));
 			//c.addAttribute("CODIGO DE PARCELA",line.substring(255,260));
 			//c.addAttribute("CODIGO DE PARAJE",line.substring(260,265));
 			//c.addAttribute("NOMBRE DEL PARAJE",line.substring(265,295));
@@ -588,7 +588,7 @@ public class Cat2Osm {
 			//c.addAttribute("COORDENADA X (CON 2 DECIMALES Y SIN SEPARADOR)",line.substring(333,342));
 			//c.addAttribute("COORDENADA Y (CON 2 DECIMALES Y SIN SEPARADOR)",line.substring(342,352));
 			//c.addAttribute("REFERENCIA CATASTRAL BICE DE LA FINCA",line.substring(581,601));
-			c.addAttribute("catastro:ref:bice",eliminarCerosString(line.substring(581,601)));
+			//c.addAttribute("catastro:ref:bice",eliminarCerosString(line.substring(581,601)));
 			//c.addAttribute("DENOMINACION DEL BICE DE LA FINCA",line.substring(601,666));
 			//c.addAttribute("HUSO GEOGRAFICO SRS",line.substring(666,676));
 

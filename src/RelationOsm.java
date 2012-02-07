@@ -265,7 +265,6 @@ public class RelationOsm {
 					for (String[] tag : tags)
 						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
-					s += "<tag k=\"addr:country\" v=\"ES\"/>\n";
 				}
 				
 				// Mostrar los shapes que utilizan esta relacion, para debugging

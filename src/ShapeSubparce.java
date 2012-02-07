@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -199,6 +201,14 @@ public class ShapeSubparce extends Shape {
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
+		
+		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
+		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
+		if (m.find()) {
+		s = new String[2];
+		s[0] = "source:date"; s[1] = m.group();
+		l.add(s);
+		}
 			
 		return l;
 	}

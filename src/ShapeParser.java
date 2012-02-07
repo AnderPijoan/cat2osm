@@ -272,7 +272,8 @@ public class ShapeParser extends Thread{
 		    String line;
 			int pro = Integer.parseInt(Config.get("Proyeccion"));
 			
-			if      (os.indexOf("win") >= 0){
+			// Windows
+			if (os.indexOf("win") >= 0){
 				// Archivo temporal para escribir el script
 				FileWriter fstreamScript = new FileWriter(tipo + f.getName() + "script.bat");
 				BufferedWriter outScript = new BufferedWriter(fstreamScript);
@@ -291,11 +292,11 @@ public class ShapeParser extends Thread{
                             		f.getPath().substring(0, f.getPath().length()-4) + " " +   // archivo origen
                             		Config.get("ResultPath")+"\\" + tipo + f.getName());        // archivo fin
 				else if (23029 <= pro && pro <= 23031)	// ED50				
-					outScript.write("ogr2ogr -s_srs \"+init=epsg:" + pro + " +nadgrids=.\\" + Config.get("NadgridsPath") + " +wktext\" -t_srs EPSG:4326 " + 
+					outScript.write("ogr2ogr.exe -s_srs \"+init=epsg:" + pro + " +nadgrids=.\\" + Config.get("NadgridsPath") + " +wktext\" -t_srs EPSG:4326 " + 
 							  		f.getPath().substring(0, f.getPath().length()-4) + " " +
 							  		Config.get("ResultPath")+"\\" + tipo + f.getName());
 				else if (25829 <= pro && pro <= 25831)  // ETRS89
-					outScript.write("ogr2ogr -s_srs \"+init=epsg:" + pro + " +wktext\" -t_srs EPSG:4326 " +
+					outScript.write("ogr2ogr.exe -s_srs \"+init=epsg:" + pro + " +wktext\" -t_srs EPSG:4326 " +
 							  		f.getPath().substring(0, f.getPath().length()-4) + " " +
 							  		Config.get("ResultPath")+"\\" + tipo + f.getName());
 				outScript.close();
@@ -307,7 +308,8 @@ public class ShapeParser extends Thread{
 				while ((line = bf.readLine()) != null)
 					System.out.println(line);
 			}
-		    else { //if (os.indexOf("linux") >= 0){
+			// Mac y Linux
+		    else {
 		    	String proyeccion = "";
 				if      (23029 <= pro && pro <= 23031)  // ED50 
 					proyeccion = "-s_srs \"+init=epsg:" + pro + " +nadgrids=" + Config.get("NadgridsPath") + " +wktext\""; 
@@ -336,7 +338,6 @@ public class ShapeParser extends Thread{
 				while ((line = bf.readLine()) != null)
 					System.out.println(line);
 		    }
-		    // else if (os.indexOf("mac") >= 0) // TODO
 			
 			//line = "scripts/ogr2ogr.bat " + f.getPath().substring(0, f.getPath().length()-4) +" "+ Config.get("ResultPath")+"/"+tipo+f.getName() +" "+ f.getPath();
 		   } catch (Exception er){ System.out.println("["+new Timestamp(new Date().getTime())+"] No se ha podido proyectar los shapefiles de "+f.getName()+"."); er.printStackTrace(); }
@@ -368,35 +369,5 @@ public class ShapeParser extends Thread{
 					" Estos estaran en la carpeta "+ path +".");
 		
 	}
-	
-	
-	/**Conocer el SO
-	 * @return
-	 */
-	public static boolean isWindows() {
-		 
-		String os = System.getProperty("os.name").toLowerCase();
-		// windows
-		return (os.indexOf("win") >= 0);
-	}
- 
-	public static boolean isMac() {
-		String os = System.getProperty("os.name").toLowerCase();
-		// mac
-		return (os.indexOf("mac") >= 0);
-	}
- 
-	public static boolean isUnix() {
-		String os = System.getProperty("os.name").toLowerCase();
-		// linux o unix
-		return (os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0);
-	}
- 
-	public static boolean isSolaris() {
-		String os = System.getProperty("os.name").toLowerCase();
-		// solaris
-		return (os.indexOf("sunos") >= 0);
-	}
- 
 
 }
