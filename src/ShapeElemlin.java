@@ -78,7 +78,7 @@ public class ShapeElemlin extends Shape {
 		}
 
 		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
+		s[0] = "source"; s[1] = "Dirección General del Catastro, del Ministerio de Economía y Hacienda del Reino de España";
 		l.add(s);
 		
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
