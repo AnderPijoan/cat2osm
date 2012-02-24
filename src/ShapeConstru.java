@@ -263,7 +263,7 @@ public class ShapeConstru extends Shape {
 			s[0] = "building:levels"; s[1] = alturaMax+""; 
 			l.add(s);
 			s = new String[2];
-			s[0] ="building"; s[1] ="yes";
+			s[0] = "building"; s[1] ="yes";
 			l.add(s);
 			
 			if(alturaMin != 0) {

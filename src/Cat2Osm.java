@@ -134,9 +134,9 @@ public class Cat2Osm {
 
 		for (Shape shape : shapes)
 
-			for (int x = 0; shape.getPoligons() != null && x < shape.getPoligons().size(); x++)
+			for (int x = 0; shape.getPoligons() != null && !shape.getPoligons().isEmpty() && x < shape.getPoligons().size(); x++)
 
-				for(int y = 0; y < shape.getWaysIds(x).size()+1; y++){
+				for(int y = 0; shape.getWaysIds(x) != null && !shape.getWaysIds(x).isEmpty() && y < shape.getWaysIds(x).size()+1; y++){
 
 					if (removeWay != null){
 						removeWay = null;
@@ -182,7 +182,6 @@ public class Cat2Osm {
 						}
 
 					}catch(Exception e) {System.out.println("["+new Timestamp(new Date().getTime())+"] Error simplificando vía. " + e.getMessage());}
-
 				}
 
 		return shapes;
@@ -989,7 +988,7 @@ public class Cat2Osm {
 			l.add(s);
 			return l;}
 		case 'P':{
-			s[0] = "tourism"; s[1] = "attraction";
+			s[0] = "amenity"; s[1] = "public_building";
 			l.add(s);
 			s = new String[2];
 			s[0] ="building"; s[1] ="yes";

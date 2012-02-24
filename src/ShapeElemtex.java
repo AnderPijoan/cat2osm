@@ -165,7 +165,8 @@ public class ShapeElemtex extends Shape {
 	 * @return Lista de ids de ways del poligono en posicion pos
 	 */
 	public List<Long> getWaysIds(int pos) {
-			return null;
+		List<Long> l = new ArrayList<Long>();
+			return l;
 	}
 
 	

@@ -227,14 +227,22 @@ public class RelationOsm {
 					int pos = ((RelationOsm) e.getKey()).getIds().indexOf(ids.get(0));
 
 					// Si tiene un role de inner
-					if (((RelationOsm) e.getKey()).getRoles().get(pos).equals("inner")) 
+					if (((RelationOsm) e.getKey()).getRoles().get(pos).equals("inner")){
 						for (int y = 0; y < ((RelationOsm) e.getKey()).getIds().size(); y++)
-							if ( y != pos)
+							if (y != pos)
 								for (int z = 0; z < ((RelationOsm) e.getKey()).getTags().size(); z++)
 									for (int w = 0; w < this.tags.size(); w++)
-										if ( (this.tags.get(w)[0]) .equals ( ((RelationOsm) e.getKey()).getTags().get(z)[0] ))
+										if ( (this.tags.get(w)[0]).equals(((RelationOsm) e.getKey()).getTags().get(z)[0]) && (this.tags.get(w)[1]).equals(((RelationOsm) e.getKey()).getTags().get(z)[1]))
 										this.tags.remove(w);
-
+						
+						// Este metodo se carga el building=yes y es necesario si tiene un building:levels
+						for (String[] tag : ((RelationOsm) e.getKey()).getTags())
+						if (tag[0].equals("building:levels")){
+							String[] temp = {"building","yes"};
+							((RelationOsm) e.getKey()).addTag(temp);
+						}
+							
+					}
 				}
 			}
 			

@@ -300,6 +300,9 @@ public abstract class Shape {
 		if (ttggss.equals("033301")){ 
 			s[0] = "natural"; s[1] ="water";
 			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] ="Especificar tipo de agua y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
+			l.add(s);
 			return l;}
 		if (ttggss.equals("037101")){ 
 			s[0] = "man_made"; s[1] ="water_well";
@@ -315,6 +318,9 @@ public abstract class Shape {
 			return l;}
 		if (ttggss.equals("037102")){ 
 			s[0] = "natural"; s[1] ="water";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] ="Especificar tipo de agua y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("037107")){ 
