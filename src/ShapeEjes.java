@@ -316,9 +316,9 @@ public class ShapeEjes extends Shape {
 		
 		InputStream inputStream = null;
 		if (tipo.equals("UR"))
-		inputStream = new FileInputStream(Config.get("UrbanoSHPPath") + "/CARVIA/CARVIA.DBF");
+		inputStream = new FileInputStream(Config.get("UrbanoSHPPath") + "/CARVIA/Carvia.DBF");
 		else if (tipo.equals("RU"))
-		inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "/CARVIA/CARVIA.DBF");
+		inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "/CARVIA/Carvia.DBF");
 		DBFReader reader = new DBFReader(inputStream);
 		
 		Object[] rowObjects;

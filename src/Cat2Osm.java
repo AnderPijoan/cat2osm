@@ -110,8 +110,8 @@ public class Cat2Osm {
 
 		return shapes;
 	}
-	
-	
+
+
 	/** Los ways inicialmente estan divididos lo maximo posible, es decir un way por cada
 	 * dos nodes. Este metodo compara los tags de los ways para saber que ways se pueden
 	 * unir para formar uno unico nuevo. Los tags de los ways se insertan al crear el way y
@@ -127,12 +127,20 @@ public class Cat2Osm {
 	@SuppressWarnings("unchecked")
 	public List<Shape> simplificarWays(List<Shape> shapes) throws InterruptedException{
 
+		int bar = -1;
+		float size = shapes.size();
 		WayOsm way1 = null;
 		WayOsm way2 = null;
 		WayOsm removeWay = null;
 		Map<WayOsm, Long> ways = utils.getTotalWays();
 
-		for (Shape shape : shapes)
+		for (Shape shape : shapes){
+			
+			int progress = (int) ((shapes.indexOf(shape)/size)*100);
+			if (bar != progress){
+			System.out.print("Progreso = "+progress+"%.\r");
+			bar = progress;
+			}
 
 			for (int x = 0; shape.getPoligons() != null && !shape.getPoligons().isEmpty() && x < shape.getPoligons().size(); x++)
 
@@ -183,6 +191,7 @@ public class Cat2Osm {
 
 					}catch(Exception e) {System.out.println("["+new Timestamp(new Date().getTime())+"] Error simplificando vía. " + e.getMessage());}
 				}
+		}
 
 		return shapes;
 	}
@@ -195,16 +204,17 @@ public class Cat2Osm {
 	@SuppressWarnings("rawtypes")
 	public void printNodes(Map <NodeOsm, Long> nodes) throws IOException{
 
-	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
-	    if (!dir.exists()) 
-	    {
-	      try                { dir.mkdirs(); }
-	      catch (Exception e){ e.printStackTrace(); }
-	    }
-		
+		File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+		if (!dir.exists()) 
+		{
+			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
+
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm");
-		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
+		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
 
 		Iterator<Entry<NodeOsm, Long>> it = nodes.entrySet().iterator();
 
@@ -224,16 +234,17 @@ public class Cat2Osm {
 	@SuppressWarnings("unchecked")
 	public void printNodesOrdenShapes(List<Shape> shapes, Map <NodeOsm, Long> nodes) throws IOException{
 
-	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
-	    if (!dir.exists()) 
-	    {
-	      try                { dir.mkdirs(); }
-	      catch (Exception e){ e.printStackTrace(); }
-	    }
-	    
+		File dir = new File(Config.get("ResultPath")); 
+		if (!dir.exists()) 
+		{
+			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
+
 		// Archivo temporal para escribir los nodos
-		FileWriter fstreamNodes = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm");
-		BufferedWriter outNodes = new BufferedWriter(fstreamNodes);
+		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
 		// Escribimos todos los nodos
 		for(Shape shape : shapes){
 
@@ -253,16 +264,17 @@ public class Cat2Osm {
 	@SuppressWarnings("rawtypes")
 	public void printWays(Map <WayOsm, Long> ways) throws IOException{
 
-	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
-	    if (!dir.exists()) 
-	    {
-	      try                { dir.mkdirs(); }
-	      catch (Exception e){ e.printStackTrace(); }
-	    }
+		File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+		if (!dir.exists()) 
+		{
+			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
 
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm");
-		BufferedWriter outWays = new BufferedWriter(fstreamWays);
+		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
 
 		Iterator<Entry<WayOsm, Long>> it = ways.entrySet().iterator();
 
@@ -281,17 +293,18 @@ public class Cat2Osm {
 	 */
 	@SuppressWarnings("unchecked")
 	public void printWaysOrdenShapes( List<Shape> shapes, Map <WayOsm, Long> ways) throws IOException{
-		
-	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
-	    if (!dir.exists()) 
-	    {
-	      try                { dir.mkdirs(); }
-	      catch (Exception e){ e.printStackTrace(); }
-	    }
+
+		File dir = new File(Config.get("ResultPath")); 
+		if (!dir.exists()) 
+		{
+			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
 
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamWays = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm");
-		BufferedWriter outWays = new BufferedWriter(fstreamWays);
+		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
 
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
 		for(Shape shape : shapes){
@@ -311,17 +324,18 @@ public class Cat2Osm {
 	 */
 	@SuppressWarnings("rawtypes")
 	public void printRelations( Map <RelationOsm, Long> relations) throws IOException{
-		
-	    File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
-	    if (!dir.exists()) 
-	    {
-	      try                { dir.mkdirs(); }
-	      catch (Exception e){ e.printStackTrace(); }
-	    }
+
+		File dir = new File(Config.get("ResultPath"));
+		if (!dir.exists()) 
+		{
+			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
 
 		// Archivo temporal para escribir los ways
-		FileWriter fstreamRelations = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm");
-		BufferedWriter outRelations = new BufferedWriter(fstreamRelations);
+		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outRelations = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamRelations), "UTF-8"));
 
 		Iterator<Entry<RelationOsm, Long>> it = relations.entrySet().iterator();
 
@@ -817,8 +831,8 @@ public class Cat2Osm {
 		}
 		return true;
 	}
-	
-	
+
+
 	/** Eliminar las comillas '"' de los textos, sino al leerlo JOSM devuelve error
 	 * pensando que ha terminado un valor antes de tiempo.
 	 * @param s String al que quitar las comillas
@@ -1015,17 +1029,17 @@ public class Cat2Osm {
 			return l;}
 	}
 
-	
+
 	/** Pasa todo el nombre de la calle a minusculas y luego va poniendo en mayusculas las primeras
 	 * letras de todas las palabras a menos que sean DE|DEL|EL|LA|LOS|LAS
 	 * @param s El nombre de la calle
 	 * @return String con el nombre de la calle pasando los articulos a minusculas.
 	 */
 	public static String formatearNombreCalle(String c){
-		
+
 		String[] l = c.toLowerCase().split(" ");
 		String ret = "";
-		
+
 		for (String s : l){
 			if (!s.isEmpty() && !s.equals("de") && !s.equals("del") && !s.equals("la") && !s.equals("las") && !s.equals("el") && !s.equals("los")){
 				char mayus = Character.toUpperCase(s.charAt(0));
@@ -1034,7 +1048,7 @@ public class Cat2Osm {
 			else
 				ret += s+" ";
 		}
-		
+
 		return ret.trim();
 	}
 

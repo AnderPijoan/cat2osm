@@ -322,7 +322,7 @@ public class ShapeSubparce extends Shape {
 			return l;
 		}
 		if (cultivo.toUpperCase().contains("IMPRODUCTIVO")){
-			s[0] = "natural"; s[1] = "scrub";
+			s[0] = "fixme"; s[1] = "Suelo Improductivo, tagearlo manualmente a la traduccion que mas se asemeje siguiendo http://wiki.openstreetmap.org/wiki/Map_features.";
 			l.add(s);
 			return l;
 		}
@@ -336,8 +336,26 @@ public class ShapeSubparce extends Shape {
 			l.add(s);
 			return l;
 		}
+		if (cultivo.toUpperCase().contains("EUCALIPTUS")){
+			s[0] = "landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("MONTE BAJO")){
+			s[0] = "natural"; s[1] = "scrub";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("INVERNADERO")){
+			s[0] = "landuse"; s[1] = "greenhouse_horticulture";
+			l.add(s);
+			return l;
+		}
 		else {
-			s[0] = "fixme"; s[1] = "Documentar nuevo cultivo landuse="+ cultivo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Tipos_de_cultivo";
+			s[0] = "fixme"; s[1] = "Documentar nuevo cultivo landuse="+ cultivo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Tipos_de_cultivo.";
 			l.add(s);
 		}
 		

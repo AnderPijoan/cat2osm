@@ -57,6 +57,7 @@ public abstract class Shape {
 		for (int x = 1; x < f.getAttributes().size(); x++){
 		atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
 		}*/
+		
 	}
 
 	
@@ -298,10 +299,10 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("033301")){ 
-			s[0] = "natural"; s[1] ="water";
+			s[0] = "landuse"; s[1] ="reservoir";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] ="Especificar tipo de agua y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
+			s[0] = "fixme"; s[1] ="Especificar tipo de agua (natural=water / leisure=swimming_pool / man_made=water_well / amenity=fountain / ...) y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("037101")){ 
@@ -317,10 +318,10 @@ public abstract class Shape {
 			l.add(s);
 			return l;}
 		if (ttggss.equals("037102")){ 
-			s[0] = "natural"; s[1] ="water";
+			s[0] = "landuse"; s[1] ="reservoir";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] ="Especificar tipo de agua y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
+			s[0] = "fixme"; s[1] ="Especificar tipo de agua (natural=water / leisure=swimming_pool / man_made=water_well / amenity=fountain / ...) y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("037107")){ 

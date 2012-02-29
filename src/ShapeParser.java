@@ -358,11 +358,11 @@ public class ShapeParser extends Thread{
 		boolean borrado = true;
 		
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
-		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".SHP").delete();
-		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".DBF").delete();
-		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".PRJ").delete();
-		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".SHX").delete();
-		borrado = borrado && new File(path +"/script"+ filename.substring(0, filename.length()-4) +".sh").delete();
+		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".shp").delete();
+		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".dbf").delete();
+		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".prj").delete();
+		borrado = borrado && new File(path +"/"+ filename.substring(0, filename.length()-4) +".shx").delete();
+		borrado = borrado && new File(path +"/script"+ filename +".sh").delete();
 	
 		if (!borrado)
 			System.out.println("["+new Timestamp(new Date().getTime())+"] No se pudo borrar alguno de los archivos temporales de "+filename+"." +
