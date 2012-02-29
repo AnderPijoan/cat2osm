@@ -37,7 +37,7 @@ public class Gui extends JFrame {
 		if (args.length == 0){
 			System.out.println("Cat2Osm version 2012-02-29.\n");
 			System.out.println("Forma de uso:");
-			System.out.println("java -jar [-Xmx=memoria] cat2osm.jar [opcion] [rutaarchivoconfig]\n");
+			System.out.println("java -jar [-XmxMemoria] cat2osm.jar [Opcion] [RutaArchivoConfig]\n");
 			System.out.println("Es necesrio indicarle una opción o pasarle el archivo de configuración:");
 			System.out.println("-ui                     Inicia la interfaz de usuario para crear el archivo de configuracion");
 			System.out.println("-v                      Muestra la version de Cat2Osm");
