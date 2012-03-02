@@ -126,8 +126,8 @@ public class ShapeElemlin extends Shape {
 
 	public boolean shapeValido (){
 
-		if (ttggss.equals("030202"))
-			return true;
+		//if (ttggss.equals("030202"))
+			//return true; // Margenes de rios que van a tener natural=water
 		//if (ttggss.equals("030302"))
 			//return true; // TODO Emborrona mas que ayudar
 		if (ttggss.equals("037101"))

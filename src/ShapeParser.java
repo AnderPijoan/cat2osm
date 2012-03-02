@@ -28,7 +28,7 @@ public class ShapeParser extends Thread{
 	public ShapeParser (String t, File f, Cat2OsmUtils u, List<Shape> s){
 		super (f.getName());
 		this.tipo = t;
-		this.file = reproyectarWGS84(f);
+		this.file = reproyectarWGS84(f, t);
 		this.utils = u;
 		shapeList = s;
 		start();
@@ -54,7 +54,7 @@ public class ShapeParser extends Thread{
 				Shape shape = new ShapeMasa(reader.next(), tipo);
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(mPolygonShapeParser(shape));
 			}
@@ -65,7 +65,7 @@ public class ShapeParser extends Thread{
 				Shape shape = new ShapeParcela(reader.next(), tipo);
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(mPolygonShapeParser(shape));
 			}
@@ -76,7 +76,7 @@ public class ShapeParser extends Thread{
 				Shape shape = new ShapeSubparce(reader.next(), tipo);
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(mPolygonShapeParser(shape));
 			}
@@ -87,7 +87,7 @@ public class ShapeParser extends Thread{
 				Shape shape = new ShapeConstru(reader.next(), tipo);
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(mPolygonShapeParser(shape));
 			}
@@ -134,7 +134,7 @@ public class ShapeParser extends Thread{
 				Shape shape = new ShapeEjes(reader.next(), tipo);
 
 				// Si cumple estar entre las fechas
-				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta))
+				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(mLineStringShapeParser(shape));
 			}
@@ -263,7 +263,7 @@ public class ShapeParser extends Thread{
 	 * @param f Archivo a reproyectar
 	 * @return File Archivo reproyectado
 	 */
-	public synchronized File reproyectarWGS84(File f){
+	public synchronized File reproyectarWGS84(File f, String tipo){
 		
 		try
 		   {			
@@ -329,7 +329,7 @@ public class ShapeParser extends Thread{
 				Process pr = Runtime.getRuntime().exec("chmod +x "+Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
 				pr.waitFor();
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Ejecutando proyeccion de los shapefiles " +
-						f.getName() +": " + command);
+						tipo+f.getName() +": " + command);
 
 		    	Runtime run = Runtime.getRuntime();
 		    	pr  = run.exec(Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
@@ -340,7 +340,7 @@ public class ShapeParser extends Thread{
 		    }
 			
 			//line = "scripts/ogr2ogr.bat " + f.getPath().substring(0, f.getPath().length()-4) +" "+ Config.get("ResultPath")+"/"+tipo+f.getName() +" "+ f.getPath();
-		   } catch (Exception er){ System.out.println("["+new Timestamp(new Date().getTime())+"] No se ha podido proyectar los shapefiles de "+f.getName()+"."); er.printStackTrace(); }
+		   } catch (Exception er){ System.out.println("["+new Timestamp(new Date().getTime())+"] No se ha podido proyectar los shapefiles "+tipo+f.getName()+"."); er.printStackTrace(); }
 		
 		return new File(Config.get("ResultPath")+"/"+tipo+f.getName());
 	}
@@ -354,6 +354,8 @@ public class ShapeParser extends Thread{
 	public void borrarShpFiles(String filename){
 	
 		String path = Config.get("ResultPath");
+		
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado de leer los archivos "+filename+".");
 		
 		boolean borrado = true;
 		

@@ -81,22 +81,22 @@ public class RelationOsm {
 		// si es asi, conserva si ya existiese uno con esa clave, si no empieza
 		// por '*' lo machaca si existiese uno igual.
 		// con el nuevo valor.
+		// También comprobamos que si es un *landuse, no se introduzca en relaciones
+		// en las que haya tags que ya especifican que uso y de forma mas correcta
 		boolean encontrado = (tag[0].equals("CAT2OSMSHAPEID"));
-		tag[1] = tag[1].replaceAll("\"", "");
+		String[] s = {tag[0].replace("*", ""), tag[1].replaceAll("\"", "")};
 
 		for (int x = 0; !encontrado && x < this.tags.size(); x++){
-			if (tag[0].startsWith("*") && tags.get(x)[0].contains(this.tags.get(x)[0]))
+			if (tag[0].startsWith("*") && (s[0].equals(this.tags.get(x)[0]) || (this.tags.get(x)[0].equals("natural") && this.tags.get(x)[1].equals("water")) ))
 				encontrado = true;
 
-			else if (this.tags.get(x)[0].equals(tag[0])){
-				this.tags.get(x)[1] = tag[1];
+			else if (this.tags.get(x)[0].equals(s[0])){
+				this.tags.get(x)[1] = s[1];
 				encontrado = true;
 			}
 		}
 
 		if (!encontrado || (tag[0].equals("CAT2OSMSHAPEID"))){
-			String temp = tag[0].replace("*", "");
-			String[] s = {temp , tag[1]};
 			this.tags.add(s);
 			}
 	}
@@ -118,19 +118,17 @@ public class RelationOsm {
 			// por '*' lo machaca si existiese uno igual.
 			// con el nuevo valor.
 			boolean encontrado = (tags.get(x)[0].equals("CAT2OSMSHAPEID"));
-			tags.get(x)[1] = tags.get(x)[1].replaceAll("\"", "");
+			String[] s = {tags.get(x)[0].replace("*", ""), tags.get(x)[1].replaceAll("\"", "")};
 
 			for (int y = 0; !encontrado && y < this.tags.size(); y++){
-				if (tags.get(x)[0].startsWith("*") && tags.get(x)[0].contains(this.tags.get(y)[0]))
+				if (tags.get(x)[0].startsWith("*") && (s[0].equals(this.tags.get(y)[0]) || (this.tags.get(y)[0].equals("natural") && this.tags.get(y)[1].equals("water")) ))
 					encontrado = true;
-				else if (this.tags.get(y)[0].equals(tags.get(x)[0])){
-					this.tags.get(y)[1] = tags.get(x)[1];
+				else if (this.tags.get(y)[0].equals(s[0])){
+					this.tags.get(y)[1] = s[1];
 					encontrado = true;
 				}
 			}
-			if (!encontrado || (tags.get(x)[0].equals("CAT2OSMSHAPEID"))){
-				String temp = tags.get(x)[0].replace("*", "");
-				String[] s = {temp , tags.get(x)[1]};
+			if (!encontrado || (s[0].equals("CAT2OSMSHAPEID"))){
 				this.tags.add(s);
 				}
 		}

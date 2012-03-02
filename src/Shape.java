@@ -143,21 +143,21 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("BJ"))return "Bajada";
 		else if (codigo.toUpperCase().equals("BO"))return "Barrio";
 		else if (codigo.toUpperCase().equals("BR"))return "Barranco";
-		else if (codigo.toUpperCase().equals("CA"))return "Ca�ada";
+		else if (codigo.toUpperCase().equals("CA"))return "Cañada";
 		else if (codigo.toUpperCase().equals("CG"))return "Colegio/Cigarral";
 		else if (codigo.toUpperCase().equals("CH"))return "Chalet";
 		else if (codigo.toUpperCase().equals("CI"))return "Cinturon";
-		else if (codigo.toUpperCase().equals("CJ"))return "Calleja/Callej�n";
+		else if (codigo.toUpperCase().equals("CJ"))return "Calleja/Callejón";
 		else if (codigo.toUpperCase().equals("CM"))return "Camino";
 		else if (codigo.toUpperCase().equals("CN"))return "Colonia";
 		else if (codigo.toUpperCase().equals("CO"))return "Concejo/Colegio";
 		else if (codigo.toUpperCase().equals("CP"))return "Campa/Campo";
 		else if (codigo.toUpperCase().equals("CR"))return "Carretera/Carrera";
-		else if (codigo.toUpperCase().equals("CS"))return "Caser�o";
+		else if (codigo.toUpperCase().equals("CS"))return "Caserío";
 		else if (codigo.toUpperCase().equals("CT"))return "Cuesta/Costanilla";
 		else if (codigo.toUpperCase().equals("CU"))return "Conjunto";
-		else if (codigo.toUpperCase().equals("DE"))return "Detr�s";
-		else if (codigo.toUpperCase().equals("DP"))return "Diputaci�n";
+		else if (codigo.toUpperCase().equals("DE"))return "Detrás";
+		else if (codigo.toUpperCase().equals("DP"))return "Diputación";
 		else if (codigo.toUpperCase().equals("DS"))return "Diseminados";
 		else if (codigo.toUpperCase().equals("ED"))return "Edificios";
 		else if (codigo.toUpperCase().equals("EM"))return "Extramuros";
@@ -169,7 +169,7 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("FN"))return "Finca";
 		else if (codigo.toUpperCase().equals("GL"))return "Glorieta";
 		else if (codigo.toUpperCase().equals("GR"))return "Grupo";
-		else if (codigo.toUpperCase().equals("GV"))return "Gran V�a";
+		else if (codigo.toUpperCase().equals("GV"))return "Gran Vía";
 		else if (codigo.toUpperCase().equals("HT"))return "Huerta/Huerto";
 		else if (codigo.toUpperCase().equals("JR"))return "Jardines";
 		else if (codigo.toUpperCase().equals("LD"))return "Lado/Ladera";
@@ -183,16 +183,16 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("PB"))return "Poblado";
 		else if (codigo.toUpperCase().equals("PD"))return "Partida";
 		else if (codigo.toUpperCase().equals("PJ"))return "Pasaje/Pasadizo";
-		else if (codigo.toUpperCase().equals("PL"))return "Pol�gono";
+		else if (codigo.toUpperCase().equals("PL"))return "Polígono";
 		else if (codigo.toUpperCase().equals("PM"))return "Paramo";
 		else if (codigo.toUpperCase().equals("PQ"))return "Parroquia/Parque";
-		else if (codigo.toUpperCase().equals("PR"))return "Prolongaci�n/Continuaci�n";
+		else if (codigo.toUpperCase().equals("PR"))return "Prolongación/Continuación";
 		else if (codigo.toUpperCase().equals("PS"))return "Paseo";
 		else if (codigo.toUpperCase().equals("PT"))return "Puente";
 		else if (codigo.toUpperCase().equals("PZ"))return "Plaza";
 		else if (codigo.toUpperCase().equals("QT"))return "Quinta";
 		else if (codigo.toUpperCase().equals("RB"))return "Rambla";
-		else if (codigo.toUpperCase().equals("RC"))return "Rinc�n/Rincona";
+		else if (codigo.toUpperCase().equals("RC"))return "Rincón/Rincona";
 		else if (codigo.toUpperCase().equals("RD"))return "Ronda";
 		else if (codigo.toUpperCase().equals("RM"))return "Ramal";
 		else if (codigo.toUpperCase().equals("RP"))return "Rampa";
@@ -201,12 +201,12 @@ public abstract class Shape {
 		else if (codigo.toUpperCase().equals("SA"))return "Salida";
 		else if (codigo.toUpperCase().equals("SD"))return "Senda";
 		else if (codigo.toUpperCase().equals("SL"))return "Solar";
-		else if (codigo.toUpperCase().equals("SN"))return "Sal�n";
+		else if (codigo.toUpperCase().equals("SN"))return "Salón";
 		else if (codigo.toUpperCase().equals("SU"))return "Subida";
 		else if (codigo.toUpperCase().equals("TN"))return "Terrenos";
 		else if (codigo.toUpperCase().equals("TO"))return "Torrente";
-		else if (codigo.toUpperCase().equals("TR"))return "Traves�a";
-		else if (codigo.toUpperCase().equals("UR"))return "Urbanizaci�n";
+		else if (codigo.toUpperCase().equals("TR"))return "Travesía";
+		else if (codigo.toUpperCase().equals("UR"))return "Urbanización";
 		else if (codigo.toUpperCase().equals("VR"))return "Vereda";
 		else if (codigo.toUpperCase().equals("CY"))return "Caleya";
 
@@ -302,7 +302,7 @@ public abstract class Shape {
 			s[0] = "landuse"; s[1] ="reservoir";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] ="Especificar tipo de agua (natural=water / leisure=swimming_pool / man_made=water_well / amenity=fountain / ...) y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
+			s[0] = "fixme"; s[1] ="Especificar tipo de agua (natural=water / leisure=swimming_pool / man_made=water_well / amenity=fountain / ...), eliminar landuse=reservoir y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("037101")){ 
@@ -321,7 +321,7 @@ public abstract class Shape {
 			s[0] = "landuse"; s[1] ="reservoir";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] ="Especificar tipo de agua (natural=water / leisure=swimming_pool / man_made=water_well / amenity=fountain / ...) y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
+			s[0] = "fixme"; s[1] ="Especificar tipo de agua (natural=water / leisure=swimming_pool / man_made=water_well / amenity=fountain / ...), eliminar landuse=reservoir y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
 			l.add(s);
 			return l;}
 		if (ttggss.equals("037107")){ 
@@ -616,12 +616,11 @@ public abstract class Shape {
 			s[0] = "amenity"; s[1] ="parking_entrance";
 			l.add(s);
 			return l;}
-		else{
+		else if (!ttggss.isEmpty()){
 			s[0] = "fixme"; s[1] = "Documentar ttggss="+ttggss+" si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
 			l.add(s);
-			return l;
 		}
-	
+		return l;
 	}
 
 	

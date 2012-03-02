@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class ShapeSubparce extends Shape {
 	private String subparce; // Clave de Subparcela
 	private String cultivo; // Tipo de cultivo de la subparcela
 	private List<ShapeAttribute> atributos;
-	private static final Map<String,String> lSub = new HashMap<String,String>(); // Lista de subparce y calificacion (para el Subparce.shp)
+	private static final Map<String,Map<String,String>> lSub = new HashMap<String,Map<String,String>>(); // Mapa <RefCat<ClaveSubparce,CodigoCultivo>> (para el Subparce.shp)
 	private static final Map<String,String> lCul = new HashMap<String,String>(); // Lista de cc y denominacion (para el Subparce.shp)
 
 
@@ -90,7 +91,7 @@ public class ShapeSubparce extends Shape {
 		refCatastral = (String) f.getAttribute("REFCAT");
 		subparce = (String) f.getAttribute("SUBPARCE");
 		if (subparce != null){
-			cultivo = getCultivo(subparce);
+			cultivo = getCultivo(refCatastral,subparce);
 		}
 		
 		// Si queremos coger todos los atributos del .shp
@@ -249,13 +250,16 @@ public class ShapeSubparce extends Shape {
 
 			while((rowObjects = reader.nextRecord()) != null) {
 
-				// La posicion 6 es el codigo subparce
-				// La posicion 8 es la calificacion catastral
-				lSub.put(((String) rowObjects[6]).trim(), ((String) rowObjects[8]).trim());
-
+				// La posicion 2 es la referencia catastral
+				// La posicion 6 es la clave de la subparcela dentro de esa parcela
+				// La posicion 8 es la calificacion catastral = codigo de cultivo
+				if (lSub.get(((String) rowObjects[2]).trim()) == null)
+					lSub.put(((String) rowObjects[2]).trim(), new HashMap<String,String>());
+			
+				lSub.get(((String) rowObjects[2]).trim()).put(((String) rowObjects[6]).trim(), ((String) rowObjects[8]).trim());
 			}
 			inputStream.close();
-
+			
 			inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "/RUCULTIVO/RUCULTIVO.DBF");
 			reader = new DBFReader(inputStream);
 
@@ -264,7 +268,7 @@ public class ShapeSubparce extends Shape {
 				// La posicion 1 es la calificacion catastral
 				// La posicion 2 es la denominacion
 				lCul.put(((String) rowObjects[1]).trim(), ((String) rowObjects[2]).trim());
-
+				
 			}
 			inputStream.close();
 		}
@@ -277,8 +281,15 @@ public class ShapeSubparce extends Shape {
 	 * @param v Numero de subparcela a buscar
 	 * @return String tipo de cultivo
 	 */
-	public String getCultivo(String s){
-		return lCul.get(lSub.get(s));
+	public String getCultivo(String refCat, String subparce){
+		
+		if (lSub.get(refCat) == null || lSub.get(refCat).isEmpty())
+			return "";
+		
+		if (lSub.get(refCat).get(subparce) == null || lSub.get(refCat).get(subparce).isEmpty())
+		return "";
+		
+		return lCul.get(lSub.get(refCat).get(subparce));
 	} 
 
 	
@@ -288,7 +299,13 @@ public class ShapeSubparce extends Shape {
 	
 	
 	public boolean shapeValido (){
-		return true;
+
+		if (cultivo == null)
+			return true;
+		if (cultivo.equals("Vía de comunicación de dominio público"))
+			return false;
+		else
+			return true;
 	}
 	
 	/** Parsea el tipo de cultivo con la nomenclatura de catastro y lo convierte
@@ -300,11 +317,54 @@ public class ShapeSubparce extends Shape {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 		
-		if (cultivo.toUpperCase().contains("PASTOS")){
-			s[0] = "landuse"; s[1] = "meadow";
+		// Valores fijos a los que no anadirles luego mas tags
+		if (cultivo.toUpperCase().contains("HIDROGRAFÍA NATURAL") || cultivo.toUpperCase().contains("HIDROGRAFIA NATURAL")){
+			s[0] = "natural"; s[1] = "water";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("HIDROGRAFÍA CONSTRUIDA") || cultivo.toUpperCase().contains("HIDROGRAFIA CONSTRUIDA")){
+			s[0] = "landuse"; s[1] = "reservoir";
 			l.add(s);
 			s = new String[2];
-			s[0] = "meadow"; s[1] = "perpetual";
+			s[0] = "fixme"; s[1] ="Especificar tipo de agua artificial, eliminar landuse=reservoir y/o comprobar que no este duplicado o contenido en otra geometria de agua.";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().equals("EDIFICACIONES GANADERAS")){
+			s[0] = "landuse"; s[1] = "farmyard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] ="yes";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().equals("MATORRAL")){
+			s = new String[2];
+			s[0] = "natural"; s[1] = "scrub";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().equals("VÍA FÉRREA") || cultivo.toUpperCase().equals("VIA FERREA")){
+			s[0] = "landuse"; s[1] = "railway";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().equals("CANTERA")){
+			s[0] = "landuse"; s[1] = "quarry";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().equals("MONTE BAJO")){
+			s[0] = "natural"; s[1] = "scrub";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().equals("ESPARTIZAR") || cultivo.toUpperCase().equals("ATOCHAR")){
+			s[0] = "natural"; s[1] = "scrub";
+			l.add(s);
+			s = new String[2];
+			s[0] = "scrub"; s[1] = "esparto";
 			l.add(s);
 			return l;
 		}
@@ -316,46 +376,557 @@ public class ShapeSubparce extends Shape {
 			l.add(s);
 			return l;
 		}
-		if (cultivo.toUpperCase().contains("LABOR") || (cultivo.toUpperCase().contains("LABRADIO") && cultivo.toUpperCase().contains("SECANO"))){
-			s[0] = "landuse"; s[1] = "farmland";
-			l.add(s);
-			return l;
-		}
-		if (cultivo.toUpperCase().contains("IMPRODUCTIVO")){
-			s[0] = "fixme"; s[1] = "Suelo Improductivo, tagearlo manualmente a la traduccion que mas se asemeje siguiendo http://wiki.openstreetmap.org/wiki/Map_features.";
-			l.add(s);
-			return l;
-		}
-		if (cultivo.toUpperCase().contains("MATORRAL")){
-			s[0] = "natural"; s[1] = "scrub";
-			l.add(s);
-			return l;
-		}
-		if (cultivo.toUpperCase().contains("OLIVOS")){
-			s[0] = "natural"; s[1] = "orchard";
-			l.add(s);
-			return l;
-		}
 		if (cultivo.toUpperCase().contains("EUCALIPTUS")){
 			s[0] = "landuse"; s[1] = "forest";
 			l.add(s);
 			s = new String[2];
 			s[0] = "type"; s[1] = "evergreen";
 			l.add(s);
-			return l;
-		}
-		if (cultivo.toUpperCase().contains("MONTE BAJO")){
-			s[0] = "natural"; s[1] = "scrub";
+			s = new String[2];
+			s[0] = "trees"; s[1] = "eucalyptus";
 			l.add(s);
 			return l;
+		}
+		if (cultivo.toUpperCase().contains("PISCIFACTORÍA") || cultivo.toUpperCase().contains("PISCIFACTORIA")){
+			s[0] = "landuse"; s[1] = "aquaculture";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("MIMBRERAS") || cultivo.toUpperCase().contains("CAÑAVERALES")){
+			s = new String[2];
+			s[0] = "wetland"; s[1] = "marsh";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().equals("CAMPING")){
+			s[0] = "tourism"; s[1] = "camp_site";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("SALINAS")){
+			s[0] = "landuse"; s[1] = "salt_pond";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("POZO") || cultivo.toUpperCase().contains("BALSA") || cultivo.toUpperCase().contains("CHARCA") || cultivo.toUpperCase().contains("SONDEO")){
+			s[0] = "landuse"; s[1] = "pond";
+			l.add(s);
+			return l;
+		}
+		if (cultivo.toUpperCase().contains("IMPRODUCTIVO")){
+		//s = new String[2];
+		//s[0] = "fixme"; s[1] = "Suelo Improductivo, tagearlo manualmente a la traduccion que mas se asemeje siguiendo http://wiki.openstreetmap.org/wiki/Map_features.";
+		//l.add(s); INNECESARIO E IMPRECISO
+		return l;
+		}
+		
+		
+		// Valores que se van componiendo de tags poco a poco, para optimizar la incorporacion
+		// de nuevos elementos.
+		// Estos aguantan hasta el return final
+		
+		// USO GENERAL
+		if (cultivo.toUpperCase().contains("LABOR") || cultivo.toUpperCase().contains("LABRADIO") || cultivo.toUpperCase().contains("LABRADÍO")){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "farmland";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("HUERTA")){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "farmland";
+			l.add(s);
+			s = new String[2];
+			s[0] = "crop"; s[1] = "vegetables";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PASTOS")){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "meadow";
+			l.add(s);
+			s = new String[2];
+			s[0] = "meadow"; s[1] = "perpetual";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("FRUTALES")){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "orchard";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PLANTAS INDUSTRIALES")){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "farmland";
+			l.add(s);
 		}
 		if (cultivo.toUpperCase().contains("INVERNADERO")){
+			s = new String[2];
 			s[0] = "landuse"; s[1] = "greenhouse_horticulture";
 			l.add(s);
-			return l;
 		}
-		else {
-			s[0] = "fixme"; s[1] = "Documentar nuevo cultivo landuse="+ cultivo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Tipos_de_cultivo.";
+		
+		// ESPECIFICAR DEPENDIENDO DEL CULTIVO
+		if (cultivo.toUpperCase().contains("ARROZ")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "farmland";
+			l.add(s);
+			s = new String[2];
+			s[0] = "crop"; s[1] = "rice";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ALMENDR")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "almond_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("AVELLAN")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "hazels";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("VIÑA") || cultivo.toUpperCase().contains("PARRAL") ){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "vineyard";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("OLIVAR") || cultivo.toUpperCase().contains("OLIVO")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "olives";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("CEREAL")){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "farmland";
+			l.add(s);
+			s = new String[2];
+			s[0] = "crop"; s[1] = "cereal";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("FRUTAL")){
+			s = new String[2];
+			s[0] = "trees"; s[1] = "fruit_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("CHUMBERAS")){
+			s = new String[2];
+			s[0] = "trees"; s[1] = "prickly_pears";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ALCORNOQUE") || cultivo.toUpperCase().contains("ALCORNOCAL")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "cork_oaks";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("MANZANO")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "apple_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("MELOCOTÓN") || cultivo.toUpperCase().contains("MELOCOTON")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "peach_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("GUINDO") || cultivo.toUpperCase().contains("CEREZO")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "cherry_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PERAL")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "pear_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ALBARICOQUE")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "apricot_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("CIRUEL")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "plum_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ALGARROB")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "carobs";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("FLORES")){
+			s = new String[2];
+			s[0] = "crop"; s[1] = "flowers";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("HORTALIZAS")){
+			s = new String[2];
+			s[0] = "crop"; s[1] = "vegetables";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ORNAMENTACIÓN") || cultivo.toUpperCase().contains("ORNAMENTACION")){
+			s = new String[2];
+			s[0] = "crop"; s[1] = "flowers";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("CASTAÑ")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "chestnut_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ENCINA")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "holm_oaks";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ROBLE")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "oaks";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("HAYA")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "beeches"; s[1] = "beeches";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ABETO")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "coniferous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "firs";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("SABINA")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "coniferous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "tetraclinis";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ALERCE")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "coniferous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "larches";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ENEBR")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "coniferous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "junipers";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PINOS") || cultivo.toUpperCase().contains("PINAR")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "coniferous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "pines";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ÁRBOLES DE RIBERA") || cultivo.toUpperCase().contains("ARBOLES DE RIBERA")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "deciduous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "aspens";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PISAPOS") || cultivo.toUpperCase().contains("PINSAPOS")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "coniferous";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "evergreen";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "spanish_firs";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ESPECIES MEZCLADAS")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "mixed";
+			l.add(s);
+			s = new String[2];
+			s[0] = "type"; s[1] = "mixed";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "pines";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("AGRIOS")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "wood"; s[1] = "coniferous";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("NARANJ")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "orange_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("LIMONE")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "lemon_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("MANDARIN")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "forest";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "tangerine_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PALMERA") || cultivo.toUpperCase().contains("PALMITAR")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "palm_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PLÁTANO") || cultivo.toUpperCase().contains("PLATANO")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "banana_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("HIGUERA")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "orchard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "trees"; s[1] = "fig_trees";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("TOMATE")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "farmland";
+			l.add(s);
+			s = new String[2];
+			s[0] = "crop"; s[1] = "tomatoes";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("ZUMAQUE")){
+			s = new String[2];
+			s[0] = "*landuse"; s[1] = "farmland";
+			l.add(s);
+			s = new String[2];
+			s[0] = "crop"; s[1] = "sumac";
+			l.add(s);
+		}
+		
+
+				
+		
+		
+		// GANADO
+		if (cultivo.toUpperCase().contains("GANADO")){
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "farmyard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "livestock";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("BOVINO")){
+			s = new String[2];
+			s[0] = "livestock"; s[1] = "cattle";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("CABRIO")){
+			s = new String[2];
+			s[0] = "livestock"; s[1] = "goats";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("PORCINO")){
+			s = new String[2];
+			s[0] = "livestock"; s[1] = "pigs";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("LANAR")){
+			s = new String[2];
+			s[0] = "livestock"; s[1] = "sheep";
+			l.add(s);
+			s = new String[2];
+			s[0] = "produce"; s[1] = "wool";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("BRAVO")){
+			s = new String[2];
+			s[0] = "produce"; s[1] = "fighting_bulls";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("CARNE")){
+			s = new String[2];
+			s[0] = "produce"; s[1] = "meat";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains(" CEBO")){
+			s = new String[2];
+			s[0] = "variety"; s[1] = "fodder-fed";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("LECHE")){
+			s = new String[2];
+			s[0] = "produce"; s[1] = "milk";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("MIXTO")){
+			s = new String[2];
+			s[0] = "produce"; s[1] = "milk,meat";
+			l.add(s);
+		}
+		
+		// PRODUCEN
+		if (cultivo.toUpperCase().contains("MADERABLE")){
+			s = new String[2];
+			s[0] = "produce"; s[1] = "wood";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("RESINABLE")){
+			s = new String[2];
+			s[0] = "produce"; s[1] = "resin";
+			l.add(s);
+		}
+		
+		// TIPOS DE RIEGO
+		if (cultivo.toUpperCase().contains("REGADIO") || cultivo.toUpperCase().contains("REGADÍO") || cultivo.toUpperCase().contains("RIEGO")){
+			s = new String[2];
+			s[0] = "irrigated"; s[1] = "yes";
+			l.add(s);
+		}
+		if (cultivo.toUpperCase().contains("SECANO")){
+			s = new String[2];
+			s[0] = "irrigated"; s[1] = "no";
+			l.add(s);
+		}
+		
+		if (l.isEmpty() && !cultivo.isEmpty()){
+			s[0] = "fixme"; s[1] = "Tagear cultivo "+ cultivo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Tipos_de_cultivo.";
 			l.add(s);
 		}
 		

@@ -204,7 +204,7 @@ public class Cat2Osm {
 	@SuppressWarnings("rawtypes")
 	public void printNodes(Map <NodeOsm, Long> nodes) throws IOException{
 
-		File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+		File dir = new File(Config.get("ResultPath"));
 		if (!dir.exists()) 
 		{
 			try                { dir.mkdirs(); }
@@ -264,7 +264,7 @@ public class Cat2Osm {
 	@SuppressWarnings("rawtypes")
 	public void printWays(Map <WayOsm, Long> ways) throws IOException{
 
-		File dir = new File(Config.get("ResultPath")); // TODO FIXME poner esto en donde debe
+		File dir = new File(Config.get("ResultPath"));
 		if (!dir.exists()) 
 		{
 			try                { dir.mkdirs(); }
@@ -1024,6 +1024,7 @@ public class Cat2Osm {
 			l.add(s);
 			return l;}
 		default:
+			if (!codigo.isEmpty())
 			s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los vienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
 			l.add(s);
 			return l;}

@@ -227,11 +227,11 @@ public class ShapeElemtex extends Shape {
 			}
 			return l;}
 		
-		else{
+		else if (!rotulo.isEmpty()){
 			s[0] = "fixme"; s[1] = "Documentar nuevo elemento textual ttggss="+ttggss+" y rotulo="+rotulo+" si es preciso en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features#Textos_en_Elemtex.shp";
 			l.add(s);
-			return l;
 		}
+		return l;
 	}
 	
 
