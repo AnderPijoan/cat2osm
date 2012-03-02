@@ -27,6 +27,12 @@ import org.jfree.ui.ExtensionFileFilter;
 public class Gui extends JFrame {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+
+	/**
 	 * @param args
 	 * @throws IOException 
 	 * @throws InterruptedException 
