@@ -69,7 +69,7 @@ public class ShapeConstru extends Shape {
 		refCatastral = (String) f.getAttribute("REFCAT");
 
 		constru = (String) f.getAttribute("CONSTRU");
-
+		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
 			for (int x = 1; x < f.getAttributes().size(); x++){
@@ -161,12 +161,12 @@ public class ShapeConstru extends Shape {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (refCatastral != null){
+		if (refCatastral != null && !refCatastral.isEmpty()){
 			s[0] = "catastro:ref"; s[1] = refCatastral;
 			l.add(s);
 		}
 
-		if (constru != null){
+		if (constru != null && !constru.isEmpty()){
 			l.addAll(construParser(constru));
 		}
 
@@ -286,183 +286,187 @@ public class ShapeConstru extends Shape {
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (elem.equals("B")){
+		switch(elem){
+		
+		case "B":
 			return l;
-		}
-		if (elem.equals("T")){
+
+		case "T":
 			return l;
-		}
-		if (elem.equals("TZA")){
+
+		case "TZA":
 			return l;
-		}
-		if (elem.equals("POR")){
+
+		case "POR":
 			return l;
-		}
-		if (elem.equals("SOP")){
+
+		case "SOP":
 			return l;
-		}
-		if (elem.equals("PJE")){
+
+		case "PJE":
 			return l;
-		}
-		if (elem.equals("MAR")){
+
+		case "MAR":
 			return l;
-		}
-		if (elem.equals("P")){
+
+		case "P":
 			return l;
-		}
-		if (elem.equals("CO")){
+
+		case "CO":
 			s[0] = "building"; s[1] = "warehouse";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("EPT")){
+
+		case "EPT":
 			return l;
-		}
-		if (elem.equals("SS")){
+
+		case "SS":
 			return l;
-		}
-		if (elem.equals("ALT")){
+
+		case "ALT":
 			return l;
-		}
-		if (elem.equals("PI")){
+
+		case "PI":
 			s[0] = "leisure"; s[1] = "swimming_pool";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("TEN")){
+
+		case "TEN":
 			s[0] = "leisure"; s[1] = "pitch";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("ETQ")){
+
+		case "ETQ":
 			return l;
-		}
-		if (elem.equals("SILO")){
+
+		case "SILO":
 			s[0] = "man_made"; s[1] = "silo";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("SUELO") || elem.equals("TERRENY") || elem.equals("SOLAR")){
+
+		case "SUELO":
+		case "TERRENY":
+		case "SOLAR":
 			s[0] = "landuse"; s[1] = "greenfield";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("PRG")){
+
+		case "PRG":
 			return l;
-		}
-		if (elem.equals("DEP")){
+
+		case "DEP":
 			s[0] = "man_made"; s[1] = "storage_tank";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("ESC")){
+
+		case "ESC":
 			s[0] = "highway"; s[1] ="steps";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("TRF")){
+
+		case "TRF":
 			s[0] = "power"; s[1] ="sub_station";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("JD")){
+
+		case "JD":
 			s[0] = "leisure"; s[1] = "garden";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("YJD")){
+
+		case "YJD":
 			s[0] = "leisure"; s[1] = "garden";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("FUT")){
+
+		case "FUT":
 			s[0] = "leisure"; s[1] = "stadium";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("VOL")){
+
+		case "VOL":
 			return l;
-		}
-		if (elem.equals("ZD")){
+
+		case "ZD":
 			s[0] = "leisure"; s[1] = "sports_centre";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("RUINA")){
+
+		case "RUINA":
 			s[0] = "ruins"; s[1] = "yes";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("CONS")){
+
+		case "CONS":
 			s[0] = "landuse"; s[1] = "construction";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("PRESA")){
+	
+		case "PRESA":
 			s[0] = "waterway"; s[1] = "dam";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("ZBE")){
+
+		case "ZBE":
 			return l;
-		}
-		if (elem.equals("ZPAV")){
+
+		case "ZPAV":
 			return l;
-		}
-		if (elem.equals("GOLF")){
+
+		case "GOLF":
 			s[0] = "leisure"; s[1] = "golf_course";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("CAMPING")){
+
+		case "CAMPING":
 			s[0] = "tourism"; s[1] = "camp_site";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("HORREO")){
+
+		case "HORREO":
 			return l;
-		}
-		if (elem.equals("PTLAN")){
+
+		case "PTLAN":
 			s[0] = "man_made"; s[1] = "pier";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		if (elem.equals("DARSENA")){
+
+		case "DARSENA":
 			s[0] = "waterway"; s[1] = "dock";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-		}
-		else {
+
+		default: if (!elem.isEmpty()) 
 			l.addAll(numRomanoParser(elem));
 		}
 

@@ -1,11 +1,9 @@
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +12,6 @@ import java.util.regex.Pattern;
 
 import org.opengis.feature.simple.SimpleFeature;
 
-import com.linuxense.javadbf.DBFException;
 import com.linuxense.javadbf.DBFReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
@@ -258,7 +255,6 @@ public class ShapeSubparce extends Shape {
 				lSub.get(((String) rowObjects[2]).trim()).put(((String) rowObjects[6]).trim(), ((String) rowObjects[8]).trim());
 			}
 			inputStream.close();
-
 		}
 	}  
 

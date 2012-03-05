@@ -119,15 +119,15 @@ public class RelationOsm {
 			// con el nuevo valor.
 			boolean encontrado = (tags.get(x)[0].equals("CAT2OSMSHAPEID"));
 			String[] s = {tags.get(x)[0].replace("*", ""), tags.get(x)[1].replaceAll("\"", "")};
-
-			for (int y = 0; !encontrado && y < this.tags.size(); y++){
-				if (tags.get(x)[0].startsWith("*") && (s[0].equals(this.tags.get(y)[0]) || (this.tags.get(y)[0].equals("natural") && this.tags.get(y)[1].equals("water")) ))
-					encontrado = true;
-				else if (this.tags.get(y)[0].equals(s[0])){
-					this.tags.get(y)[1] = s[1];
-					encontrado = true;
-				}
-			}
+//
+//			for (int y = 0; !encontrado && y < this.tags.size(); y++){
+//				if (tags.get(x)[0].startsWith("*") && (s[0].equals(this.tags.get(y)[0]) || (this.tags.get(y)[0].equals("natural") && this.tags.get(y)[1].equals("water")) ))
+//					encontrado = true;
+//				else if (this.tags.get(y)[0].equals(s[0])){
+//					this.tags.get(y)[1] = s[1];
+//					encontrado = true;
+//				}
+//			}
 			if (!encontrado || (s[0].equals("CAT2OSMSHAPEID"))){
 				this.tags.add(s);
 				}

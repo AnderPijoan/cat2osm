@@ -211,86 +211,113 @@ public class ShapeEjes extends Shape {
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (codigo.equals("AU")){
+		switch(codigo){
+		
+		case "AU":
 			s[0] = "highway"; s[1] = "motorway";
 			l.add(s);
-		}
-		else if (codigo.equals("AY")){
+		return l;
+		
+		case "AY":
 			s[0] = "waterway"; s[1] = "stream";
 			l.add(s);
-		}
-		else if (codigo.equals("CG")){
+		return l;
+		
+		case "CG":
 			s[0] = "amenity"; s[1] = "school";
 			l.add(s);
-		}
-		else if (codigo.equals("CJ")){
+		return l;
+		
+		case "CJ":
 			s[0] = "highway"; s[1] = "residential";
 			l.add(s);
-		}
-		else if (codigo.equals("CM")){
+		return l;
+		
+		case "CM":
 			s[0] = "highway"; s[1] = "track";
 			l.add(s);
-		}
-		else if (codigo.equals("CR")){
+		return l;
+		
+		case "CR":
 			s[0] = "highway"; s[1] = "trunk";
 			l.add(s);
-		}
-		else if (codigo.equals("ES")){
+		return l;
+		
+		case "ES":
 			s[0] = "highway"; s[1] = "steps";
 			l.add(s);
-		}
-		else if (codigo.equals("FC")){
+		return l;
+		
+		case "FC":
 			s[0] = "railway"; s[1] = "rail";
 			l.add(s);
-		}
-		else if (codigo.equals("GL")){
+		return l;
+		
+		case "GL":
 			s[0] = "junction"; s[1] = "roundabout";
 			l.add(s);
-		}
-		else if (codigo.equals("GV")){
+		return l;
+		
+		case "GV":
 			s[0] = "highway"; s[1] = "primary";
 			l.add(s);
-		}
-		else if (codigo.equals("JR")){
+		return l;
+		
+		case "JR":
 			s[0] = "leisure"; s[1] = "garden";
 			l.add(s);
-		}
-		else if (codigo.equals("MC")){
+		return l;
+		
+		case "MC":
 			s[0] = "amenity"; s[1] = "marketplace";
 			l.add(s);
-		}
-		else if (codigo.equals("ML")){
+		return l;
+		
+		case "ML":
 			s[0] = "waterway"; s[1] = "dock";
 			l.add(s);
-		}
-		else if (codigo.equals("PZ")){
+		return l;
+		
+		case "PZ":
 			s[0] = "highway"; s[1] = "pedestrian";
 			l.add(s);
 			s = new String[2];
 			s[0] = "area"; s[1] = "yes";
 			l.add(s);
-		}
-		else if (codigo.equals("RD")){
+		return l;
+		
+		case "RD":
 			s[0] = "highway"; s[1] = "trunk";
 			l.add(s);
-		}
-		else if (codigo.equals("RU")){
+		return l;
+		
+		case "RU":
 			s[0] = "highway"; s[1] = "residential";
 			l.add(s);
-		}
-		else if (codigo.equals("SD")){
+		return l;
+		
+		case "SD":
 			s[0] = "highway"; s[1] = "path";
 			l.add(s);
-		}
-		else if (codigo.equals("TR")){
+		return l;
+		
+		case "TR":
 			s[0] = "highway"; s[1] = "path";
 			l.add(s);
-		}
-		else if (codigo.equals("UR")){
+		return l;
+		
+		case "UR":
 			s[0] = "highway"; s[1] = "residential";
 			l.add(s);
+		return l;
+		
+		default:
+			if (codigo.isEmpty()){
+				s[0] = "fixme"; s[1] = "Tagear tipo de via "+ codigo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features.";
+				l.add(s);
+			}
 		}
-
+		
 		return l;
 	}
 

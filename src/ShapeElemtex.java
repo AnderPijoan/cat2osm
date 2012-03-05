@@ -277,204 +277,183 @@ public class ShapeElemtex extends Shape {
 		l.add(s);
 		s = new String[2];
 		
-		if (rotulo.contains("AYUNTAMIENTO") || rotulo.contains("AYTO")){ 
+		if (rotulo.contains("AYUNTAMIENTO") ||
+				rotulo.equals("AYTO.")) {
 			s[0] = "amenity"; s[1] = "townhall";
 			l.add(s);
 			return l;}
-		
-		if (rotulo.contains("MUSEO")){ 
+			
+		if (rotulo.contains("MUSEO")) {
 			s[0] = "tourism"; s[1] = "museum";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("PALACIO")){ 
+		if (rotulo.contains("PALACIO")) {
 			s[0] = "building"; s[1] = "palace";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("HOTEL") ){ 
+		if (rotulo.contains("HOTEL")) {
 			s[0] = "tourism"; s[1] = "hotel";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CORREOS") || rotulo.contains("POSTAL")){ 
+		if (rotulo.equals("CORREOS") ||
+		rotulo.contains("POSTAL")) {
 			s[0] = "amenity"; s[1] = "post_office";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.startsWith("CEMENTERIO")){ 
+		if (rotulo.equals("CEMENTERIO")){
 			s[0] = "amenity"; s[1] = "grave_yard";
 			l.add(s);
 			setTtggss("landuse=cemetery");
 			return l;}
 		
-		if ((rotulo.contains("AUTOB�S") || rotulo.contains("AUTOBUS") || rotulo.contains("BUS") || rotulo.contains("GUAGUA")) && (rotulo.contains("ESTACION") || rotulo.contains("ESTACI�N "))){ 
-			s[0] = "amenity"; s[1] = "bus_station";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.startsWith("MARQUESINA")){ 
-			l.remove(0);
-			s[0] = "highway"; s[1] = "bus_stop";
-			l.add(s);
-			s = new String[2];
-			s[0] = "shelter"; s[1] = "yes";
-			l.add(s);
-			return l;}
-		
-		if ((rotulo.contains("TREN") || rotulo.contains("FERROCARRIL") || rotulo.contains("FFCC") || rotulo.contains("FF.CC.")) && (rotulo.contains("ESTACION") || rotulo.contains("ESTACI�N"))){ 
-			s[0] = "railway"; s[1] = "station";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("AEROPUERTO")){ 
+			if (rotulo.equals("AEROPUERTO")) {
 			s[0] = "aeroway"; s[1] = "aerodrome";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("FRONTON") || rotulo.contains("FRONT�N")){ 
+			if (rotulo.equals("FRONTON") || 
+					rotulo.equals("FRONTÓN")) {
 			s[0] = "sport"; s[1] = "pelota";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.startsWith("TEATRO")){ 
+			if (rotulo.contains("TEATRO")){
 			s[0] = "amenity"; s[1] = "theatre";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("HOSPITAL")){ 
+			if (rotulo.contains("HOSPITAL")) {
 			s[0] = "amenity"; s[1] = "hospital";
+			l.add(s);
+			return l; }
+		
+			if (rotulo.contains("CLINICA") ||
+		rotulo.contains("CLÍNICA")) {
+			s[0] = "amenity"; s[1] = "doctors";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CLINICA") || rotulo.contains("CL�NICA")){ 
-			s[0] = "amenity"; s[1] = "doctors";
-			l.add(s);
-			return l;}		
-		
-		if (rotulo.contains("AUDITORIO")){ 
+			if (rotulo.contains("AUDITORIO")){
 			s[0] = "amenity"; s[1] = "community_centre";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("PISCINA")){ 
+			if (rotulo.contains("PISCINA")) {
 			s[0] = "leisure"; s[1] = "swimming_pool";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("ESTANQUE")){ 
+			if (rotulo.equals("ESTANQUE")){
 			l.remove(0);
 			s[0] = "natural"; s[1] = "water";
 			l.add(s);
 			return l;}
-			
-		if (rotulo.contains("TRANSFORMADOR") || rotulo.contains("TRF") || rotulo.contains("TRSF")){ 
-			l.remove(0);
-			s[0] = "power"; s[1] ="sub_station";
-			l.add(s);
-			return l;}
 		
-		if (rotulo.contains("APARCAMIENTO") || rotulo.contains("PARKING")){ 
+			if (rotulo.equals("APARCAMIENTO") ||
+		rotulo.equals("PARKING")){
 			s[0] = "amenity"; s[1] ="parking";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("JUZGADO")){ 
+			if (rotulo.equals("JUZGADO")){
 			s[0] = "amenity"; s[1] ="courthouse";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("MONASTERIO") || rotulo.contains("CONVENTO")){ 
+			if (rotulo.equals("MONASTERIO") ||
+		rotulo.equals("CONVENTO")) {
 			s[0] = "amenity"; s[1] ="place_of_worship";
 			l.add(s);
 			return l;}
 		
-		if ((rotulo.contains("CAMPO") && (rotulo.contains("FUTBOL") || rotulo.contains("F�TBOL"))) || (rotulo.contains("PISTA") && (rotulo.contains("PADEL") || rotulo.contains("P�DEL")  || rotulo.contains("TENIS"))) || rotulo.contains("CANCHA")){ 
-			s[0] = "leisure"; s[1] = "pitch";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("CAMPO") && rotulo.contains("GOLF")){ 
+			if (rotulo.equals("CAMPO DE GOLF")){
 			s[0] = "leisure"; s[1] = "golf_course";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("ESTADIO")){ 
+			if (rotulo.equals("ESTADIO")){
 			s[0] = "leisure"; s[1] = "stadium";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("POLIDEPORTIVO") || rotulo.contains("DEPORTE") || rotulo.contains("DEPORTIVO")){ 
+			if (rotulo.equals("POLIDEPORTIVO") ||
+		rotulo.contains("DEPORTIVO")) {
 			s[0] = "leisure"; s[1] = "sports_centre";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("JUEGOS")){ 
-			s[0] = "leisure"; s[1] ="playground";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("BOMBEROS")){ 
+			if (rotulo.equals("BOMBEROS")) {
 			s[0] = "amenity"; s[1] = "fire_station";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CENTRO") && rotulo.contains("COMERCIAL") ){ 
+			if (rotulo.equals("CENTRO COMERCIAL")){
 			s[0] = "shop"; s[1] = "mall";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("SUPERMERCADO") || rotulo.contains("HIPERMERCADO") || rotulo.contains("HIPER")){ 
+			if (rotulo.contains("SUPERMERCADO") ||
+		rotulo.contains("HIPERMERCADO")  ||
+		rotulo.contains("HIPER")) {
 			s[0] = "shop"; s[1] = "supermarket";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("MERCADO")){ 
+			if (rotulo.equals("MERCADO")){
 			s[0] = "amenity"; s[1] = "marketplace";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("GASOLINERA")){ 
+			if (rotulo.contains("GASOLINERA")){
 			s[0] = "amenity"; s[1] = "fuel";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("BIBLIOTECA")){ 
+			if (rotulo.equals("BIBLIOTECA")){
 			s[0] = "amenity"; s[1] = "library";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("GUARDERIA") || rotulo.contains("GUARDER�A")){ 
+			if (rotulo.equals("GUARDERIA") ||
+		rotulo.equals("GUARDERÍA")){
 			s[0] = "amenity"; s[1] = "kindergarten";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("FACULTAD") || rotulo.contains("UNIVERSIDAD") || rotulo.contains("UNIVERSITARI")){ 
+			if (rotulo.contains("FACULTAD") ||
+		rotulo.contains("UNIVERSIDAD") ||
+		rotulo.contains("UNIVERSITARI")){
 			s[0] = "amenity"; s[1] = "university";
 			l.add(s);
 			return l;}
-		
-		if (rotulo.contains("ESCOLAR") || rotulo.contains("ESCUELA") || rotulo.contains("COLEGIO")){ 
+
+			if (rotulo.equals("ESCUELA") ||
+		rotulo.equals("COLEGIO")){ 
 			s[0] = "amenity"; s[1] = "school";
 			l.add(s);
 			return l;}
 
-		if (rotulo.contains("INSTITUTO")){
+			if (rotulo.equals("INSTITUTO")){
 			s[0] = "amenity"; s[1] = "college";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CENTRO") && rotulo.contains("SOCIAL")){ 
+			if (rotulo.contains("CENTRO") &&
+		rotulo.contains("SOCIAL")) {
 			s[0] = "amenity"; s[1] = "social_facility";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CASA") && rotulo.contains("RURAL")){ 
+			if (rotulo.equals("CASA RURAL")){
 			s[0] = "tourism"; s[1] = "chalet";
 			l.add(s);
 			return l;}
 			 
-		if (rotulo.contains("IGLESIA")){ 
+			if (rotulo.equals("IGLESIA")){
 			s[0] = "amenity"; s[1] = "place_of_worship";
 			l.add(s);
 			s = new String[2];
@@ -488,7 +467,7 @@ public class ShapeElemtex extends Shape {
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CATEDRAL")){
+			if (rotulo.equals("CATEDRAL")){
 			s[0] = "amenity"; s[1] = "place_of_worship";
 			l.add(s);
 			s = new String[2];
@@ -500,9 +479,10 @@ public class ShapeElemtex extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "cathedral";
 			l.add(s);
-			return l;} 
+			return l; }
 		
-		if (rotulo.contains("CAPILLA") || rotulo.contains("ERMITA")){
+			if (rotulo.equals("CAPILLA") ||
+		rotulo.equals("ERMITA")){
 			s[0] = "amenity"; s[1] = "place_of_worship";
 			l.add(s);
 			s = new String[2];
@@ -514,160 +494,87 @@ public class ShapeElemtex extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "chapel";
 			l.add(s);
-			return l;} 
+			return l; }
 		
-		if (rotulo.contains("REFUGIO")){ 
-			s[0] = "amenity"; s[1] = "shelter";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("ESTABLO")){ 
+			if (rotulo.equals("ESTABLO")){
 			s[0] = "building"; s[1] = "stable";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("INVERNAL")){ 
-			s[0] = "tourism"; s[1] = "alpine_hut";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("ALMACEN") || rotulo.contains("ALMAC�N") || rotulo.equals("NAVE")){ 
-			s[0] = "building"; s[1] = "warehouse";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("TALLER")){ 
-			s[0] = "shop"; s[1] = "car_repair";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("BOMBEO")){
-			l.remove(0);
-			s[0] = "man_made"; s[1] = "pumping_station";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("ALBERGUE")){ 
+			if (rotulo.equals("ALBERGUE")) {
 			s[0] = "tourism"; s[1] = "hostel";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.startsWith("POZO")){ 
-			l.remove(0);
-			s[0] = "man_made"; s[1] = "water_well";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.startsWith("PAJAR")){ 
-			l.remove(0);
-			s[0] = "building"; s[1] = "barn";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("DEPOSITO") || rotulo.contains("DEP�SITO")){ 
-			l.remove(0);
-			s[0] = "man_made"; s[1] = "storage_tank";
-			l.add(s);
-			return l;} 
-		
-		if (rotulo.contains("DEPURADORA")){ 
+			if (rotulo.contains("DEPURADORA")){
 			l.remove(0);
 			s[0] = "man_made"; s[1] = "wastewater_plant";
 			l.add(s);
-			return l;} 
+			return l; }
 		
-		if (rotulo.contains("LAVADERO")){
-			s[0] = "amenity"; s[1] = "public_building";
-			l.add(s);
-			s = new String[2];
-			s[0] = "building"; s[1] = "wash-house";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.contains("MERENDERO")){
+			if (rotulo.equals("MERENDERO")){
 			s[0] = "tourism"; s[1] = "picnic_site";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("MUELLE")){
+			if (rotulo.equals("MUELLE")){
 			s[0] = "waterway"; s[1] = "dock";
 			l.add(s);
-			return l;}
+			return l; }
 		
-		if (rotulo.startsWith("FUENTE")){
+			if (rotulo.equals("FUENTE")){
 			l.remove(0);
 			s[0] = "amenity"; s[1] = "fountain";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.startsWith("FARO") ){ 
+			if (rotulo.contains("FARO")) {
 			l.remove(0);
 			s[0] = "man_made"; s[1] = "lighthouse";
 			l.add(s);
-			return l;}	 
-		
-		if (rotulo.startsWith("PARQUE")){ 
-			s[0] = "leisure"; s[1] = "park";
-			l.add(s);
 			return l;}
 		
-		if (rotulo.startsWith("PLAYA")){ 
+			if (rotulo.contains("PLAYA")){
 			s[0] = "natural"; s[1] = "beach";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CAFETERIA") || rotulo.contains("CAFETER�A")){ 
+			if (rotulo.contains("CAFETERIA") ||
+		rotulo.contains("CAFETERÍA")){
 			s[0] = "amenity"; s[1] = "cafe";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("CAMPING")){ 
+			if (rotulo.contains("CAMPING")){
 			s[0] = "tourism"; s[1] = "camp_site";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("RESTAURANTE") || rotulo.contains("RTE.")){ 
+			if (rotulo.contains("RESTAURANTE") ||
+		rotulo.equals("RTE.")){ 
 			s[0] = "amenity"; s[1] = "restaurant";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("BASCULA") || rotulo.contains("B�SCULA")){ 
+			if (rotulo.equals("BASCULA") ||
+		rotulo.equals("BÁSCULA")){
 			s[0] = "man_made"; s[1] = "weighbridge";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.contains("BEBEDERO")){ 
-			s[0] = "amenity"; s[1] = "watering_place";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.startsWith("CINE")){ 
+			if (rotulo.equals("CINE")){
 			s[0] = "amenity"; s[1] = "cinema";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.equals("BAR")){ 
+			if (rotulo.equals("BAR")){
 			s[0] = "amenity"; s[1] = "bar";
 			l.add(s);
 			return l;}
 		
-		if (rotulo.equals("SILO")){
-			l.remove(0);
-			s[0] = "man_made"; s[1] = "silo";
-			l.add(s);
-			return l;}
-		
-		if (rotulo.equals("TORRE")){ 
-			s[0] = "man_made"; s[1] = "tower";
-			l.add(s);
-			return l;}
-		
-		else {
+			else{
 			setTtggss("0");
-			return l;
-		}
+			return l;}
 	}
-	
-	
 	
 }

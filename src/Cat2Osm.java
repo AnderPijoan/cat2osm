@@ -3,7 +3,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.sql.Timestamp;
@@ -13,9 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
@@ -70,6 +67,7 @@ public class Cat2Osm {
 	 * @param shapes Lista de shapes original
 	 * @return lista de shapes con los tags modificados
 	 */
+	@SuppressWarnings("unchecked")
 	public List<Shape> pasarElemtexLanduseAConstru(List<Shape> shapes){
 
 		GeometryFactory factory = new GeometryFactory();
@@ -103,11 +101,8 @@ public class Cat2Osm {
 					}
 
 				shape.getCoor();
-
 			}
-
 		}
-
 		return shapes;
 	}
 
@@ -135,11 +130,11 @@ public class Cat2Osm {
 		Map<WayOsm, Long> ways = utils.getTotalWays();
 
 		for (Shape shape : shapes){
-			
+
 			int progress = (int) ((shapes.indexOf(shape)/size)*100);
 			if (bar != progress){
-			System.out.print("Progreso = "+progress+"%.\r");
-			bar = progress;
+				System.out.print("Progreso = "+progress+"%.\r");
+				bar = progress;
 			}
 
 			for (int x = 0; shape.getPoligons() != null && !shape.getPoligons().isEmpty() && x < shape.getPoligons().size(); x++)
@@ -660,6 +655,7 @@ public class Cat2Osm {
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("NUMERO DE ORDEN DEL ELEMENTO DE CONSTRUCCION",line.substring(44,48));
+			c.setSubparce(line.substring(44,48));
 			//c.addAttribute("NUMERO DE ORDEN DEL BIEN INMUEBLE FISCAL",line.substring(50,54));
 			//c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA A LA QUE ESTA ASOCIADO EL LOCAL",line.substring(54,58));
 			//c.addAttribute("BLOQUE",line.substring(58,62));
@@ -667,6 +663,7 @@ public class Cat2Osm {
 			//c.addAttribute("PLANTA",line.substring(64,67));
 			//c.addAttribute("PUERTA",line.substring(67,70));
 			//c.addAttribute("CODIGO DE DESTINO SEGUN CODIFICACION DGC",line.substring(70,73));
+			c.addAttribute(usoInmueblesParser(line.substring(70,73).trim()));
 			//c.addAttribute("INDICADOR DEL TIPO DE REFORMA O REHABILITACION",line.substring(73,74));
 			//c.addAttribute("ANO DE REFORMA EN CASO DE EXISTIR",line.substring(74,78));
 			//c.addAttribute("ANO DE ANTIGUEDAD EFECTIVA EN CATASTRO",line.substring(78,82)); 
@@ -738,7 +735,7 @@ public class Cat2Osm {
 			c.setFechaAlta(Long.parseLong(line.substring(371,375)+"0101")); 
 			c.setFechaBaja(fechaHasta);
 			//c.addAttribute("CLAVE DE GRUPO DE LOS BIENES INMUEBLES DE CARAC ESPECIALES",line.substring(427,428));
-			c.addAttribute(usoInmueblesParser(line.substring(427,428)));
+			c.addAttribute(usoInmueblesParser(line.substring(427,428).trim()));
 			//c.addAttribute("SUPERFICIE DEL ELEMENTO O ELEMENTOS CONSTRUCTIVOS ASOCIADOS AL INMUEBLE",line.substring(441,451));
 			//c.addAttribute("SUPERFICIE ASOCIADA AL INMUEBLE",line.substring(451,461));
 			//c.addAttribute("COEFICIENTE DE PROPIEDAD (3ent y 6deci)",line.substring(461,470));
@@ -775,7 +772,6 @@ public class Cat2Osm {
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("CODIGO DE LA SUBPARCELA",line.substring(44,48));
-			c.setSubparce(line.substring(44,48));
 			//c.addAttribute("NUMERO DE ORDEN DEL BIEN INMUEBLE FISCAL",line.substring(50,54));
 			//c.addAttribute("TIPO DE SUBPARCELA (T, A, D)",line.substring(54,55));
 			//c.addAttribute("SUPERFICIE DE LA SUBPARCELA (m cuadrad)",line.substring(55,65));
@@ -848,82 +844,84 @@ public class Cat2Osm {
 
 	public static String nombreTipoViaParser(String codigo){
 
-		if (codigo.equals("CL"))return "Calle";
-		else if (codigo.equals("AL"))return "Aldea/Alameda";
-		else if (codigo.equals("AR"))return "Area/Arrabal";
-		else if (codigo.equals("AU"))return "Autopista";
-		else if (codigo.equals("AV"))return "Avenida";
-		else if (codigo.equals("AY"))return "Arroyo";
-		else if (codigo.equals("BJ"))return "Bajada";
-		else if (codigo.equals("BO"))return "Barrio";
-		else if (codigo.equals("BR"))return "Barranco";
-		else if (codigo.equals("CA"))return "Cañada";
-		else if (codigo.equals("CG"))return "Colegio/Cigarral";
-		else if (codigo.equals("CH"))return "Chalet";
-		else if (codigo.equals("CI"))return "Cinturon";
-		else if (codigo.equals("CJ"))return "Calleja/Callejón";
-		else if (codigo.equals("CM"))return "Camino";
-		else if (codigo.equals("CN"))return "Colonia";
-		else if (codigo.equals("CO"))return "Concejo/Colegio";
-		else if (codigo.equals("CP"))return "Campa/Campo";
-		else if (codigo.equals("CR"))return "Carretera/Carrera";
-		else if (codigo.equals("CS"))return "Caserío";
-		else if (codigo.equals("CT"))return "Cuesta/Costanilla";
-		else if (codigo.equals("CU"))return "Conjunto";
-		else if (codigo.equals("DE"))return "Detrás";
-		else if (codigo.equals("DP"))return "Diputación";
-		else if (codigo.equals("DS"))return "Diseminados";
-		else if (codigo.equals("ED"))return "Edificios";
-		else if (codigo.equals("EM"))return "Extramuros";
-		else if (codigo.equals("EN"))return "Entrada, Ensanche";
-		else if (codigo.equals("ER"))return "Extrarradio";
-		else if (codigo.equals("ES"))return "Escalinata";
-		else if (codigo.equals("EX"))return "Explanada";
-		else if (codigo.equals("FC"))return "Ferrocarril";
-		else if (codigo.equals("FN"))return "Finca";
-		else if (codigo.equals("GL"))return "Glorieta";
-		else if (codigo.equals("GR"))return "Grupo";
-		else if (codigo.equals("GV"))return "Gran Vía";
-		else if (codigo.equals("HT"))return "Huerta/Huerto";
-		else if (codigo.equals("JR"))return "Jardines";
-		else if (codigo.equals("LD"))return "Lado/Ladera";
-		else if (codigo.equals("LG"))return "Lugar";
-		else if (codigo.equals("MC"))return "Mercado";
-		else if (codigo.equals("ML"))return "Muelle";
-		else if (codigo.equals("MN"))return "Municipio";
-		else if (codigo.equals("MS"))return "Masias";
-		else if (codigo.equals("MT"))return "Monte";
-		else if (codigo.equals("MZ"))return "Manzana";
-		else if (codigo.equals("PB"))return "Poblado";
-		else if (codigo.equals("PD"))return "Partida";
-		else if (codigo.equals("PJ"))return "Pasaje/Pasadizo";
-		else if (codigo.equals("PL"))return "Polígono";
-		else if (codigo.equals("PM"))return "Paramo";
-		else if (codigo.equals("PQ"))return "Parroquia/Parque";
-		else if (codigo.equals("PR"))return "Prolongación/Continuación";
-		else if (codigo.equals("PS"))return "Paseo";
-		else if (codigo.equals("PT"))return "Puente";
-		else if (codigo.equals("PZ"))return "Plaza";
-		else if (codigo.equals("QT"))return "Quinta";
-		else if (codigo.equals("RB"))return "Rambla";
-		else if (codigo.equals("RC"))return "Rincón/Rincona";
-		else if (codigo.equals("RD"))return "Ronda";
-		else if (codigo.equals("RM"))return "Ramal";
-		else if (codigo.equals("RP"))return "Rampa";
-		else if (codigo.equals("RR"))return "Riera";
-		else if (codigo.equals("RU"))return "Rua";
-		else if (codigo.equals("SA"))return "Salida";
-		else if (codigo.equals("SD"))return "Senda";
-		else if (codigo.equals("SL"))return "Solar";
-		else if (codigo.equals("SN"))return "Salón";
-		else if (codigo.equals("SU"))return "Subida";
-		else if (codigo.equals("TN"))return "Terrenos";
-		else if (codigo.equals("TO"))return "Torrente";
-		else if (codigo.equals("TR"))return "Travesía";
-		else if (codigo.equals("UR"))return "Urbanización";
-		else if (codigo.equals("VR"))return "Vereda";
-		else if (codigo.equals("CY"))return "Caleya";
-
+		switch(codigo){
+		case "CL": return "Calle";
+		case "AL": return "Aldea/Alameda";
+		case "AR":return "Area/Arrabal";
+		case "AU":return "Autopista";
+		case "AV":return "Avenida";
+		case "AY":return "Arroyo";
+		case "BJ":return "Bajada";
+		case "BO":return "Barrio";
+		case "BR":return "Barranco";
+		case "CA":return "Cañada";
+		case "CG":return "Colegio/Cigarral";
+		case "CH":return "Chalet";
+		case "CI":return "Cinturon";
+		case "CJ":return "Calleja/Callejón";
+		case "CM":return "Camino";
+		case "CN":return "Colonia";
+		case "CO":return "Concejo/Colegio";
+		case "CP":return "Campa/Campo";
+		case "CR":return "Carretera/Carrera";
+		case "CS":return "Caserío";
+		case "CT":return "Cuesta/Costanilla";
+		case "CU":return "Conjunto";
+		case "DE":return "Detrás";
+		case "DP":return "Diputación";
+		case "DS":return "Diseminados";
+		case "ED":return "Edificios";
+		case "EM":return "Extramuros";
+		case "EN":return "Entrada, Ensanche";
+		case "ER":return "Extrarradio";
+		case "ES":return "Escalinata";
+		case "EX":return "Explanada";
+		case "FC":return "Ferrocarril";
+		case "FN":return "Finca";
+		case "GL":return "Glorieta";
+		case "GR":return "Grupo";
+		case "GV":return "Gran Vía";
+		case "HT":return "Huerta/Huerto";
+		case "JR":return "Jardines";
+		case "LD":return "Lado/Ladera";
+		case "LG":return "Lugar";
+		case "MC":return "Mercado";
+		case "ML":return "Muelle";
+		case "MN":return "Municipio";
+		case "MS":return "Masias";
+		case "MT":return "Monte";
+		case "MZ":return "Manzana";
+		case "PB":return "Poblado";
+		case "PD":return "Partida";
+		case "PJ":return "Pasaje/Pasadizo";
+		case "PL":return "Polígono";
+		case "PM":return "Paramo";
+		case "PQ":return "Parroquia/Parque";
+		case "PR":return "Prolongación/Continuación";
+		case "PS":return "Paseo";
+		case "PT":return "Puente";
+		case "PZ":return "Plaza";
+		case "QT":return "Quinta";
+		case "RB":return "Rambla";
+		case "RC":return "Rincón/Rincona";
+		case "RD":return "Ronda";
+		case "RM":return "Ramal";
+		case "RP":return "Rampa";
+		case "RR":return "Riera";
+		case "RU":return "Rua";
+		case "SA":return "Salida";
+		case "SD":return "Senda";
+		case "SL":return "Solar";
+		case "SN":return "Salón";
+		case "SU":return "Subida";
+		case "TN":return "Terrenos";
+		case "TO":return "Torrente";
+		case "TR":return "Travesía";
+		case "UR":return "Urbanización";
+		case "VR":return "Vereda";
+		case "CY":return "Caleya";
+		}
+		
 		return codigo;
 	}
 
@@ -931,7 +929,8 @@ public class Cat2Osm {
 	/** Traduce el codigo de uso de inmueble que traen los .cat a sus tags en OSM
 	 * Como los cat se leen despues de los shapefiles, hay tags que los shapefiles traen
 	 * mas concretos, que esto los machacaria. Es por eso que si al tag le ponemos un '*'
-	 * por delante, comprueba que no exista ese tag antes de meterlo. En caso de existir
+	 * por delante cuando son tipos genericos sin especificaciones,
+	 * comprueba que no exista ese tag antes de meterlo. En caso de existir
 	 * dejaria el que ya estaba.
 	 * @param codigo Codigo de uso de inmueble
 	 * @return Lista de tags que genera
@@ -940,93 +939,1526 @@ public class Cat2Osm {
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		switch (codigo.charAt(0)){
-		case 'A':{
+		switch (codigo){
+		case "A":
+		case "B":
+		case "AAL":
+		case "BAL":
 			s[0] = "building"; s[1] = "warehouse";
 			l.add(s);
+			return l;
+			
+		case "AAP":
+		case "BAP":
+			s[0] = "amenity"; s[1] = "parking";
+			l.add(s);
 			s = new String[2];
-			s[0] =  "*landuse"; s[1] = "industrial";
+			s[0] = "fixme"; s[1] = "Comprobar que sea parking publico o al aire libre, en caso de no serlo deberia ser building=garage o landuse=garages";
 			l.add(s);
-			return l;}
-		case 'V':{
-			s[0] = "*landuse"; s[1] = "residential";
+			return l;
+			
+		case"ACR":
+		case"BCR":
+			s[0] = "building"; s[1] = "yes";
 			l.add(s);
-			return l;}
-		case 'I':{
-			s[0] = "*landuse"; s[1] = "industrial";
+			return l;
+			
+		case "ACT":
+		case "BCT":
+			s[0] = "building"; s[1] = "yes";
 			l.add(s);
-			return l;}
-		case 'O':{
-			s[0] = "*landuse"; s[1] = "commercial";
+			s = new String[2];
+			s[0] = "power"; s[1] = "sub_station";
 			l.add(s);
-			return l;}
-		case 'C':{
+			return l;
+			
+		case "AES":
+		case "BES":
+			s[0] = "building"; s[1] = "yes";
+			l.add(s);
+			s = new String[2];
+			s[0] = "public_transport"; s[1] = "station";
+			l.add(s);
+			return l;
+			
+		case "AIG":
+		case "BIG":
+			s[0] = "building"; s[1] = "livestock";
+			l.add(s);
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "farmyard";
+			l.add(s);
+			return l;
+			
+		case "C":
+		case "D":
 			s[0] = "*landuse"; s[1] = "retail";
 			l.add(s);
-			return l;}
-		case 'K':{
+			return l;
+			
+		case "CAT":
+		case "DAT":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "car";
+			l.add(s);
+			return l;
+			
+		case "CBZ":
+		case "DBZ":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "electronics";
+			l.add(s);
+			return l;
+			
+		case "CCE":
+		case "DCE":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "*";
+			l.add(s);
+			return l;
+			
+		case "CCL":
+		case "DCL":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "shoes";
+			l.add(s);
+			return l;
+			
+		case "CCR":
+		case "DCR":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "butcher";
+			l.add(s);
+			return l;
+			
+		case "CDM":
+		case "DDM":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "*";
+			l.add(s);
+			return l;
+			
+		case "CDR":
+		case "DDR":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "chemist";
+			l.add(s);
+			return l;
+			
+		case "CFN":
+		case "DFN":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "bank";
+			l.add(s);
+			return l;
+			
+		case "CFR":
+		case "DFR":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "pharmacy";
+			l.add(s);
+			return l;
+			
+		case "CFT":
+		case "DFT":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "plumber";
+			l.add(s);
+			return l;
+			
+		case "CGL":
+		case "DGL":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "marketplace";
+			l.add(s);
+			return l;
+			
+		case "CIM":
+		case "DIM":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "copyshop";
+			l.add(s);
+			return l;
+			
+		case "CJY":
+		case "DJY":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "jewelry";
+			l.add(s);
+			return l;
+			
+		case "CLB":
+		case "DLB":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "books";
+			l.add(s);
+			return l;
+			
+		case "CMB":
+		case "DMB":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "furniture";
+			l.add(s);
+			return l;
+			
+		case "CPA":
+		case "DPA":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "*";
+			l.add(s);
+			return l;
+			
+		case "CPR":
+		case "DPR":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "chemist";
+			l.add(s);
+			return l;
+			
+		case "CRL":
+		case "DRL":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "watchmaker";
+			l.add(s);
+			return l;
+			
+		case "CSP":
+		case "DSP":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "clothes";
+			l.add(s);
+			return l;
+			
+		case "CTJ":
+		case "DTJ":
+			s[0] = "landuse"; s[1] = "retail";
+			l.add(s);
+			s = new String[2];
+			s[0] = "shop"; s[1] = "supermarket";
+			l.add(s);
+			return l;
+			
+		case "E":
+		case "F":
+			s[0] = "*amenity"; s[1] = "school";
+			l.add(s);
+			return l;
+			
+		case "EBL":
+		case "FBL":
+			s[0] = "amenity"; s[1] = "library";
+			l.add(s);
+			return l;
+			
+		case "EBS":
+		case "FBS":
+			s[0] = "amenity"; s[1] = "school";
+			l.add(s);
+			s = new String[2];
+			s[0] = "isced:level"; s[1] = "1;2";
+			l.add(s);
+			return l;
+			
+		case "ECL":
+		case "FCL":
+			s[0] = "amenity"; s[1] = "comunity_centre";
+			l.add(s);
+			return l;
+			
+		case "EIN":
+		case "FIN":
+			s[0] = "amenity"; s[1] = "school";
+			l.add(s);
+			s = new String[2];
+			s[0] = "isced:level"; s[1] = "3;4";
+			l.add(s);
+			return l;
+			
+		case "EMS":
+		case "FMS":
+			s[0] = "tourism"; s[1] = "museum";
+			l.add(s);
+			return l;
+			
+		case "EPR":
+		case "FPR":
+			s[0] = "amenity"; s[1] = "school";
+			l.add(s);
+			s = new String[2];
+			s[0] = "isced:level"; s[1] = "4";
+			l.add(s);
+			return l;
+			
+		case "EUN":
+		case "FUN":
+			s[0] = "amenity"; s[1] = "university";
+			l.add(s);
+			return l;
+			
+		case "G":
+		case "H":
+			s[0] = "tourism"; s[1] = "hotel";
+			l.add(s);
+			return l;
+			
+		case "GC1":
+		case "HC1":
+			s[0] = "amenity"; s[1] = "cafe";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "1";
+			l.add(s);
+			return l;
+			
+		case "GC2":
+		case "HC2":
+			s[0] = "amenity"; s[1] = "cafe";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "2";
+			l.add(s);
+			return l;
+			
+		case "GC3":
+		case "HC3":
+			s[0] = "amenity"; s[1] = "cafe";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "3";
+			l.add(s);
+			return l;
+			
+		case "GC4":
+		case "HC4":
+			s[0] = "amenity"; s[1] = "cafe";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "4";
+			l.add(s);
+			return l;
+			
+		case "GC5":
+		case "HC5":
+			s[0] = "amenity"; s[1] = "cafe";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "5";
+			l.add(s);
+			return l;
+			
+		case "GH1":
+		case "HH1":
+			s[0] = "amenity"; s[1] = "hotel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "1";
+			l.add(s);
+			return l;
+			
+		case "GH2":
+		case "HH2":
+			s[0] = "amenity"; s[1] = "hotel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "2";
+			l.add(s);
+			return l;
+			
+		case "GH3":
+		case "HH3":
+			s[0] = "amenity"; s[1] = "hotel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "3";
+			l.add(s);
+			return l;
+			
+		case "GH4":
+		case "HH4":
+			s[0] = "amenity"; s[1] = "hotel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "4";
+			l.add(s);
+			return l;
+			
+		case "GH5":
+		case "HH5":
+			s[0] = "amenity"; s[1] = "hotel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "5";
+			l.add(s);
+			return l;
+			
+		case "GP1":
+		case "HP1":
+			s[0] = "tourism"; s[1] = "apartments";
+			l.add(s);
+			s = new String[2];
+			s[0] = "category"; s[1] = "1";
+			l.add(s);
+			return l;
+			
+		case "GP2":
+		case "HP2":
+			s[0] = "tourism"; s[1] = "apartments";
+			l.add(s);
+			s = new String[2];
+			s[0] = "category"; s[1] = "2";
+			l.add(s);
+			return l;
+			
+		case "GP3":
+		case "HP3":
+			s[0] = "tourism"; s[1] = "apartments";
+			l.add(s);
+			s = new String[2];
+			s[0] = "category"; s[1] = "3";
+			l.add(s);
+			return l;
+			
+		case "GPL":
+		case "HPL":
+			s[0] = "tourism"; s[1] = "apartments";
+			l.add(s);
+			return l;
+			
+		case "GR1":
+		case "HR1":
+			s[0] = "amenity"; s[1] = "restaurant";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "1";
+			l.add(s);
+			return l;
+			
+		case "GR2":
+		case "HR2":
+			s[0] = "amenity"; s[1] = "restaurant";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "2";
+			l.add(s);
+			return l;
+			
+		case "GR3":
+		case "HR3":
+			s[0] = "amenity"; s[1] = "restaurant";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "3";
+			l.add(s);
+			return l;
+			
+		case "GR4":
+		case "HR4":
+			s[0] = "amenity"; s[1] = "restaurant";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "4";
+			l.add(s);
+			return l;
+			
+		case "GR5":
+		case "HR5":
+			s[0] = "amenity"; s[1] = "restaurant";
+			l.add(s);
+			s = new String[2];
+			s[0] = "forks"; s[1] = "5";
+			l.add(s);
+			return l;
+			
+		case "GS1":
+		case "HS1":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "1";
+			l.add(s);
+			return l;
+			
+		case "GS2":
+		case "HS2":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "2";
+			l.add(s);
+			return l;
+			
+		case "GS3":
+		case "HS3":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "stars"; s[1] = "3";
+			l.add(s);
+			return l;
+			
+		case "GT1":
+		case "HT1":
+			return l;
+			
+		case "GT2":
+		case "HT2":
+			return l;
+			
+		case "GT3":
+		case "HT3":
+			return l;
+			
+		case "GTL":
+		case "HTL":
+			return l;
+			
+		case "I":
+		case "J":
+			s[0] = "*landuse"; s[1] = "industrial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "works";
+			l.add(s);
+			return l;
+			
+		case "IAJ":
+		case "JAG":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "works";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "farming";
+			l.add(s);
+			return l;
+			
+		case "IAL":
+		case "JAL":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "works";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "food";
+			l.add(s);
+			return l;
+			
+		case "IAM":
+		case "JAM":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "content"; s[1] = "OMW";
+			l.add(s);
+			return l;
+			
+		case "IAR":
+		case "JAR":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "agricultural";
+			l.add(s);
+			return l;
+			
+		case "IAS":
+		case "JAS":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "sawmill";
+			l.add(s);
+			return l;
+			
+		case "IBB":
+		case "JBB":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "drinks";
+			l.add(s);
+			return l;
+			
+		case "IBD":
+		case "JBD":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "winery";
+			l.add(s);
+			return l;
+			
+		case "IBR":
+		case "JBR":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "ceramic";
+			l.add(s);
+			return l;
+			
+		case "ICH":
+		case "JCH":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "mushrooms";
+			l.add(s);
+			return l;
+			
+		case "ICN":
+		case "JCN":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "building";
+			l.add(s);
+			return l;
+			
+		case "ICT":
+		case "JCT":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "quarry";
+			l.add(s);
+			return l;
+			
+		case "IEL":
+		case "JEL":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "electric";
+			l.add(s);
+			return l;
+			
+		case "IGR":
+		case "JGR":
+			s[0] = "landuse"; s[1] = "farmyard";
+			l.add(s);
+			return l;
+			
+		case "IIM":
+		case "JIM":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "chemistry";
+			l.add(s);
+			return l;
+			
+		case "IIN":
+		case "JIN":
+			s[0] = "landuse"; s[1] = "greenhouse_horticulture";
+			l.add(s);
+			return l;
+			
+		case "IMD":
+		case "JMD":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "wood";
+			l.add(s);
+			return l;
+			
+		case "IMN":
+		case "JMN":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "manufacturing";
+			l.add(s);
+			return l;
+			
+		case "IMT":
+		case "JMT":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "metal";
+			l.add(s);
+			return l;
+			
+		case "IMU":
+		case "JMU":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "machinery";
+			l.add(s);
+			return l;
+			
+		case "IPL":
+		case "JPL":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "plastics";
+			l.add(s);
+			return l;
+			
+		case "IPP":
+		case "JPP":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "paper";
+			l.add(s);
+			return l;
+			
+		case "IPS":
+		case "JPS":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "fishing";
+			l.add(s);
+			return l;
+			
+		case "IPT":
+		case "JPT":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "petroleum";
+			l.add(s);
+			return l;
+			
+		case "ITB":
+		case "JTB":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "tobacco";
+			l.add(s);
+			return l;
+			
+		case "ITX":
+		case "JTX":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "clothing";
+			l.add(s);
+			return l;
+			
+		case "IVD":
+		case "JVD":
+			s[0] = "tourism"; s[1] = "hostel";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "works"; s[1] = "glass";
+			l.add(s);
+			return l;
+			
+		case "K":
+		case "L":
 			s[0] = "*landuse"; s[1] = "recreation_ground";
 			l.add(s);
 			s = new String[2];
 			s[0] = "recreation_type"; s[1] = "sports";
 			l.add(s);
-			return l;}
-		case 'T':{
-			s[0] = "*landuse"; s[1] = "recreation_ground";
+			return l;
+			
+		case "KDP":
+		case "LDP":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "sports";
+			l.add(s);
+			s = new String[2];
+			s[0] = "leisure"; s[1] = "pitch";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar sport=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "KES":
+		case "LES":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "sports";
+			l.add(s);
+			s = new String[2];
+			s[0] = "leisure"; s[1] = "stadium";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar sport=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "KPL":
+		case "LPL":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "sports";
+			l.add(s);
+			s = new String[2];
+			s[0] = "leisure"; s[1] = "sports_centre";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar sport=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "KPS":
+		case "LPS":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "sports";
+			l.add(s);
+			s = new String[2];
+			s[0] = "leisure"; s[1] = "swimming_pool";
+			l.add(s);
+			s = new String[2];
+			s[0] = "sport"; s[1] = "swimming";
+			l.add(s);
+			return l;
+			
+		case "M":
+		case "N":
+			s[0] = "*landuse"; s[1] = "greenfield";
+			l.add(s);
+			return l;
+			
+		case "O":
+		case "X":
+			s[0] = "*landuse"; s[1] = "commercial";
+			l.add(s);
+			return l;
+			
+		case "O02":
+		case "X02":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "O03":
+		case "X03":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "O06":
+		case "X06":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "O07":
+		case "X07":
+			s[0] = "landuse"; s[1] = "health";
+			l.add(s);
+			s = new String[2];
+			s[0] = "health_facility:type"; s[1] = "office";
+			l.add(s);
+			s = new String[2];
+			s[0] = "health_person:type"; s[1] = "nurse";
+			l.add(s);
+			return l;
+			
+		case "O11":
+		case "X11":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "O13":
+		case "X13":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "O15":
+		case "X15":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "office"; s[1] = "writer";
+			l.add(s);
+			return l;
+			
+		case "O16":
+		case "X16":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "painter";
+			l.add(s);
+			return l;
+			
+		case "O17":
+		case "X17":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "office"; s[1] = "musician";
+			l.add(s);
+			return l;
+			
+		case "O43":
+		case "X43":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "office"; s[1] = "salesman";
+			l.add(s);
+			return l;
+			
+		case "O44":
+		case "X44":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "O75":
+		case "X75":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "weaver";
+			l.add(s);
+			return l;
+			
+		case "O79":
+		case "X79":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "tailor";
+			l.add(s);
+			return l;
+			
+		case "O81":
+		case "X81":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "carpenter";
+			l.add(s);
+			return l;
+			
+		case "O88":
+		case "X88":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "craft"; s[1] = "jeweller";
+			l.add(s);
+			return l;
+			
+		case "O99":
+		case "X99":
+			s[0] = "landuse"; s[1] = "commercial";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "P":
+		case "Q":
+			s[0] = "amenity"; s[1] = "public_building";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "PAA":
+		case "QAA":
+			s[0] = "amenity"; s[1] = "townhall";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "PAD":
+		case "QAD":
+			s[0] = "amenity"; s[1] = "courthouse";
+			l.add(s);
+			s = new String[2];
+			s[0] = "operator"; s[1] = "autonomous_community";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "PAE":
+		case "QAE":
+			s[0] = "amenity"; s[1] = "townhall";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "PCB":
+		case "QCB":
+			s[0] = "office"; s[1] = "administrative";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "PDL":
+		case "QDL":
+		case "PGB":
+		case "QGB":
+			s[0] = "office"; s[1] = "government";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "PJA":
+		case "QJA":
+			s[0] = "amenity"; s[1] = "courthouse";
+			l.add(s);
+			s = new String[2];
+			s[0] = "operator"; s[1] = "county";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "PJO":
+		case "QJO":
+			s[0] = "amenity"; s[1] = "courthouse";
+			l.add(s);
+			s = new String[2];
+			s[0] = "operator"; s[1] = "province";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "public";
+			l.add(s);
+			return l;
+			
+		case "R":
+		case "S":
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			return l;
+			
+		case "RBS":
+		case "SBS":
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			s = new String[2];
+			s[0] = "religion"; s[1] = "christian";
+			l.add(s);
+			s = new String[2];
+			s[0] = "denomination"; s[1] = "catholic";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "basilica";
+			l.add(s);
+			return l;
+			
+		case "RCP":
+		case "SCP":
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			s = new String[2];
+			s[0] = "religion"; s[1] = "christian";
+			l.add(s);
+			s = new String[2];
+			s[0] = "denomination"; s[1] = "catholic";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "chapel";
+			l.add(s);
+			return l;
+			
+		case "RCT":
+		case "SCT":
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			s = new String[2];
+			s[0] = "religion"; s[1] = "christian";
+			l.add(s);
+			s = new String[2];
+			s[0] = "denomination"; s[1] = "catholic";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "cathedral";
+			l.add(s);
+			return l;
+			
+		case "RER":
+		case "SER":
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			s = new String[2];
+			s[0] = "religion"; s[1] = "christian";
+			l.add(s);
+			s = new String[2];
+			s[0] = "denomination"; s[1] = "catholic";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "hermitage";
+			l.add(s);
+			return l;
+			
+		case "RPR":
+		case "SPR":
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			s = new String[2];
+			s[0] = "religion"; s[1] = "christian";
+			l.add(s);
+			s = new String[2];
+			s[0] = "denomination"; s[1] = "catholic";
+			l.add(s);
+			s = new String[2];
+			s[0] = "building"; s[1] = "parish_church";
+			l.add(s);
+			return l;
+			
+		case "RSN":
+		case "SSN":
+			s[0] = "amenity"; s[1] = "hospital";
+			l.add(s);
+			s = new String[2];
+			s[0] = "landuse"; s[1] = "health";
+			l.add(s);
+			return l;
+			
+		case "T":
+		case "U":
+			s[0] = "landuse"; s[1] = "recreation_ground";
 			l.add(s);
 			s = new String[2];
 			s[0] = "recreation_type"; s[1] = "entertainment";
 			l.add(s);
-			return l;}
-		case 'G':{
-			s[0] = "*landuse"; s[1] = "retail";
+			return l;
+			
+		case "TAD":
+		case "UAD":
+			s[0] = "landuse"; s[1] = "recreation_ground";
 			l.add(s);
-			return l;}
-		case 'Y':{
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "entertainment";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "auditorium";
+			l.add(s);
+			return l;
+			
+		case "TCM":
+		case "UCM":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "entertainment";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "cinema";
+			l.add(s);
+			return l;
+			
+		case "TCN":
+		case "UCN":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "entertainment";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "cinema";
+			l.add(s);
+			return l;
+			
+		case "TSL":
+		case "USL":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "entertainment";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "hall";
+			l.add(s);
+			return l;
+			
+		case "TTT":
+		case "UTT":
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "entertainment";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "theatre";
+			l.add(s);
+			return l;
+			
+		case "V":
+		case "W":
+			s[0] = "*landuse"; s[1] = "residential";
+			l.add(s);
+			return l;
+					
+		case "Y":
 			s[0] = "*landuse"; s[1] = "health";
 			l.add(s);
-			return l;}
-		case 'E':{
-			s[0] = "*landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] =  "recreation_type"; s[1] = "culture";
-			l.add(s);
-			return l;}
-		case 'R':{
-			s[0] = "building"; s[1] = "church";
-			l.add(s);
-			return l;}
-		case 'M':{
-			s[0] = "*landuse"; s[1] = "greenfield";
-			l.add(s);
-			return l;}
-		case 'P':{
-			s[0] = "amenity"; s[1] = "public_building";
-			l.add(s);
-			s = new String[2];
-			s[0] ="building"; s[1] ="yes";
-			l.add(s);
-			return l;}
-		case 'B':{
-			s[0] = "building"; s[1] = "warehouse";
-			l.add(s);
-			s = new String[2];
-			s[0] = "*landuse"; s[1] ="farmyard";
-			l.add(s);
-			return l;}
-		case 'J':{
-			s[0] = "*landuse"; s[1] = "industrial";
-			l.add(s);
-			return l;}
-		case 'Z':{
+			return l;
+
+		case "Z":
 			s[0] = "*landuse"; s[1] = "farm";
 			l.add(s);
-			return l;}
-		default:
-			if (!codigo.isEmpty())
-			s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los vienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
+			return l;
+			
+		case "YAM":
+		case "ZAM":
+		case "YCL":
+		case "ZCL":
+			s[0] = "landuse"; s[1] = "health";
 			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "clinic";
+			l.add(s);
+			s = new String[2];
+			s[0] = "medical_system:western"; s[1] = "yes";
+			l.add(s);
+			s = new String[2];
+			s[0] = "health_facility:type"; s[1] = "clinic";
+			l.add(s);
+			return l;
+			
+		case "YBE":
+		case "ZBE":
+			s[0] = "landuse"; s[1] = "pond";
+			l.add(s);
+			return l;
+			
+		case "YCA":
+		case "ZCA":
+			s[0] = "amenity"; s[1] = "casino";
+			l.add(s);
+			return l;
+			
+		case "YCB":
+		case "ZCB":
+			s[0] = "amenity"; s[1] = "club";
+			l.add(s);
+			return l;
+			
+		case "YCE":
+		case "ZCE":
+			s[0] = "amenity"; s[1] = "casino";
+			l.add(s);
+			return l;
+			
+		case "YCT":
+		case "ZCT":
+			s[0] = "landuse"; s[1] = "quarry";
+			l.add(s);
+			return l;
+			
+		case "YDE":
+		case "ZDE":
+			s[0] = "man_made"; s[1] = "wastewater_plant";
+			l.add(s);
+			return l;
+			
+		case "YDG":
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "content"; s[1] = "gas";
+			l.add(s);
+			return l;
+			
+		case "ZDG":
+			s[0] = "landuse"; s[1] = "farmyard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "content"; s[1] = "gas";
+			l.add(s);
+			return l;
+			
+		case "YDL":
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "content"; s[1] = "liquid";
+			l.add(s);
+			return l;
+			
+		case "ZDL":
+			s[0] = "landuse"; s[1] = "farmyard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "content"; s[1] = "liquid";
+			l.add(s);
+			return l;
+			
+		case "YDS":
+		case "ZDS":
+			s[0] = "landuse"; s[1] = "health";
+			l.add(s);
+			s = new String[2];
+			s[0] = "medical_system:western"; s[1] = "yes";
+			l.add(s);
+			s = new String[2];
+			s[0] = "health_facility:type"; s[1] = "dispensary";
+			l.add(s);
+			return l;
+			
+		case "YGR":
+		case "ZGR":
+			s[0] = "amenity"; s[1] = "kindergarten";
+			l.add(s);
+			return l;
+			
+		case "YGV":
+		case "ZGV":
+			s[0] = "landuse"; s[1] = "surface_mining";
+			l.add(s);
+			s = new String[2];
+			s[0] = "mining_resource"; s[1] = "gravel";
+			l.add(s);
+			return l;
+			
+		case "YHG":
+		case "ZHG":
+			return l;
+			
+		case "YHS":
+		case "ZHS":
+		case "YSN":
+		case "ZSN":
+			s[0] = "landuse"; s[1] = "health";
+			l.add(s);
+			s = new String[2];
+			s[0] = "amenity"; s[1] = "hospital";
+			l.add(s);
+			s = new String[2];
+			s[0] = "medical_system:western"; s[1] = "yes";
+			l.add(s);
+			s = new String[2];
+			s[0] = "health_facility:type"; s[1] = "hospital";
+			l.add(s);
+			return l;
+			
+		case "YMA":
+		case "ZMA":
+			s[0] = "landuse"; s[1] = "surface_mining";
+			l.add(s);
+			s = new String[2];
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar mining_resource=X si es posible.";
+			l.add(s);
+			return l;
+			
+		case "YME":
+		case "ZME":
+			s[0] = "man_made"; s[1] = "pier";
+			l.add(s);
+			return l;
+			
+		case "YPC":
+		case "ZPC":
+			s[0] = "landuse"; s[1] = "aquaculture";
+			l.add(s);
+			return l;
+			
+		case "YRS":
+		case "ZRS":
+			s[0] = "social_facility"; s[1] = "group_home";
+			l.add(s);
+			return l;
+			
+		case "YSA":
+		case "ZSA":
+		case "YSO":
+		case "ZSO":
+			s[0] = "office"; s[1] = "labor_union";
+			l.add(s);
+			return l;
+			
+		case "YSC":
+		case "ZSC":
+			s[0] = "health_facility:type"; s[1] = "first_aid";
+			l.add(s);
+			s = new String[2];
+			s[0] = "medical_system:western"; s[1] = "yes";
+			l.add(s);
+			s = new String[2];
+			s[0] = "yes"; s[1] = "yes";
+			l.add(s);
+			return l;
+			
+		case "YSL":
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "content"; s[1] = "solid";
+			l.add(s);
+			return l;
+			
+		case "ZSL":
+			s[0] = "landuse"; s[1] = "farmyard";
+			l.add(s);
+			s = new String[2];
+			s[0] = "man_made"; s[1] = "storage_tank";
+			l.add(s);
+			s = new String[2];
+			s[0] = "content"; s[1] = "solid";
+			l.add(s);
+			return l;
+			
+		case "YVR":
+		case "ZVR":
+			s[0] = "landuse"; s[1] = "landfill";
+			l.add(s);
+			return l;
+			
+		default:
+			if (!codigo.isEmpty()){
+				s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los vienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/wiki/Traduccion_metadatos_catastro_a_map_features#Codificacion_de_los_usos_de_los_bienes_inmuebles";
+				l.add(s);}
+
+
 			return l;}
 	}
 
