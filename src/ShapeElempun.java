@@ -13,7 +13,7 @@ import com.vividsolutions.jts.geom.Point;
 
 
 public class ShapeElempun extends Shape {
-	
+
 	private String shapeId = null; // Id del shape ELEMPUN+long
 	private Coordinate coor;
 	private Long nodo;
@@ -21,11 +21,11 @@ public class ShapeElempun extends Shape {
 	private List<ShapeAttribute> atributos;
 
 	public ShapeElempun(SimpleFeature f, String tipo) {
-		
+
 		super(f, tipo);
 
 		shapeId = "ELEMPUN" + super.newShapeId();
-		
+
 		// Elempun trae la geometria en formato Point
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.Point")){
 
@@ -35,7 +35,7 @@ public class ShapeElempun extends Shape {
 		}
 		else {
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "+ 
-		f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMPUN");
+					f.getDefaultGeometry().getClass().getName() +" desconocido dentro del shapefile ELEMPUN");
 		}
 
 		// Los demas atributos son metadatos y de ellos sacamos 
@@ -49,17 +49,17 @@ public class ShapeElempun extends Shape {
 		}*/
 	}
 
-	
+
 	public String getShapeId(){
 		return shapeId;
 	}
-	
-	
+
+
 	public ShapeAttribute getAttribute(int x){	
 		return atributos.get(x);
 	}
 
-	
+
 	/** Devuelve los atributos del shape
 	 * @return Lista de atributos
 	 */
@@ -69,20 +69,20 @@ public class ShapeElempun extends Shape {
 
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
-			}
+		}
 
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
-		
+
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
 		if (m.find()) {
-		s = new String[2];
-		s[0] = "source:date"; s[1] = m.group();
-		l.add(s);
+			s = new String[2];
+			s[0] = "source:date"; s[1] = m.group();
+			l.add(s);
 		}
-		
+
 		return l;
 	}
 
@@ -94,6 +94,11 @@ public class ShapeElempun extends Shape {
 
 	public Long getRelationId() {
 		return null;
+	}
+	
+
+	public boolean esEdificio() {
+		return false;
 	}
 
 
@@ -111,70 +116,72 @@ public class ShapeElempun extends Shape {
 	public String getTtggss() {
 		return ttggss;
 	}
-	
-	
+
+
 	public boolean shapeValido (){
-		
-		if (ttggss.equals("030202"))
+
+		switch(ttggss){
+		case "030202":
 			return true;
-		if (ttggss.equals("030302"))
+		case "030302":
 			return true;
-		if (ttggss.equals("037101"))
+		case "037101":
 			return true;
-		if (ttggss.equals("038101"))
+		case "038101":
 			return true;
-		if (ttggss.equals("038102"))
+		case "038102":
 			return true;
-		if (ttggss.equals("037102"))
+		case "037102":
 			return true;
-		if (ttggss.equals("068401"))
+		case "068401":
 			return true;
-		if (ttggss.equals("167111"))
+		case "167111":
 			return true;
-		if (ttggss.equals("167201"))
+		case "167201":
 			return true;
-		if (ttggss.equals("168103"))
+		case "168103":
 			return true;
-		if (ttggss.equals("168116"))
+		case "168116":
 			return true;
-		if (ttggss.equals("168153"))
+		case "168153":
 			return true;
-		if (ttggss.equals("168168"))
+		case "168168":
 			return true;
-		if (ttggss.equals("168113"))
+		case "168113":
 			return true;
-		if (ttggss.equals("060402"))
+		case "060402":
 			return false;
-		if (ttggss.equals("060202"))
+		case "060202":
 			return false;
-		if (ttggss.equals("160300"))
+		case "160300":
 			return false;
-		if (ttggss.equals("067121"))
+		case "067121":
 			return false;
-		if (ttggss.equals("160101"))
+		case "160101":
 			return false;
-		if (ttggss.equals("115101"))
+		case "115101":
 			return false;
-		if (ttggss.equals("168100"))
+		case "168100":
 			return false;
-		else
+		default:
 			return true;
+		}
 	}
-	
-	
+
+
 	public void addNode(int pos, long nodeId){
 		nodo = nodeId;
 	}
 
-	
+
 	public void addWay(int pos, long wayId){
 	}
-	
-	
+
+
 	public void deleteWay(int pos, long wayId){
 	}
 
-	
+
 	public void setRelation(long relationId){
 	}
 
@@ -196,7 +203,7 @@ public class ShapeElempun extends Shape {
 	 */
 	public List<Long> getWaysIds(int pos) {
 		List<Long> l = new ArrayList<Long>();
-			return l;
+		return l;
 	}
 
 

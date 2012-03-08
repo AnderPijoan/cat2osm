@@ -100,6 +100,11 @@ public class ShapeElemlin extends Shape {
 	public String getRefCat() {
 		return null;
 	}
+	
+
+	public boolean esEdificio() {
+		return false;
+	}
 
 
 	public synchronized Long getRelationId() {
@@ -126,22 +131,24 @@ public class ShapeElemlin extends Shape {
 
 	public boolean shapeValido (){
 
-		//if (ttggss.equals("030202"))
+		switch(ttggss){
+		//case "030202":
 			//return true; // Margenes de rios que van a tener natural=water
-		//if (ttggss.equals("030302"))
+		//case "030302":
 			//return true; // TODO Emborrona mas que ayudar
-		if (ttggss.equals("037101"))
+		case "037101":
 			return true;
-		if (ttggss.equals("038101"))
+		case "038101":
 			return true;
-		if (ttggss.equals("038102"))
+		case "038102":
 			return true;
-		if (ttggss.equals("037102"))
+		case "037102":
 			return true;
-		if (ttggss.equals("167111"))
+		case "167111":
 			return true;
-		else
+		default:
 			return false;
+		}
 	}
 
 

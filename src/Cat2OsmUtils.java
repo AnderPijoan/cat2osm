@@ -20,6 +20,9 @@ public class Cat2OsmUtils {
 	// Listaa de relations
 	private final ConcurrentHashMap <RelationOsm, Long> totalRelations = new ConcurrentHashMap <RelationOsm, Long>();
 	
+	// Booleanos para el modo de calcular las entradas
+	private static boolean modoEntradas = false;
+	
 	public synchronized ConcurrentHashMap<NodeOsm, Long> getTotalNodes() {
 		return totalNodes;
 	}
@@ -247,5 +250,13 @@ public class Cat2OsmUtils {
         
         return nodes;
     }
+
+	public static boolean getModoEntradas() {
+		return modoEntradas;
+	}
+
+	public void setModoEntradas(boolean modoEntradas) {
+		Cat2OsmUtils.modoEntradas = modoEntradas;
+	}
 	
 }

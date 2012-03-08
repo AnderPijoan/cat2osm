@@ -89,7 +89,7 @@ public class ShapeSubparce extends Shape {
 		if (subparce != null){
 			cultivo = getCultivo(refCatastral,subparce);
 		}
-
+		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
 		for (int x = 1; x < f.getAttributes().size(); x++){
@@ -278,7 +278,12 @@ public class ShapeSubparce extends Shape {
 
 
 	public String getTtggss() {
-		return null;
+		return "";
+	}
+	
+	
+	public boolean esEdificio() {
+		return false;
 	}
 
 

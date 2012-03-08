@@ -66,13 +66,6 @@ TipoRegistro=0
 # No=0 / Si=1 (Ralentiza un poco el proceso)
 ElemtexAConstru=1
 
-# Analizar el archivo shapefile EJES, para las rutas y carreteras.
-# En Catastro estas no estan unidas y se componen de segmentos independientes.
-# Utilizarlo no es recomendable salvo en casos en los que no existan carreteras importadas ya que produce 
-# un resultado que requiere de muchisimos arreglos por parte del usuario.
-# No=0 / Si=0
-Ejes=0
-
 # Imprimir tanto en las vias como en las relaciones, la lista de shapes que las componen o las
 # utilizan. Es para casos de debugging si se quiere tener los detalles.
 # No=0 / Si=1

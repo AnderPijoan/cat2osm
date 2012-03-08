@@ -75,7 +75,7 @@ public class ShapeParser extends Thread{
 			while (reader.hasNext()) {
 				Shape shape = new ShapeSubparce(reader.next(), tipo);
 
-				// Si cumple estar entre las fechas
+				// Si cumple estar entre las fechas 
 				if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
 					// Anadimos el shape creado a la lista
 					shapeList.add(mPolygonShapeParser(shape));
@@ -156,6 +156,8 @@ public class ShapeParser extends Thread{
 	 */
 	private Shape mPolygonShapeParser(Shape shape){
 
+
+		
 		// Obtenemos las coordenadas de cada punto del shape
 		for (int x = 0; x < shape.getPoligons().size(); x++){
 			Coordinate[] coor = shape.getCoordenadas(x);

@@ -204,4 +204,9 @@ public class ShapeParcela extends Shape {
 		return true;
 	}
 	
+
+	public boolean esEdificio() {
+		return false;
+	}
+	
 }

@@ -6,6 +6,7 @@ public class Cat {
 	int tipoRegistro;
 	String refCatastral; // Referencia Catastral
 	String subparce; // Codigo Subparcela
+	int numOrdenConstru; // Numero de orden de construccion
 	List<String[]> atributos;
 	long fechaAlta; // Formato AAAAMMDD
 	long fechaBaja;
@@ -41,6 +42,16 @@ public class Cat {
 	
 	public String getRefCatastral(){
 		return refCatastral;
+	}
+	
+	
+	public int getNumOrdenConstru() {
+		return numOrdenConstru;
+	}
+
+
+	public void setNumOrdenConstru(int numOrdenConstru) {
+		this.numOrdenConstru = numOrdenConstru;
 	}
 	
 	

@@ -53,6 +53,10 @@ public class NodeOsm {
 		return coor;
 	}
 	
+	public void setCoor(Coordinate c){
+		this.coor = c;
+	}
+	
 	
 	public double getX() {
 		return coor.x;

@@ -12,10 +12,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.geotools.geometry.jts.JTSFactoryFinder;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.index.SpatialIndex;
+import com.vividsolutions.jts.index.strtree.STRtree;
+import com.vividsolutions.jts.linearref.LinearLocation;
+import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
 
 public class Cat2Osm {
@@ -46,7 +57,8 @@ public class Cat2Osm {
 
 
 	/** Busca en la lista de shapes los que coincidan con el codigo de subparce
-	 * @param subparce codigo de subparcela a buscar
+	 * @param shapes lista de shapes que han coincidido con la refCat para buscar en ella las subparcelas
+	 * @param subparce Codigo de subparcela para obtener la que corresponda
 	 * @returns List<Shape> lista de shapes que coinciden                    
 	 */
 	private static List<Shape> buscarSubparce(List<Shape> shapes, String subparce){
@@ -56,6 +68,20 @@ public class Cat2Osm {
 			if (shape instanceof ShapeSubparce)
 				if (((ShapeSubparce) shape).getSubparce().equals(subparce))
 					shapeList.add(shape);
+
+		return shapeList;
+	}
+
+	/** Busca en la lista de shapes los que sean parcelas
+	 * @param shapes lista de shapes
+	 * @return List<Shape> lista de shapes que coinciden  
+	 */
+	private static List<Shape> buscarParce(List<Shape> shapes){
+		List<Shape> shapeList = new ArrayList<Shape>();
+
+		for(Shape shape : shapes) 
+			if (shape instanceof ShapeParcela)
+				shapeList.add(shape);
 
 		return shapeList;
 	}
@@ -107,6 +133,107 @@ public class Cat2Osm {
 	}
 
 
+	/** Los elementos textuales traen informacion con los numeros de portal pero sin datos de la parcela ni unidos a ellas
+	 * Con esto, sabiendo el numero de portal buscamos la parcela mas cercana con ese numero y le pasamos los tags al elemento
+	 * textual que es un punto
+	 * @param shapes Lista de shapes original
+	 * @return lista de shapes con los tags modificados
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Shape> calcularEntradas(List<Shape> shapes){
+
+		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
+
+		// Para cada shape de elemtex que tengamos, que son los portales,
+		// metemos su coordenada en una lista
+		for (Shape shapeTex : shapes)
+			if (shapeTex instanceof ShapeElemtex){
+
+				com.vividsolutions.jts.geom.Point point = gf.createPoint(shapeTex.getCoor());
+
+				double minDist = Double.MAX_VALUE;
+
+				for (Shape shapePar : shapes){
+					
+					// Si es un shape de parcela y tiene geometria
+					if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
+						
+						// Cogemos la geometria exterior de la parcela
+						Geometry geom = (LineString) shapePar.getPoligons().get(0);
+						String tempRotulo = "";
+						
+						for (String[] tag : ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shapePar.getRelationId())).getTags())
+							if (tag[0].equals("addr:housenumber"))
+								tempRotulo = tag[1];
+							
+							
+						// Si coincide el numero de portal y existe la geometria
+						if (tempRotulo.equals(((ShapeElemtex) shapeTex).getRotulo()) && geom != null) {
+							
+							// Para hacer la query es necesario en Envelope
+							Envelope env = geom.getEnvelopeInternal();
+							
+							// Si existe
+							if (!env.isNull()) {
+								double temp = Math.min(minDist, env.distance(point.getEnvelopeInternal()));
+								if (temp != minDist){
+
+									// Creamos una cache para meter la geometria de la parcela
+									final SpatialIndex index = new STRtree();
+									index.insert(env, new LocationIndexedLine(geom));
+
+									// Creamos el punto de busqueda con la coordenada del punto y la expandimos
+									// en la distancia que se ha calculado a la que esta la parcela para obtener
+									// una linea de desplazamiento para tocar la parcela
+									Envelope search = new Envelope(point.getCoordinate());
+									search.expandBy(minDist);
+									List<LocationIndexedLine> lines = index.query(search);
+
+									// Cada linea que nos devuelve representa el desplazamiento
+									// que hay que darle a la coordenada para que se situe sobre la linea de la
+									// geometria de la parcela
+									for (LocationIndexedLine line : lines) {
+										LinearLocation here = line.project(point.getCoordinate());
+										Coordinate fixedCoor = line.extractPoint(here);
+										double dist = fixedCoor.distance(point.getCoordinate());
+										
+										if (dist < minDist) {
+											minDist = dist;
+
+											// Actualizamos la coordenada en el shape
+											((ShapeElemtex) shapeTex).setCoor(fixedCoor);
+
+											// Y Actualizamos la coordenada en el nodeOsm
+											if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
+												NodeOsm node = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
+												node.setCoor(fixedCoor);
+												//node.addTags(((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shapePar.getRelationId())).getTags());
+											}
+										}
+
+										// Actualizamos la variable minDist
+										minDist = temp;
+									}
+								}
+							}
+						}
+					}
+				}
+			}	
+
+		// Borramos los shapes de parcelas para que no los dibuje
+//		Iterator<Shape> iterator = shapes.iterator();
+//
+//		while(iterator.hasNext()) {
+//			Shape shape = iterator.next();
+//			if(shape instanceof ShapeParcela)
+//				iterator.remove();
+//		}
+
+		return shapes;
+	}
+
+
 	/** Los ways inicialmente estan divididos lo maximo posible, es decir un way por cada
 	 * dos nodes. Este metodo compara los tags de los ways para saber que ways se pueden
 	 * unir para formar uno unico nuevo. Los tags de los ways se insertan al crear el way y
@@ -122,8 +249,11 @@ public class Cat2Osm {
 	@SuppressWarnings("unchecked")
 	public List<Shape> simplificarWays(List<Shape> shapes) throws InterruptedException{
 
-		int bar = -1;
+		System.out.print("Progreso = 0%. Estimando tiempo restante...\r");
+		int bar = 0;
+		long timeElapsed = 0;
 		float size = shapes.size();
+		long time = System.currentTimeMillis();
 		WayOsm way1 = null;
 		WayOsm way2 = null;
 		WayOsm removeWay = null;
@@ -133,8 +263,14 @@ public class Cat2Osm {
 
 			int progress = (int) ((shapes.indexOf(shape)/size)*100);
 			if (bar != progress){
-				System.out.print("Progreso = "+progress+"%.\r");
+				timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
+				long hor = Math.round((timeElapsed/3600));
+				long min = Math.round((timeElapsed-3600*hor)/60);
+				long seg = Math.round((timeElapsed-3600*hor-60*min));
+
+				System.out.print("Progreso = "+progress+"%. Tiempo restante estimado = "+hor+" horas, "+min+" minutos, "+seg+" segundos.\r");
 				bar = progress;
+				time = System.currentTimeMillis();
 			}
 
 			for (int x = 0; shape.getPoligons() != null && !shape.getPoligons().isEmpty() && x < shape.getPoligons().size(); x++)
@@ -367,28 +503,41 @@ public class Cat2Osm {
 
 		// Concatenamos todos los archivos
 		String str;
-		BufferedReader inNodes = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempNodes.osm"));
-		while ((str = inNodes.readLine()) != null){
-			outOsm.write(str);
-			outOsm.newLine();
+
+		if (new File(path + "/"+ Config.get("ResultFileName") + "tempNodes.osm").exists())
+		{
+			BufferedReader inNodes = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempNodes.osm"));
+			while ((str = inNodes.readLine()) != null){
+				outOsm.write(str);
+				outOsm.newLine();
+
+			}
+			inNodes.close();
 		}
-		BufferedReader inWays = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempWays.osm"));
-		while ((str = inWays.readLine()) != null){
-			outOsm.write(str);
-			outOsm.newLine();
+
+		if (new File(path + "/"+ Config.get("ResultFileName") + "tempWays.osm").exists())
+		{
+			BufferedReader inWays = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempWays.osm"));
+			while ((str = inWays.readLine()) != null){
+				outOsm.write(str);
+				outOsm.newLine();
+			}
+			inWays.close();
 		}
-		BufferedReader inRelations = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempRelations.osm"));
-		while ((str = inRelations.readLine()) != null){
-			outOsm.write(str);
-			outOsm.newLine();
+
+		if (new File(path + "/"+ Config.get("ResultFileName") + "tempRelations.osm").exists())
+		{
+			BufferedReader inRelations = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempRelations.osm"));
+			while ((str = inRelations.readLine()) != null){
+				outOsm.write(str);
+				outOsm.newLine();
+			}
+			inRelations.close();
 		}
 		outOsm.write("</osm>");
 		outOsm.newLine();
 
 		outOsm.close();
-		inNodes.close();
-		inWays.close();
-		inRelations.close();
 
 		boolean borrado = true;
 		borrado = borrado && (new File(path+ "/" + Config.get("ResultFileName") + "tempNodes.osm")).delete();
@@ -429,6 +578,9 @@ public class Cat2Osm {
 					// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
 					List <Shape> matches = buscarRefCat(shapesTotales, c.getRefCatastral());
 
+					// El registro 11 solo se tiene que asignar a parcelas
+					if (c.getTipoRegistro() == 11)
+						matches = buscarParce(matches);
 					// Para los tipos de registro de subparcelas, buscamos la subparcela concreta para
 					// anadirle los atributos
 					if (c.getTipoRegistro() == 17)
@@ -441,6 +593,7 @@ public class Cat2Osm {
 							if (shape != (null)){
 								RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
 								r.addTags(c.getAttributes());
+
 							}
 					}
 				}
@@ -515,7 +668,13 @@ public class Cat2Osm {
 
 		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
 		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
-		Cat c = new Cat(Integer.parseInt(line.substring(0,2)));
+
+		Cat c = null;
+
+		if (esNumero(line.substring(0,2)))
+			c = new Cat(Integer.parseInt(line.substring(0,2)));
+		else
+			c = new Cat(0);
 
 		switch(c.getTipoRegistro()){ // Formato de los tipos distintos de registro .CAT
 		case 01: {
@@ -589,9 +748,11 @@ public class Cat2Osm {
 			//c.addAttribute("SUPERFICIE CATASTRAL (metros cuadrados)",line.substring(295,305));
 			c.addAttribute("catastro:surface",eliminarCerosString(line.substring(295,305)));
 			//c.addAttribute("SUPERFICIE CONSTRUIDA TOTAL",line.substring(305,312));
-			c.addAttribute("catastro:surface:built",eliminarCerosString(line.substring(305,312)));
+			if (!eliminarCerosString(line.substring(295,305)).equals(eliminarCerosString(line.substring(305,312))))
+				c.addAttribute("catastro:surface:built",eliminarCerosString(line.substring(305,312)));
 			//c.addAttribute("SUPERFICIE CONSTRUIDA SOBRE RASANTE",line.substring(312,319));
-			c.addAttribute("catastro:surface:overground",eliminarCerosString(line.substring(312,319)));
+			if (!eliminarCerosString(line.substring(295,305)).equals(eliminarCerosString(line.substring(312,319))))
+				c.addAttribute("catastro:surface:overground",eliminarCerosString(line.substring(312,319)));
 			//c.addAttribute("SUPERFICIE CUBIERTA",line.substring(319,333));
 			//c.addAttribute("COORDENADA X (CON 2 DECIMALES Y SIN SEPARADOR)",line.substring(333,342));
 			//c.addAttribute("COORDENADA Y (CON 2 DECIMALES Y SIN SEPARADOR)",line.substring(342,352));
@@ -610,7 +771,11 @@ public class Cat2Osm {
 			//c.addAttribute("CLASE DE LA UNIDAD CONSTRUCTIVA",line.substring(28,30));
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
-			//c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA",line.substring(44,48)); 
+			//c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA",line.substring(44,48));
+			if (esNumero(line.substring(44,48)) && Integer.parseInt(line.substring(44,48)) != 0)
+				c.setNumOrdenConstru(Integer.parseInt(line.substring(44,48)));
+			else
+				c.setSubparce(line.substring(44,48));
 			//c.addAttribute("CODIGO DE PROVINCIA",line.substring(50,52));
 			//c.addAttribute("catastro:ref:province",eliminarCerosString(line.substring(50,52)));
 			//c.addAttribute("NOMBRE PROVINCIA",line.substring(52,77));
@@ -644,7 +809,6 @@ public class Cat2Osm {
 			//c.addAttribute("LONGITUD DE FACHADA",line.substring(307,312));
 			//c.addAttribute("CODIGO DE UNIDAD CONSTRUCTIVA MATRIZ",line.substring(409,413));
 
-
 			return c; }
 		case 14: {
 
@@ -655,7 +819,10 @@ public class Cat2Osm {
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("NUMERO DE ORDEN DEL ELEMENTO DE CONSTRUCCION",line.substring(44,48));
-			c.setSubparce(line.substring(44,48));
+			if (esNumero(line.substring(44,48)) && Integer.parseInt(line.substring(44,48)) != 0)
+				c.setNumOrdenConstru(Integer.parseInt(line.substring(44,48)));
+			else
+				c.setSubparce(line.substring(44,48));
 			//c.addAttribute("NUMERO DE ORDEN DEL BIEN INMUEBLE FISCAL",line.substring(50,54));
 			//c.addAttribute("CODIGO DE LA UNIDAD CONSTRUCTIVA A LA QUE ESTA ASOCIADO EL LOCAL",line.substring(54,58));
 			//c.addAttribute("BLOQUE",line.substring(58,62));
@@ -663,7 +830,7 @@ public class Cat2Osm {
 			//c.addAttribute("PLANTA",line.substring(64,67));
 			//c.addAttribute("PUERTA",line.substring(67,70));
 			//c.addAttribute("CODIGO DE DESTINO SEGUN CODIFICACION DGC",line.substring(70,73));
-			c.addAttribute(usoInmueblesParser(line.substring(70,73).trim()));
+//TODO		c.addAttribute(destinoParser(line.substring(70,73).trim()));
 			//c.addAttribute("INDICADOR DEL TIPO DE REFORMA O REHABILITACION",line.substring(73,74));
 			//c.addAttribute("ANO DE REFORMA EN CASO DE EXISTIR",line.substring(74,78));
 			//c.addAttribute("ANO DE ANTIGUEDAD EFECTIVA EN CATASTRO",line.substring(78,82)); 
@@ -687,6 +854,10 @@ public class Cat2Osm {
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("NUMERO SECUENCIAL DEL BIEN INMUEBLE DENTRO DE LA PARCELA",line.substring(44,48));
+			if (esNumero(line.substring(44,48)) && Integer.parseInt(line.substring(44,48)) != 0)
+				c.setNumOrdenConstru(Integer.parseInt(line.substring(44,48)));
+			else
+				c.setSubparce(line.substring(44,48));
 			//c.addAttribute("PRIMER CARACTER DE CONTROL",line.substring(48,49));
 			//c.addAttribute("SEGUNDO CARACTER DE CONTROL",line.substring(49,50));
 			//c.addAttribute("NUMERO FIJO DEL BIEN INMUEBLE",line.substring(50,58));
@@ -772,6 +943,7 @@ public class Cat2Osm {
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("CODIGO DE LA SUBPARCELA",line.substring(44,48));
+			c.setSubparce(line.substring(44,48));
 			//c.addAttribute("NUMERO DE ORDEN DEL BIEN INMUEBLE FISCAL",line.substring(50,54));
 			//c.addAttribute("TIPO DE SUBPARCELA (T, A, D)",line.substring(54,55));
 			//c.addAttribute("SUPERFICIE DE LA SUBPARCELA (m cuadrad)",line.substring(55,65));
@@ -809,7 +981,7 @@ public class Cat2Osm {
 			if (i != 0)
 				temp = i.toString();
 			else 
-				temp = null;
+				temp = "";
 		}
 		return temp;
 	}
@@ -921,11 +1093,11 @@ public class Cat2Osm {
 		case "VR":return "Vereda";
 		case "CY":return "Caleya";
 		}
-		
+
 		return codigo;
 	}
 
-
+	
 	/** Traduce el codigo de uso de inmueble que traen los .cat a sus tags en OSM
 	 * Como los cat se leen despues de los shapefiles, hay tags que los shapefiles traen
 	 * mas concretos, que esto los machacaria. Es por eso que si al tag le ponemos un '*'
@@ -940,6 +1112,112 @@ public class Cat2Osm {
 		String[] s = new String[2];
 
 		switch (codigo){
+		
+		case "A":
+		case "B":
+		s[0] = "*landuse"; s[1] ="farmyard";
+		l.add(s);
+		return l;
+		
+		case "C":
+		case "D":
+		s[0] = "*landuse"; s[1] = "retail";
+		l.add(s);
+		return l;
+		
+		case "E":
+		case "F":
+		s[0] = "landuse"; s[1] = "recreation_ground";
+		l.add(s);
+		s = new String[2];
+		s[0] = "recreation_type"; s[1] = "culture";
+		l.add(s);
+		return l;
+		
+		case "G":
+		case "H":
+		return l;
+		
+		case "I":
+		case "J":
+		s[0] = "*landuse"; s[1] = "industrial";
+		l.add(s);
+		return l;
+		
+		case "K":
+		case "L":
+		s[0] = "*landuse"; s[1] = "recreation_ground";
+		l.add(s);
+		s = new String[2];
+		s[0] = "recreation_type"; s[1] = "sports";
+		l.add(s);
+		return l;
+		
+		case "M":
+		case "N":
+		s[0] = "*landuse"; s[1] = "greenfield";
+		l.add(s);
+		return l;
+		
+		case "O":
+		case "X":
+		s[0] = "*landuse"; s[1] = "commercial";
+		l.add(s);
+		return l;
+		
+		case "P":
+		case "Q":
+		return l;
+		
+		case "R":
+		case "S":
+		s[0] = "amenity"; s[1] = "place_of_worship";
+		l.add(s);
+		return l;
+
+		case "T":
+		case "U":
+		s[0] = "landuse"; s[1] = "recreation_ground";
+		l.add(s);
+		s = new String[2];
+		s[0] = "recreation_type"; s[1] = "entertainment";
+		l.add(s);
+		return l;
+		
+		case "V":
+		case "W":
+		s[0] = "*landuse"; s[1] = "residential";
+		l.add(s);
+		return l;
+		
+		case "Y":
+		case "Z":
+		return l;
+		
+		default:
+		s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los bienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
+		l.add(s);
+		return l;
+		
+		}
+	}
+
+	
+
+	/** Traduce el codigo de destino de los registros 14  que traen los .cat a sus tags en OSM
+	 * Como los cat se leen despues de los shapefiles, hay tags que los shapefiles traen
+	 * mas concretos, que esto los machacaria. Es por eso que si al tag le ponemos un '*'
+	 * por delante cuando son tipos genericos sin especificaciones,
+	 * comprueba que no exista ese tag antes de meterlo. En caso de existir
+	 * dejaria el que ya estaba.
+	 * @param codigo Codigo de uso de inmueble
+	 * @return Lista de tags que genera
+	 */
+	public static List<String[]> destinoParser(String codigo){
+		List<String[]> l = new ArrayList<String[]>();
+		String[] s = new String[2];
+
+		switch (codigo){
 		case "A":
 		case "B":
 		case "AAL":
@@ -947,7 +1225,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "warehouse";
 			l.add(s);
 			return l;
-			
+
 		case "AAP":
 		case "BAP":
 			s[0] = "amenity"; s[1] = "parking";
@@ -956,13 +1234,13 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Comprobar que sea parking publico o al aire libre, en caso de no serlo deberia ser building=garage o landuse=garages";
 			l.add(s);
 			return l;
-			
+
 		case"ACR":
 		case"BCR":
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
 			return l;
-			
+
 		case "ACT":
 		case "BCT":
 			s[0] = "building"; s[1] = "yes";
@@ -971,7 +1249,7 @@ public class Cat2Osm {
 			s[0] = "power"; s[1] = "sub_station";
 			l.add(s);
 			return l;
-			
+
 		case "AES":
 		case "BES":
 			s[0] = "building"; s[1] = "yes";
@@ -980,7 +1258,7 @@ public class Cat2Osm {
 			s[0] = "public_transport"; s[1] = "station";
 			l.add(s);
 			return l;
-			
+
 		case "AIG":
 		case "BIG":
 			s[0] = "building"; s[1] = "livestock";
@@ -989,13 +1267,13 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
 			return l;
-			
+
 		case "C":
 		case "D":
 			s[0] = "*landuse"; s[1] = "retail";
 			l.add(s);
 			return l;
-			
+
 		case "CAT":
 		case "DAT":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1004,7 +1282,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "car";
 			l.add(s);
 			return l;
-			
+
 		case "CBZ":
 		case "DBZ":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1013,7 +1291,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "electronics";
 			l.add(s);
 			return l;
-			
+
 		case "CCE":
 		case "DCE":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1022,7 +1300,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "*";
 			l.add(s);
 			return l;
-			
+
 		case "CCL":
 		case "DCL":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1031,7 +1309,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "shoes";
 			l.add(s);
 			return l;
-			
+
 		case "CCR":
 		case "DCR":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1040,7 +1318,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "butcher";
 			l.add(s);
 			return l;
-			
+
 		case "CDM":
 		case "DDM":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1049,7 +1327,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "*";
 			l.add(s);
 			return l;
-			
+
 		case "CDR":
 		case "DDR":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1058,7 +1336,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "chemist";
 			l.add(s);
 			return l;
-			
+
 		case "CFN":
 		case "DFN":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1067,7 +1345,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "bank";
 			l.add(s);
 			return l;
-			
+
 		case "CFR":
 		case "DFR":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1076,7 +1354,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "pharmacy";
 			l.add(s);
 			return l;
-			
+
 		case "CFT":
 		case "DFT":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1085,7 +1363,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "plumber";
 			l.add(s);
 			return l;
-			
+
 		case "CGL":
 		case "DGL":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1094,7 +1372,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "marketplace";
 			l.add(s);
 			return l;
-			
+
 		case "CIM":
 		case "DIM":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1103,7 +1381,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "copyshop";
 			l.add(s);
 			return l;
-			
+
 		case "CJY":
 		case "DJY":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1112,7 +1390,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "jewelry";
 			l.add(s);
 			return l;
-			
+
 		case "CLB":
 		case "DLB":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1121,7 +1399,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "books";
 			l.add(s);
 			return l;
-			
+
 		case "CMB":
 		case "DMB":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1130,7 +1408,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "furniture";
 			l.add(s);
 			return l;
-			
+
 		case "CPA":
 		case "DPA":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1139,7 +1417,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "*";
 			l.add(s);
 			return l;
-			
+
 		case "CPR":
 		case "DPR":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1148,7 +1426,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "chemist";
 			l.add(s);
 			return l;
-			
+
 		case "CRL":
 		case "DRL":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1157,7 +1435,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "watchmaker";
 			l.add(s);
 			return l;
-			
+
 		case "CSP":
 		case "DSP":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1166,7 +1444,7 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "clothes";
 			l.add(s);
 			return l;
-			
+
 		case "CTJ":
 		case "DTJ":
 			s[0] = "landuse"; s[1] = "retail";
@@ -1175,19 +1453,19 @@ public class Cat2Osm {
 			s[0] = "shop"; s[1] = "supermarket";
 			l.add(s);
 			return l;
-			
+
 		case "E":
 		case "F":
 			s[0] = "*amenity"; s[1] = "school";
 			l.add(s);
 			return l;
-			
+
 		case "EBL":
 		case "FBL":
 			s[0] = "amenity"; s[1] = "library";
 			l.add(s);
 			return l;
-			
+
 		case "EBS":
 		case "FBS":
 			s[0] = "amenity"; s[1] = "school";
@@ -1196,13 +1474,13 @@ public class Cat2Osm {
 			s[0] = "isced:level"; s[1] = "1;2";
 			l.add(s);
 			return l;
-			
+
 		case "ECL":
 		case "FCL":
 			s[0] = "amenity"; s[1] = "comunity_centre";
 			l.add(s);
 			return l;
-			
+
 		case "EIN":
 		case "FIN":
 			s[0] = "amenity"; s[1] = "school";
@@ -1211,13 +1489,13 @@ public class Cat2Osm {
 			s[0] = "isced:level"; s[1] = "3;4";
 			l.add(s);
 			return l;
-			
+
 		case "EMS":
 		case "FMS":
 			s[0] = "tourism"; s[1] = "museum";
 			l.add(s);
 			return l;
-			
+
 		case "EPR":
 		case "FPR":
 			s[0] = "amenity"; s[1] = "school";
@@ -1226,19 +1504,19 @@ public class Cat2Osm {
 			s[0] = "isced:level"; s[1] = "4";
 			l.add(s);
 			return l;
-			
+
 		case "EUN":
 		case "FUN":
 			s[0] = "amenity"; s[1] = "university";
 			l.add(s);
 			return l;
-			
+
 		case "G":
 		case "H":
 			s[0] = "tourism"; s[1] = "hotel";
 			l.add(s);
 			return l;
-			
+
 		case "GC1":
 		case "HC1":
 			s[0] = "amenity"; s[1] = "cafe";
@@ -1247,7 +1525,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "1";
 			l.add(s);
 			return l;
-			
+
 		case "GC2":
 		case "HC2":
 			s[0] = "amenity"; s[1] = "cafe";
@@ -1256,7 +1534,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "2";
 			l.add(s);
 			return l;
-			
+
 		case "GC3":
 		case "HC3":
 			s[0] = "amenity"; s[1] = "cafe";
@@ -1265,7 +1543,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "3";
 			l.add(s);
 			return l;
-			
+
 		case "GC4":
 		case "HC4":
 			s[0] = "amenity"; s[1] = "cafe";
@@ -1274,7 +1552,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "4";
 			l.add(s);
 			return l;
-			
+
 		case "GC5":
 		case "HC5":
 			s[0] = "amenity"; s[1] = "cafe";
@@ -1283,7 +1561,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "5";
 			l.add(s);
 			return l;
-			
+
 		case "GH1":
 		case "HH1":
 			s[0] = "amenity"; s[1] = "hotel";
@@ -1292,7 +1570,7 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "1";
 			l.add(s);
 			return l;
-			
+
 		case "GH2":
 		case "HH2":
 			s[0] = "amenity"; s[1] = "hotel";
@@ -1301,7 +1579,7 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "2";
 			l.add(s);
 			return l;
-			
+
 		case "GH3":
 		case "HH3":
 			s[0] = "amenity"; s[1] = "hotel";
@@ -1310,7 +1588,7 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "3";
 			l.add(s);
 			return l;
-			
+
 		case "GH4":
 		case "HH4":
 			s[0] = "amenity"; s[1] = "hotel";
@@ -1319,7 +1597,7 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "4";
 			l.add(s);
 			return l;
-			
+
 		case "GH5":
 		case "HH5":
 			s[0] = "amenity"; s[1] = "hotel";
@@ -1328,7 +1606,7 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "5";
 			l.add(s);
 			return l;
-			
+
 		case "GP1":
 		case "HP1":
 			s[0] = "tourism"; s[1] = "apartments";
@@ -1337,7 +1615,7 @@ public class Cat2Osm {
 			s[0] = "category"; s[1] = "1";
 			l.add(s);
 			return l;
-			
+
 		case "GP2":
 		case "HP2":
 			s[0] = "tourism"; s[1] = "apartments";
@@ -1346,7 +1624,7 @@ public class Cat2Osm {
 			s[0] = "category"; s[1] = "2";
 			l.add(s);
 			return l;
-			
+
 		case "GP3":
 		case "HP3":
 			s[0] = "tourism"; s[1] = "apartments";
@@ -1355,13 +1633,13 @@ public class Cat2Osm {
 			s[0] = "category"; s[1] = "3";
 			l.add(s);
 			return l;
-			
+
 		case "GPL":
 		case "HPL":
 			s[0] = "tourism"; s[1] = "apartments";
 			l.add(s);
 			return l;
-			
+
 		case "GR1":
 		case "HR1":
 			s[0] = "amenity"; s[1] = "restaurant";
@@ -1370,7 +1648,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "1";
 			l.add(s);
 			return l;
-			
+
 		case "GR2":
 		case "HR2":
 			s[0] = "amenity"; s[1] = "restaurant";
@@ -1379,7 +1657,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "2";
 			l.add(s);
 			return l;
-			
+
 		case "GR3":
 		case "HR3":
 			s[0] = "amenity"; s[1] = "restaurant";
@@ -1388,7 +1666,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "3";
 			l.add(s);
 			return l;
-			
+
 		case "GR4":
 		case "HR4":
 			s[0] = "amenity"; s[1] = "restaurant";
@@ -1397,7 +1675,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "4";
 			l.add(s);
 			return l;
-			
+
 		case "GR5":
 		case "HR5":
 			s[0] = "amenity"; s[1] = "restaurant";
@@ -1406,7 +1684,7 @@ public class Cat2Osm {
 			s[0] = "forks"; s[1] = "5";
 			l.add(s);
 			return l;
-			
+
 		case "GS1":
 		case "HS1":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1415,7 +1693,7 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "1";
 			l.add(s);
 			return l;
-			
+
 		case "GS2":
 		case "HS2":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1424,7 +1702,7 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "2";
 			l.add(s);
 			return l;
-			
+
 		case "GS3":
 		case "HS3":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1433,23 +1711,23 @@ public class Cat2Osm {
 			s[0] = "stars"; s[1] = "3";
 			l.add(s);
 			return l;
-			
+
 		case "GT1":
 		case "HT1":
 			return l;
-			
+
 		case "GT2":
 		case "HT2":
 			return l;
-			
+
 		case "GT3":
 		case "HT3":
 			return l;
-			
+
 		case "GTL":
 		case "HTL":
 			return l;
-			
+
 		case "I":
 		case "J":
 			s[0] = "*landuse"; s[1] = "industrial";
@@ -1458,7 +1736,7 @@ public class Cat2Osm {
 			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			return l;
-			
+
 		case "IAJ":
 		case "JAG":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1470,7 +1748,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "farming";
 			l.add(s);
 			return l;
-			
+
 		case "IAL":
 		case "JAL":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1482,7 +1760,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "food";
 			l.add(s);
 			return l;
-			
+
 		case "IAM":
 		case "JAM":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1494,7 +1772,7 @@ public class Cat2Osm {
 			s[0] = "content"; s[1] = "OMW";
 			l.add(s);
 			return l;
-			
+
 		case "IAR":
 		case "JAR":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1506,7 +1784,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "agricultural";
 			l.add(s);
 			return l;
-			
+
 		case "IAS":
 		case "JAS":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1515,7 +1793,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "sawmill";
 			l.add(s);
 			return l;
-			
+
 		case "IBB":
 		case "JBB":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1527,7 +1805,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "drinks";
 			l.add(s);
 			return l;
-			
+
 		case "IBD":
 		case "JBD":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1539,7 +1817,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "winery";
 			l.add(s);
 			return l;
-			
+
 		case "IBR":
 		case "JBR":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1551,7 +1829,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "ceramic";
 			l.add(s);
 			return l;
-			
+
 		case "ICH":
 		case "JCH":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1563,7 +1841,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "mushrooms";
 			l.add(s);
 			return l;
-			
+
 		case "ICN":
 		case "JCN":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1575,7 +1853,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "building";
 			l.add(s);
 			return l;
-			
+
 		case "ICT":
 		case "JCT":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1587,7 +1865,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "quarry";
 			l.add(s);
 			return l;
-			
+
 		case "IEL":
 		case "JEL":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1599,13 +1877,13 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "electric";
 			l.add(s);
 			return l;
-			
+
 		case "IGR":
 		case "JGR":
 			s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
 			return l;
-			
+
 		case "IIM":
 		case "JIM":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1617,13 +1895,13 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "chemistry";
 			l.add(s);
 			return l;
-			
+
 		case "IIN":
 		case "JIN":
 			s[0] = "landuse"; s[1] = "greenhouse_horticulture";
 			l.add(s);
 			return l;
-			
+
 		case "IMD":
 		case "JMD":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1635,7 +1913,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "wood";
 			l.add(s);
 			return l;
-			
+
 		case "IMN":
 		case "JMN":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1647,7 +1925,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "manufacturing";
 			l.add(s);
 			return l;
-			
+
 		case "IMT":
 		case "JMT":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1659,7 +1937,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "metal";
 			l.add(s);
 			return l;
-			
+
 		case "IMU":
 		case "JMU":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1671,7 +1949,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "machinery";
 			l.add(s);
 			return l;
-			
+
 		case "IPL":
 		case "JPL":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1683,7 +1961,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "plastics";
 			l.add(s);
 			return l;
-			
+
 		case "IPP":
 		case "JPP":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1695,7 +1973,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "paper";
 			l.add(s);
 			return l;
-			
+
 		case "IPS":
 		case "JPS":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1707,7 +1985,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "fishing";
 			l.add(s);
 			return l;
-			
+
 		case "IPT":
 		case "JPT":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1719,7 +1997,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "petroleum";
 			l.add(s);
 			return l;
-			
+
 		case "ITB":
 		case "JTB":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1731,7 +2009,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "tobacco";
 			l.add(s);
 			return l;
-			
+
 		case "ITX":
 		case "JTX":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1743,7 +2021,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "clothing";
 			l.add(s);
 			return l;
-			
+
 		case "IVD":
 		case "JVD":
 			s[0] = "tourism"; s[1] = "hostel";
@@ -1755,7 +2033,7 @@ public class Cat2Osm {
 			s[0] = "works"; s[1] = "glass";
 			l.add(s);
 			return l;
-			
+
 		case "K":
 		case "L":
 			s[0] = "*landuse"; s[1] = "recreation_ground";
@@ -1764,7 +2042,7 @@ public class Cat2Osm {
 			s[0] = "recreation_type"; s[1] = "sports";
 			l.add(s);
 			return l;
-			
+
 		case "KDP":
 		case "LDP":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -1779,7 +2057,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar sport=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "KES":
 		case "LES":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -1794,7 +2072,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar sport=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "KPL":
 		case "LPL":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -1809,7 +2087,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar sport=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "KPS":
 		case "LPS":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -1824,19 +2102,19 @@ public class Cat2Osm {
 			s[0] = "sport"; s[1] = "swimming";
 			l.add(s);
 			return l;
-			
+
 		case "M":
 		case "N":
 			s[0] = "*landuse"; s[1] = "greenfield";
 			l.add(s);
 			return l;
-			
+
 		case "O":
 		case "X":
 			s[0] = "*landuse"; s[1] = "commercial";
 			l.add(s);
 			return l;
-			
+
 		case "O02":
 		case "X02":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1845,7 +2123,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "O03":
 		case "X03":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1854,7 +2132,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "O06":
 		case "X06":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1863,7 +2141,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "O07":
 		case "X07":
 			s[0] = "landuse"; s[1] = "health";
@@ -1875,7 +2153,7 @@ public class Cat2Osm {
 			s[0] = "health_person:type"; s[1] = "nurse";
 			l.add(s);
 			return l;
-			
+
 		case "O11":
 		case "X11":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1884,7 +2162,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "O13":
 		case "X13":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1893,7 +2171,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "O15":
 		case "X15":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1902,7 +2180,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "writer";
 			l.add(s);
 			return l;
-			
+
 		case "O16":
 		case "X16":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1911,7 +2189,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "painter";
 			l.add(s);
 			return l;
-			
+
 		case "O17":
 		case "X17":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1920,7 +2198,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "musician";
 			l.add(s);
 			return l;
-			
+
 		case "O43":
 		case "X43":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1929,7 +2207,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "salesman";
 			l.add(s);
 			return l;
-			
+
 		case "O44":
 		case "X44":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1938,7 +2216,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "O75":
 		case "X75":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1947,7 +2225,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "weaver";
 			l.add(s);
 			return l;
-			
+
 		case "O79":
 		case "X79":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1956,7 +2234,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "tailor";
 			l.add(s);
 			return l;
-			
+
 		case "O81":
 		case "X81":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1965,7 +2243,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "carpenter";
 			l.add(s);
 			return l;
-			
+
 		case "O88":
 		case "X88":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1974,7 +2252,7 @@ public class Cat2Osm {
 			s[0] = "craft"; s[1] = "jeweller";
 			l.add(s);
 			return l;
-			
+
 		case "O99":
 		case "X99":
 			s[0] = "landuse"; s[1] = "commercial";
@@ -1983,7 +2261,7 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "P":
 		case "Q":
 			s[0] = "amenity"; s[1] = "public_building";
@@ -1992,7 +2270,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "PAA":
 		case "QAA":
 			s[0] = "amenity"; s[1] = "townhall";
@@ -2001,7 +2279,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "PAD":
 		case "QAD":
 			s[0] = "amenity"; s[1] = "courthouse";
@@ -2013,7 +2291,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "PAE":
 		case "QAE":
 			s[0] = "amenity"; s[1] = "townhall";
@@ -2022,7 +2300,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "PCB":
 		case "QCB":
 			s[0] = "office"; s[1] = "administrative";
@@ -2031,7 +2309,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "PDL":
 		case "QDL":
 		case "PGB":
@@ -2042,7 +2320,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "PJA":
 		case "QJA":
 			s[0] = "amenity"; s[1] = "courthouse";
@@ -2054,7 +2332,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "PJO":
 		case "QJO":
 			s[0] = "amenity"; s[1] = "courthouse";
@@ -2066,13 +2344,13 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "public";
 			l.add(s);
 			return l;
-			
+
 		case "R":
 		case "S":
 			s[0] = "amenity"; s[1] = "place_of_worship";
 			l.add(s);
 			return l;
-			
+
 		case "RBS":
 		case "SBS":
 			s[0] = "amenity"; s[1] = "place_of_worship";
@@ -2087,7 +2365,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "basilica";
 			l.add(s);
 			return l;
-			
+
 		case "RCP":
 		case "SCP":
 			s[0] = "amenity"; s[1] = "place_of_worship";
@@ -2102,7 +2380,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "chapel";
 			l.add(s);
 			return l;
-			
+
 		case "RCT":
 		case "SCT":
 			s[0] = "amenity"; s[1] = "place_of_worship";
@@ -2117,7 +2395,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "cathedral";
 			l.add(s);
 			return l;
-			
+
 		case "RER":
 		case "SER":
 			s[0] = "amenity"; s[1] = "place_of_worship";
@@ -2132,7 +2410,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "hermitage";
 			l.add(s);
 			return l;
-			
+
 		case "RPR":
 		case "SPR":
 			s[0] = "amenity"; s[1] = "place_of_worship";
@@ -2147,7 +2425,7 @@ public class Cat2Osm {
 			s[0] = "building"; s[1] = "parish_church";
 			l.add(s);
 			return l;
-			
+
 		case "RSN":
 		case "SSN":
 			s[0] = "amenity"; s[1] = "hospital";
@@ -2156,7 +2434,7 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "health";
 			l.add(s);
 			return l;
-			
+
 		case "T":
 		case "U":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -2165,7 +2443,7 @@ public class Cat2Osm {
 			s[0] = "recreation_type"; s[1] = "entertainment";
 			l.add(s);
 			return l;
-			
+
 		case "TAD":
 		case "UAD":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -2177,7 +2455,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "auditorium";
 			l.add(s);
 			return l;
-			
+
 		case "TCM":
 		case "UCM":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -2189,7 +2467,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "cinema";
 			l.add(s);
 			return l;
-			
+
 		case "TCN":
 		case "UCN":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -2201,7 +2479,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "cinema";
 			l.add(s);
 			return l;
-			
+
 		case "TSL":
 		case "USL":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -2213,7 +2491,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "hall";
 			l.add(s);
 			return l;
-			
+
 		case "TTT":
 		case "UTT":
 			s[0] = "landuse"; s[1] = "recreation_ground";
@@ -2225,13 +2503,13 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "theatre";
 			l.add(s);
 			return l;
-			
+
 		case "V":
 		case "W":
 			s[0] = "*landuse"; s[1] = "residential";
 			l.add(s);
 			return l;
-					
+
 		case "Y":
 			s[0] = "*landuse"; s[1] = "health";
 			l.add(s);
@@ -2241,7 +2519,7 @@ public class Cat2Osm {
 			s[0] = "*landuse"; s[1] = "farm";
 			l.add(s);
 			return l;
-			
+
 		case "YAM":
 		case "ZAM":
 		case "YCL":
@@ -2258,43 +2536,43 @@ public class Cat2Osm {
 			s[0] = "health_facility:type"; s[1] = "clinic";
 			l.add(s);
 			return l;
-			
+
 		case "YBE":
 		case "ZBE":
 			s[0] = "landuse"; s[1] = "pond";
 			l.add(s);
 			return l;
-			
+
 		case "YCA":
 		case "ZCA":
 			s[0] = "amenity"; s[1] = "casino";
 			l.add(s);
 			return l;
-			
+
 		case "YCB":
 		case "ZCB":
 			s[0] = "amenity"; s[1] = "club";
 			l.add(s);
 			return l;
-			
+
 		case "YCE":
 		case "ZCE":
 			s[0] = "amenity"; s[1] = "casino";
 			l.add(s);
 			return l;
-			
+
 		case "YCT":
 		case "ZCT":
 			s[0] = "landuse"; s[1] = "quarry";
 			l.add(s);
 			return l;
-			
+
 		case "YDE":
 		case "ZDE":
 			s[0] = "man_made"; s[1] = "wastewater_plant";
 			l.add(s);
 			return l;
-			
+
 		case "YDG":
 			s[0] = "man_made"; s[1] = "storage_tank";
 			l.add(s);
@@ -2302,7 +2580,7 @@ public class Cat2Osm {
 			s[0] = "content"; s[1] = "gas";
 			l.add(s);
 			return l;
-			
+
 		case "ZDG":
 			s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
@@ -2313,7 +2591,7 @@ public class Cat2Osm {
 			s[0] = "content"; s[1] = "gas";
 			l.add(s);
 			return l;
-			
+
 		case "YDL":
 			s[0] = "man_made"; s[1] = "storage_tank";
 			l.add(s);
@@ -2321,7 +2599,7 @@ public class Cat2Osm {
 			s[0] = "content"; s[1] = "liquid";
 			l.add(s);
 			return l;
-			
+
 		case "ZDL":
 			s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
@@ -2332,7 +2610,7 @@ public class Cat2Osm {
 			s[0] = "content"; s[1] = "liquid";
 			l.add(s);
 			return l;
-			
+
 		case "YDS":
 		case "ZDS":
 			s[0] = "landuse"; s[1] = "health";
@@ -2344,13 +2622,13 @@ public class Cat2Osm {
 			s[0] = "health_facility:type"; s[1] = "dispensary";
 			l.add(s);
 			return l;
-			
+
 		case "YGR":
 		case "ZGR":
 			s[0] = "amenity"; s[1] = "kindergarten";
 			l.add(s);
 			return l;
-			
+
 		case "YGV":
 		case "ZGV":
 			s[0] = "landuse"; s[1] = "surface_mining";
@@ -2359,11 +2637,11 @@ public class Cat2Osm {
 			s[0] = "mining_resource"; s[1] = "gravel";
 			l.add(s);
 			return l;
-			
+
 		case "YHG":
 		case "ZHG":
 			return l;
-			
+
 		case "YHS":
 		case "ZHS":
 		case "YSN":
@@ -2380,7 +2658,7 @@ public class Cat2Osm {
 			s[0] = "health_facility:type"; s[1] = "hospital";
 			l.add(s);
 			return l;
-			
+
 		case "YMA":
 		case "ZMA":
 			s[0] = "landuse"; s[1] = "surface_mining";
@@ -2389,25 +2667,25 @@ public class Cat2Osm {
 			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar mining_resource=X si es posible.";
 			l.add(s);
 			return l;
-			
+
 		case "YME":
 		case "ZME":
 			s[0] = "man_made"; s[1] = "pier";
 			l.add(s);
 			return l;
-			
+
 		case "YPC":
 		case "ZPC":
 			s[0] = "landuse"; s[1] = "aquaculture";
 			l.add(s);
 			return l;
-			
+
 		case "YRS":
 		case "ZRS":
 			s[0] = "social_facility"; s[1] = "group_home";
 			l.add(s);
 			return l;
-			
+
 		case "YSA":
 		case "ZSA":
 		case "YSO":
@@ -2415,7 +2693,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "labor_union";
 			l.add(s);
 			return l;
-			
+
 		case "YSC":
 		case "ZSC":
 			s[0] = "health_facility:type"; s[1] = "first_aid";
@@ -2427,7 +2705,7 @@ public class Cat2Osm {
 			s[0] = "yes"; s[1] = "yes";
 			l.add(s);
 			return l;
-			
+
 		case "YSL":
 			s[0] = "man_made"; s[1] = "storage_tank";
 			l.add(s);
@@ -2435,7 +2713,7 @@ public class Cat2Osm {
 			s[0] = "content"; s[1] = "solid";
 			l.add(s);
 			return l;
-			
+
 		case "ZSL":
 			s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
@@ -2446,13 +2724,13 @@ public class Cat2Osm {
 			s[0] = "content"; s[1] = "solid";
 			l.add(s);
 			return l;
-			
+
 		case "YVR":
 		case "ZVR":
 			s[0] = "landuse"; s[1] = "landfill";
 			l.add(s);
 			return l;
-			
+
 		default:
 			if (!codigo.isEmpty()){
 				s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los vienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/wiki/Traduccion_metadatos_catastro_a_map_features#Codificacion_de_los_usos_de_los_bienes_inmuebles";

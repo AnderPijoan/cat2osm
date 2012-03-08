@@ -22,7 +22,14 @@ public class ShapeConstru extends Shape {
 	private Long relation; // Relacion de sus ways
 	private String refCatastral; // Referencia catastral
 	private String constru; // Campo Constru solo en Constru.shp
+	private boolean edificioTageable = false; // Campo para saber si es un edificio con alturas y por lo tanto
+	// si se le pueden anadir tags de bienes inmuebles leidos en los .Cat
+	// Los registros 14 y 15 no hay forma de relacionarlos a que construccion de todas las de la
+	// parcela hace referencia, por tanto no se pueden anadir esos tags. Con este campo vamos a intentar
+	// afinar para que al menos algunos tags de construcciones podamos asignarlo unicamente a los
+	// edificios de la parcela.
 	private List<ShapeAttribute> atributos;
+
 
 	public ShapeConstru(SimpleFeature f, String tipo) {
 		super(f, tipo);
@@ -53,7 +60,7 @@ public class ShapeConstru extends Shape {
 		}
 		else
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "
-		+ f.getDefaultGeometry().getClass().getName() +" desconocido del shapefile CONSTRU");
+					+ f.getDefaultGeometry().getClass().getName() +" desconocido del shapefile CONSTRU");
 
 		// Inicializamos las listas
 		this.nodes = new ArrayList<List<Long>>();
@@ -69,7 +76,7 @@ public class ShapeConstru extends Shape {
 		refCatastral = (String) f.getAttribute("REFCAT");
 
 		constru = (String) f.getAttribute("CONSTRU");
-		
+
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
 			for (int x = 1; x < f.getAttributes().size(); x++){
@@ -161,10 +168,11 @@ public class ShapeConstru extends Shape {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (refCatastral != null && !refCatastral.isEmpty()){
-			s[0] = "catastro:ref"; s[1] = refCatastral;
-			l.add(s);
-		}
+		// No hace falta mostrar la referencia catastral ya que tienen la misma que su parcela
+		//if (refCatastral != null && !refCatastral.isEmpty()){
+		//s[0] = "catastro:ref"; s[1] = refCatastral;
+		//l.add(s);
+		//}
 
 		if (constru != null && !constru.isEmpty()){
 			l.addAll(construParser(constru));
@@ -177,15 +185,15 @@ public class ShapeConstru extends Shape {
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
-		
+
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
 		if (m.find()) {
-		s = new String[2];
-		s[0] = "source:date"; s[1] = m.group();
-		l.add(s);
+			s = new String[2];
+			s[0] = "source:date"; s[1] = m.group();
+			l.add(s);
 		}
-		
+
 		return l;
 	}
 
@@ -219,7 +227,7 @@ public class ShapeConstru extends Shape {
 		return true;
 	}
 
-	
+
 	/** Parsea el atributo constru entero, este se compone de distintos
 	 * elementos separados por el caracter '+'
 	 * @param constru Atributo constru
@@ -234,9 +242,9 @@ public class ShapeConstru extends Shape {
 		int alturaMin = 9999;
 
 		for (String s: construs){
-			
+
 			List<String[]> temp = construElemParser(s.toUpperCase());
-			
+
 			// Si es un numero, no sabemos si es el de altura superior o inferior
 			// por eso lo almacenamos hasta el final.
 			if (!temp.isEmpty() && temp.get(0)[0].equals("NUM")) {
@@ -245,8 +253,8 @@ public class ShapeConstru extends Shape {
 				alturaMin = (alturaMin<Integer.parseInt(num[1]))? alturaMin : Integer.parseInt(num[1]);
 			}
 			else
-			l.addAll(temp);
-			}
+				l.addAll(temp);
+		}
 
 		// Comparamos si tenemos algun numero almacenado
 		if (alturaMax != -9999 && alturaMin != 9999){
@@ -258,25 +266,33 @@ public class ShapeConstru extends Shape {
 				alturaMax = (alturaMax>0)? alturaMax : 0;
 				alturaMin = (alturaMin<0)? alturaMin : 0;
 			}
-
 			String[] s = new String[2];
-			s[0] = "building:levels"; s[1] = alturaMax+""; 
-			l.add(s);
-			s = new String[2];
-			s[0] = "building"; s[1] ="yes";
-			l.add(s);
-			
+
+			if (alturaMin == 0 && alturaMax != 0){
+				s[0] = "building:levels"; s[1] = alturaMax+""; 
+				l.add(s);
+				s = new String[2];
+				s[0] = "height"; s[1] = alturaMax*3+"";
+				l.add(s);
+				s = new String[2];
+				s[0] = "building"; s[1] ="yes";
+				l.add(s);
+			}
+
 			if(alturaMin != 0) {
 				s = new String[2];
 				s[0] = "building:min_level"; s[1] = alturaMin+"";
 				l.add(s);
+				s = new String[2];
+				s[0] = "min_height"; s[1] = alturaMin*3+"";
+				l.add(s);
 			}
 		}
-		
+
 		return l;
 	}
 
-	
+
 	/** Parsea cada elemento que ha sido separado
 	 * @param elem Elemto a parsear
 	 * @return Lista con los tags que genera cada elemento
@@ -287,7 +303,7 @@ public class ShapeConstru extends Shape {
 		String[] s = new String[2];
 
 		switch(elem){
-		
+
 		case "B":
 			return l;
 
@@ -337,6 +353,9 @@ public class ShapeConstru extends Shape {
 		case "TEN":
 			s[0] = "leisure"; s[1] = "pitch";
 			l.add(s);
+			s = new String[2];
+			s[0] = "sport"; s[1] = "tennis";
+			l.add(s);
 			return l;
 
 		case "ETQ":
@@ -379,6 +398,7 @@ public class ShapeConstru extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
+			edificioTageable = true;
 			return l;
 
 		case "JD":
@@ -397,6 +417,7 @@ public class ShapeConstru extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
+			edificioTageable = true;
 			return l;
 
 		case "VOL":
@@ -408,6 +429,7 @@ public class ShapeConstru extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
+			edificioTageable = true;
 			return l;
 
 		case "RUINA":
@@ -422,7 +444,7 @@ public class ShapeConstru extends Shape {
 			s[0] = "landuse"; s[1] = "construction";
 			l.add(s);
 			return l;
-	
+
 		case "PRESA":
 			s[0] = "waterway"; s[1] = "dam";
 			l.add(s);
@@ -554,7 +576,13 @@ public class ShapeConstru extends Shape {
 
 		s[0] = "NUM"; s[1] = sumaTotal+"";
 		l.add(s);
+		edificioTageable = true;
 		return l;
+	}
+
+
+	public boolean esEdificio() {
+		return edificioTageable;
 	}
 
 }

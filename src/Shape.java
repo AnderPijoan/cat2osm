@@ -126,6 +126,8 @@ public abstract class Shape {
 	public abstract String getTtggss();
 
 	public abstract boolean shapeValido();
+	
+	public abstract boolean esEdificio();
 
 
 	/** Traduce el tipo de via
