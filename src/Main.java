@@ -71,7 +71,7 @@ public class Main {
 			System.out.println("-ui                               Abrir la interfaz de usuario para crear el archivo de configuración");
 			System.out.println("rutaarchivoconfig -constru        Generar un archivo con las geometrías CONSTRU");
 			System.out.println("rutaarchivoconfig -ejes           Generar un archivo con las geometrías EJES");
-			System.out.println("rutaarchivoconfig -elemlin           Generar un archivo con las geometrías ELEMLIN");
+			System.out.println("rutaarchivoconfig -elemlin        Generar un archivo con las geometrías ELEMLIN");
 			System.out.println("rutaarchivoconfig -elempun        Generar un archivo con las geometrías ELEMPUN");
 			System.out.println("rutaarchivoconfig -elemtex        Generar un archivo con las geometrías ELEMTEX y mostrando todos los textos de Parajes y Comarcas, Información urbana y rústica y Vegetación y Accidentes demográficos");
 			System.out.println("rutaarchivoconfig -masa           Generar un archivo con las geometrías MASA");
