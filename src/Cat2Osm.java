@@ -87,9 +87,10 @@ public class Cat2Osm {
 	}
 
 
-	/** Los elementos textuales traen informacion sobre que hay en alguna construccion como pueden ser cementerios,
-	 * hospitales, etc. Las opciones en las construcciones son limitadas y puede hacer que cambie su landuse. 
-	 * Por eso se calcula si un elemtex se encuentra sobre una constru y se anade el landuse al constru.
+	/** Los elementos textuales traen informacion sobre que hay en alguna construccion o parcela como pueden ser cementerios,
+	 * hospitales, playas etc. Los registros de catastro traen unos valores de uso de suelo limitados (ya que el codigo de destino
+	 * no se puede saber a que construccion esta ligado directamente) y asi con este metodo puede hacer que cambie su landuse u 
+	 * otros tags. Se calcula si un elemtex se encuentra sobre una constru o parcela y se anaden los tags.
 	 * @param shapes Lista de shapes original
 	 * @return lista de shapes con los tags modificados
 	 */
@@ -101,11 +102,11 @@ public class Cat2Osm {
 		for (Shape shape: shapes){
 
 			// Si le hemos modificado el ttggss para que ahora cambie alguno de los tags
-			if (shape instanceof ShapeElemtex && shape.getTtggss().contains("=")){
+			if (shape instanceof ShapeElemtex && (shape.getTtggss().startsWith("CONSTRU:") || shape.getTtggss().startsWith("PARCELA:"))){
 
 				for (Shape s: shapes)
 
-					if (s instanceof ShapeConstru && s.getPoligons() != null){
+					if ((shape.getTtggss().startsWith("CONSTRU:") && s instanceof ShapeConstru) || (shape.getTtggss().startsWith("PARCELA:") && s instanceof ShapeParcela) && s.getPoligons() != null){
 						LinearRing l = factory.createLinearRing(s.getPoligons().get(0).getCoordinates());
 						Polygon parcela = factory.createPolygon(l, null);
 						Point coor = factory.createPoint(shape.getCoor());
@@ -116,7 +117,7 @@ public class Cat2Osm {
 
 							// Los tags vienen como "key=value,key=value" almacenados
 							// en el ttggss
-							String[] pares = shape.getTtggss().split(",");
+							String[] pares = shape.getTtggss().replace("CONSTRU:", "").replace("PARCELA:", "").split(",");
 							List<String[]> tags = new ArrayList<String[]>();
 
 							for (String par : pares)
@@ -140,9 +141,30 @@ public class Cat2Osm {
 	 * @return lista de shapes con los tags modificados
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> calcularEntradas(List<Shape> shapes){
+	public List<Shape> calcularPortales(List<Shape> shapes){
 
+		// Creamos la factoria para crear objetos de GeoTools
 		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
+
+		// Creamos una cache para meter las geometrias de las parcelas y una lista con los numeros de policia de esas parcelas
+		final SpatialIndex index = new STRtree();
+
+		for (Shape shapePar : shapes)
+
+			// Si es un shape de parcela y tiene geometria
+			if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
+
+				// Cogemos la geometria exterior de la parcela
+				Geometry geom = (LineString) shapePar.getPoligons().get(0);
+
+				// Para hacer la query es necesario en Envelope
+				Envelope env = geom.getEnvelopeInternal();
+
+				// Si existe
+				if (!env.isNull())
+					index.insert(env, new LocationIndexedLine(geom));
+			}
+
 
 		// Para cada shape de elemtex que tengamos, que son los portales,
 		// metemos su coordenada en una lista
@@ -151,84 +173,40 @@ public class Cat2Osm {
 
 				com.vividsolutions.jts.geom.Point point = gf.createPoint(shapeTex.getCoor());
 
-				double minDist = Double.MAX_VALUE;
+				double minDist = 0.00008; // Distancia minima ~ 80 metros
 
-				for (Shape shapePar : shapes){
-					
-					// Si es un shape de parcela y tiene geometria
-					if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
-						
-						// Cogemos la geometria exterior de la parcela
-						Geometry geom = (LineString) shapePar.getPoligons().get(0);
-						String tempRotulo = "";
-						
-						for (String[] tag : ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shapePar.getRelationId())).getTags())
-							if (tag[0].equals("addr:housenumber"))
-								tempRotulo = tag[1];
-							
-							
-						// Si coincide el numero de portal y existe la geometria
-						if (tempRotulo.equals(((ShapeElemtex) shapeTex).getRotulo()) && geom != null) {
-							
-							// Para hacer la query es necesario en Envelope
-							Envelope env = geom.getEnvelopeInternal();
-							
-							// Si existe
-							if (!env.isNull()) {
-								double temp = Math.min(minDist, env.distance(point.getEnvelopeInternal()));
-								if (temp != minDist){
+				// Creamos el punto de busqueda con la coordenada del punto y la expandimos
+				// en la distancia minima para obtener
+				// una linea de desplazamiento para tocar la parcela
+				Envelope search = new Envelope(point.getCoordinate());
+				search.expandBy(minDist);
 
-									// Creamos una cache para meter la geometria de la parcela
-									final SpatialIndex index = new STRtree();
-									index.insert(env, new LocationIndexedLine(geom));
+				// Hacemos la query
+				List<LocationIndexedLine> lines = index.query(search);
 
-									// Creamos el punto de busqueda con la coordenada del punto y la expandimos
-									// en la distancia que se ha calculado a la que esta la parcela para obtener
-									// una linea de desplazamiento para tocar la parcela
-									Envelope search = new Envelope(point.getCoordinate());
-									search.expandBy(minDist);
-									List<LocationIndexedLine> lines = index.query(search);
+				// Cada linea que nos devuelve representa el desplazamiento
+				// que hay que darle a la coordenada para que se situe sobre la linea de la
+				// geometria de la parcela
+				for (LocationIndexedLine line : lines) {
+					LinearLocation here = line.project(point.getCoordinate());
+					Coordinate fixedCoor = line.extractPoint(here);
+					double dist = fixedCoor.distance(point.getCoordinate());
 
-									// Cada linea que nos devuelve representa el desplazamiento
-									// que hay que darle a la coordenada para que se situe sobre la linea de la
-									// geometria de la parcela
-									for (LocationIndexedLine line : lines) {
-										LinearLocation here = line.project(point.getCoordinate());
-										Coordinate fixedCoor = line.extractPoint(here);
-										double dist = fixedCoor.distance(point.getCoordinate());
-										
-										if (dist < minDist) {
-											minDist = dist;
+					if (dist < minDist) {
+						// Acualizamos la variable minDist
+						minDist = dist;
 
-											// Actualizamos la coordenada en el shape
-											((ShapeElemtex) shapeTex).setCoor(fixedCoor);
+						// Actualizamos la coordenada en el shape
+						((ShapeElemtex) shapeTex).setCoor(fixedCoor);
 
-											// Y Actualizamos la coordenada en el nodeOsm
-											if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
-												NodeOsm node = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
-												node.setCoor(fixedCoor);
-												//node.addTags(((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shapePar.getRelationId())).getTags());
-											}
-										}
-
-										// Actualizamos la variable minDist
-										minDist = temp;
-									}
-								}
-							}
+						// Y Actualizamos la coordenada en el nodeOsm
+						if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
+							NodeOsm node = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
+							node.setCoor(fixedCoor);
 						}
 					}
 				}
 			}	
-
-		// Borramos los shapes de parcelas para que no los dibuje
-//		Iterator<Shape> iterator = shapes.iterator();
-//
-//		while(iterator.hasNext()) {
-//			Shape shape = iterator.next();
-//			if(shape instanceof ShapeParcela)
-//				iterator.remove();
-//		}
 
 		return shapes;
 	}
@@ -552,8 +530,8 @@ public class Cat2Osm {
 
 
 	/** Lee linea a linea el archivo cat, coge los shapes q coincidan 
-	 * con esa referencia catastral y los pasa a formato osm
-	 * @param car Archivo cat del que lee linea a linea
+	 * con esa referencia catastral y les anade los tags de los registros .cat
+	 * @param cat Archivo cat del que lee linea a linea
 	 * @param List<Shape> Lista de los elementos shp parseados ya en memoria
 	 * @throws IOException
 	 */
@@ -587,21 +565,78 @@ public class Cat2Osm {
 						matches = buscarSubparce(matches, c.getSubparce());
 
 					// Puede que no haya shapes para esa refCatastral
-					if (!matches.isEmpty()){
+					if (matches != null)
+					for (Shape shape : matches)
+						if (shape != (null)){
+							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
+							r.addTags(c.getAttributes());
 
-						for (Shape shape : matches)
-							if (shape != (null)){
-								RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
-								r.addTags(c.getAttributes());
+						}
 
-							}
-					}
 				}
 			}
 			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
 		}
 	}
 
+	
+	/** Lee linea a linea el archivo cat, coge los registros 14 que son los que tienen uso
+	 * de inmuebles y con el punto X e Y del centroide de la parcela que coincide con su referencia
+	 * catastral crea nodos con los usos
+	 * de los bienes inmuebles
+	 * @param cat Archivo cat del que lee linea a linea
+	 * @param List<Shape> Lista de los elementos shp parseados ya en memoria
+	 * @param t solo sirve para diferenciar del otro metodo
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unchecked")
+	public void catUsosParser(File cat, List<Shape> shapesTotales) throws IOException{
+
+		BufferedReader bufRdr  = new BufferedReader(new FileReader(cat));
+		String line = null; // Para cada linea leida del archivo .cat
+
+		// Lectura del archivo .cat
+		while((line = bufRdr.readLine()) != null)
+		{
+			try {
+				
+				// Si es registro 14
+				if (esNumero(line.substring(0,2)) && line.substring(0,2).equals("14")){
+					
+					// Cogemos las geometrias con esa referencia catastral.
+					List<Shape> matches = buscarRefCat(shapesTotales, line.substring(30,44));
+					
+					// Puede que no haya shapes para esa refCatastral
+					if (matches != null)
+					for (Shape shape : matches)
+						if (shape != (null) &&  shape.getPoligons() != null && !shape.getPoligons().isEmpty()){
+
+							// Cogemos la geometria exterior de la parcela
+							Geometry geom = (LineString) shape.getPoligons().get(0);
+							
+							// Creamos los tags que tendra el nodo
+							List<String[]> tags = new ArrayList<String[]>();
+							
+							// Metemos los tags de uso de inmuebles con el numero de inmueble por delante
+							tags.addAll(destinoParser(line.substring(70,73).trim()));
+							for (String[] tag : tags){
+								tag[0] = line.substring(44,48)+ ":" + tag[0].replace("*", "");
+							}
+							
+							// Anadimos la referencia catastral
+							tags.add(new String[] {"catastro:ref", line.substring(30,44)});
+							
+							// Creamos el nodo en la lista de nodos de utils, pero no se lo anadimos al shape sino luego 
+							// lo borraria ya que eliminamos todos los nodos que sean de geometrias de shape
+							utils.getNodeId(new Coordinate(geom.getCentroid().getX(),geom.getCentroid().getY()), tags);
+						}
+				}
+			}
+			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
+		}
+		
+	}
+	
 
 	/** Parsea el archivo .cat y crea los elementos en memoria en un List
 	 * @param f Archivo a parsear
@@ -698,7 +733,7 @@ public class Cat2Osm {
 			// Este tipo no tiene fechaAlta ni fechaBaja
 			// Deben salir todos siempre porque son los datos de las fincas a las que luego
 			// se hace referencia en los demas tipos de registro.
-			c.setFechaAlta(fechaDesde); 
+			c.setFechaAlta(fechaDesde);
 			c.setFechaBaja(fechaHasta);
 
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2)); 
@@ -1097,7 +1132,7 @@ public class Cat2Osm {
 		return codigo;
 	}
 
-	
+
 	/** Traduce el codigo de uso de inmueble que traen los .cat a sus tags en OSM
 	 * Como los cat se leen despues de los shapefiles, hay tags que los shapefiles traen
 	 * mas concretos, que esto los machacaria. Es por eso que si al tag le ponemos un '*'
@@ -1112,97 +1147,97 @@ public class Cat2Osm {
 		String[] s = new String[2];
 
 		switch (codigo){
-		
+
 		case "A":
 		case "B":
-		s[0] = "*landuse"; s[1] ="farmyard";
-		l.add(s);
-		return l;
-		
+			s[0] = "*landuse"; s[1] ="farmyard";
+			l.add(s);
+			return l;
+
 		case "C":
 		case "D":
-		s[0] = "*landuse"; s[1] = "retail";
-		l.add(s);
-		return l;
-		
+			s[0] = "*landuse"; s[1] = "retail";
+			l.add(s);
+			return l;
+
 		case "E":
 		case "F":
-		s[0] = "landuse"; s[1] = "recreation_ground";
-		l.add(s);
-		s = new String[2];
-		s[0] = "recreation_type"; s[1] = "culture";
-		l.add(s);
-		return l;
-		
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "culture";
+			l.add(s);
+			return l;
+
 		case "G":
 		case "H":
-		return l;
-		
+			return l;
+
 		case "I":
 		case "J":
-		s[0] = "*landuse"; s[1] = "industrial";
-		l.add(s);
-		return l;
-		
+			s[0] = "*landuse"; s[1] = "industrial";
+			l.add(s);
+			return l;
+
 		case "K":
 		case "L":
-		s[0] = "*landuse"; s[1] = "recreation_ground";
-		l.add(s);
-		s = new String[2];
-		s[0] = "recreation_type"; s[1] = "sports";
-		l.add(s);
-		return l;
-		
+			s[0] = "*landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "sports";
+			l.add(s);
+			return l;
+
 		case "M":
 		case "N":
-		s[0] = "*landuse"; s[1] = "greenfield";
-		l.add(s);
-		return l;
-		
+			s[0] = "*landuse"; s[1] = "greenfield";
+			l.add(s);
+			return l;
+
 		case "O":
 		case "X":
-		s[0] = "*landuse"; s[1] = "commercial";
-		l.add(s);
-		return l;
-		
+			s[0] = "*landuse"; s[1] = "commercial";
+			l.add(s);
+			return l;
+
 		case "P":
 		case "Q":
-		return l;
-		
+			return l;
+
 		case "R":
 		case "S":
-		s[0] = "amenity"; s[1] = "place_of_worship";
-		l.add(s);
-		return l;
+			s[0] = "amenity"; s[1] = "place_of_worship";
+			l.add(s);
+			return l;
 
 		case "T":
 		case "U":
-		s[0] = "landuse"; s[1] = "recreation_ground";
-		l.add(s);
-		s = new String[2];
-		s[0] = "recreation_type"; s[1] = "entertainment";
-		l.add(s);
-		return l;
-		
+			s[0] = "landuse"; s[1] = "recreation_ground";
+			l.add(s);
+			s = new String[2];
+			s[0] = "recreation_type"; s[1] = "entertainment";
+			l.add(s);
+			return l;
+
 		case "V":
 		case "W":
-		s[0] = "*landuse"; s[1] = "residential";
-		l.add(s);
-		return l;
-		
+			s[0] = "*landuse"; s[1] = "residential";
+			l.add(s);
+			return l;
+
 		case "Y":
 		case "Z":
-		return l;
-		
+			return l;
+
 		default:
-		s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los bienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
-		l.add(s);
-		return l;
-		
+			s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los bienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/w/index.php?title=Traduccion_metadatos_catastro_a_map_features";
+			l.add(s);
+			return l;
+
 		}
 	}
 
-	
+
 
 	/** Traduce el codigo de destino de los registros 14  que traen los .cat a sus tags en OSM
 	 * Como los cat se leen despues de los shapefiles, hay tags que los shapefiles traen
@@ -1220,6 +1255,10 @@ public class Cat2Osm {
 		switch (codigo){
 		case "A":
 		case "B":
+			s[0] = "*landuse"; s[1] ="farmyard";
+			l.add(s);
+			return l;
+			
 		case "AAL":
 		case "BAL":
 			s[0] = "building"; s[1] = "warehouse";

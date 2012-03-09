@@ -205,11 +205,6 @@ public class ShapeEjes extends Shape {
 	public Coordinate getCoor() {
 		return null;
 	}
-	
-
-	public boolean esEdificio() {
-		return false;
-	}
 
 	
 	public List<String[]> atributosViaParser(String codigo){

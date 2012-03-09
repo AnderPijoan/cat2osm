@@ -202,7 +202,7 @@ public class ShapeElemtex extends Shape {
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (ttggss.contains("landuse")){ 
+		if (ttggss.contains("=")){ 
 			if (rotulo != null){
 				l.addAll(tags);
 			}
@@ -256,7 +256,7 @@ public class ShapeElemtex extends Shape {
 	 */
 	public boolean shapeValido (){
 
-		if (!Cat2OsmUtils.getModoEntradas()){
+		if (!Cat2OsmUtils.getModoPortales()){
 			if (ttggss.contains("="))
 				return true;
 			if (ttggss.equals("189203"))
@@ -283,9 +283,17 @@ public class ShapeElemtex extends Shape {
 	 * que hay poblaciones en las que han separado cada letra del texto para darle enfasis.
 	 * Tambien modificamos el ttggss almacenando en el si hay que cambiar algun tag de la geometria
 	 * sobre la que se encuentra este texto. (Por ejemplo un cementerio deberia cambiar el landuse
-	 * del constru sobre el que se encuentra)
-	 * El orden es muy importante (los mas generales al final)
-	 * y distinguir entre contains, startsWith y equals
+	 * del constru sobre el que se encuentra o la playa el landuse de la parcela sobre la que se encuentra)
+	 * El orden es muy importante (los mas generales al final), distinguir entre contains,
+	 * startsWith, equals y solo se cambiaran los tags de las parcelas o construcciones cuando
+	 * estemos seguros q lo que hay debajo sera de ese tipo. Los textos en Catastro suelen aparecer desplazados
+	 * para que justo termine el texto junto a la geometria si esta es pequeña, por lo que por ejemplo
+	 * un pozo no nos valdria para poner landuse=pond a lo que este debajo ya que el texto estara seguramente
+	 * fuera de la geometria del pozo. Un estadio por ejemplo es mas probable que el texto este
+	 * dentrod de la geometria del estadio, generalmente sobre el campo. 
+	 * Casos como por ejemplo un auditorio o una clinica no cambiamos los tags de la geometria sobre la que se
+	 * encuentra ya que podria ser unicamente una planta del edificio y este tenga viviendas y deberia quedarse
+	 * con landuse=residential.
 	 * @param temp Texto catalogado como informacion urbana sin clasificar.
 	 * @return Lista de los tags de OpenStreetMap que representan el texto dado
 	 */
@@ -293,42 +301,78 @@ public class ShapeElemtex extends Shape {
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (!Cat2OsmUtils.getModoEntradas()){
+		if (!Cat2OsmUtils.getModoPortales()){
 
 			String temp = rotulo.toUpperCase();
 
-			// Anadimos el nombre que aparece en catastro
-			// Para algunos tipos luego lo borraremos
+			// Insertamos el nombre pero luego para algunos tipos se borra
 			s[0] = "name"; s[1] = rotulo;
 			l.add(s);
 			s = new String[2];
+			
 
-			if (temp.contains("AYUNTAMIENTO") ||
-					temp.equals("AYTO.")) {
+			if (temp.contains("AYUNTAMIENTO") || temp.equals("AYTO.")) {
+				l.remove(0);
 				s[0] = "amenity"; s[1] = "townhall";
 				l.add(s);
 				s = new String[2];
 				s[0] = "name"; s[1] = "Ayuntamiento";
 				l.add(s);
+				setTtggss("CONSTRU:amenity=townhall");
 				return l;}
 
 			if (temp.contains("MUSEO")) {
 				s[0] = "tourism"; s[1] = "museum";
 				l.add(s);
+				setTtggss("CONSTRU:tourism=museum");
+				return l;}
+			
+			if ( (temp.contains("ESTACIÓN") || temp.contains("ESTACION")) && (temp.contains("FERROCARRIL") || temp.contains("TREN") || temp.contains("FFCC") || temp.contains("FF.CC.")) ) {
+				s[0] = "public_transport"; s[1] = "station";
+				l.add(s);
+				setTtggss("CONSTRU:landuse=railway,public_transport=station,building=yes");
+				return l;}
+			
+			if ( (temp.contains("ESTACIÓN") || temp.contains("ESTACION")) && (temp.contains("AUTOBÚS") || temp.contains("AUTOBUS") || temp.contains("BUS")) ) {
+				s[0] = "public_transport"; s[1] = "station";
+				l.add(s);
+				setTtggss("CONSTRU:public_transport=station,building=yes");
 				return l;}
 
 			if (temp.contains("PALACIO")) {
 				s[0] = "building"; s[1] = "palace";
 				l.add(s);
+				setTtggss("CONSTRU:building=palace");
+				return l;}
+			
+			if (temp.contains("ALMACÉN") || temp.contains("ALMACEN")) {
+				l.remove(0);
+				s[0] = "building"; s[1] = "warehouse";
+				l.add(s);
+				setTtggss("CONSTRU:building=warehouse");
 				return l;}
 
 			if (temp.contains("HOTEL")) {
 				s[0] = "tourism"; s[1] = "hotel";
 				l.add(s);
 				return l;}
+			
+			if (temp.contains("FACULTAD") || temp.contains("UNIVERSIDAD") || temp.contains("UNIVERSITARI")){
+				s[0] = "amenity"; s[1] = "university";
+				l.add(s);
+				return l;}
 
-			if (temp.equals("CORREOS") ||
-					temp.contains("POSTAL")) {
+			if (temp.equals("ESCUELA") || temp.equals("COLEGIO")){ 
+				s[0] = "amenity"; s[1] = "school";
+				l.add(s);
+				return l;}
+
+			if (temp.equals("INSTITUTO")){
+				s[0] = "amenity"; s[1] = "college";
+				l.add(s);
+				return l;}
+
+			if (temp.equals("CORREOS") || temp.contains("POSTAL")) {
 				s[0] = "amenity"; s[1] = "post_office";
 				l.add(s);
 				return l;}
@@ -336,23 +380,18 @@ public class ShapeElemtex extends Shape {
 			if (temp.equals("CEMENTERIO")){
 				s[0] = "amenity"; s[1] = "grave_yard";
 				l.add(s);
-				setTtggss("landuse=cemetery");
-				return l;}
-			
-			if (temp.equals("POZO")){
-				setTtggss("landuse=pond");
+				setTtggss("CONSTRU:landuse=cemetery");
 				return l;}
 
 			if (temp.equals("AEROPUERTO")) {
 				s[0] = "aeroway"; s[1] = "aerodrome";
 				l.add(s);
+				setTtggss("CONSTRU:aeroway=aerodrome");
 				return l;}
 
-			if (temp.equals("FRONTON") || 
-					temp.equals("FRONTÓN")) {
+			if (temp.equals("FRONTON") || temp.equals("FRONTÓN")) {
 				s[0] = "sport"; s[1] = "pelota";
 				l.add(s);
-				setTtggss("landuse=recreation_ground");
 				return l;}
 
 			if (temp.contains("TEATRO")){
@@ -360,18 +399,11 @@ public class ShapeElemtex extends Shape {
 				l.add(s);
 				return l;}
 
-			if (temp.contains("HOSPITAL")) {
+			if (temp.contains("HOSPITAL") || temp.contains("CLINICA") || temp.contains("CLÍNICA") || (temp.contains("CENTRO") && temp.contains("SALUD"))) {
 				s[0] = "amenity"; s[1] = "hospital";
 				l.add(s);
-				setTtggss("landuse=health");
+				setTtggss("CONSTRU:landuse=health");
 				return l; }
-
-			if (temp.contains("CLINICA") ||
-					temp.contains("CLÍNICA")) {
-				s[0] = "amenity"; s[1] = "doctors";
-				l.add(s);
-				setTtggss("landuse=health");
-				return l;}
 
 			if (temp.contains("AUDITORIO")){
 				s[0] = "amenity"; s[1] = "community_centre";
@@ -389,62 +421,54 @@ public class ShapeElemtex extends Shape {
 				l.add(s);
 				return l;}
 
-			if (temp.equals("APARCAMIENTO") ||
-					temp.equals("PARKING")){
+			if (temp.equals("APARCAMIENTO") || temp.equals("PARKING")){
+				l.remove(0);
 				s[0] = "amenity"; s[1] ="parking";
 				l.add(s);
+				setTtggss("CONSTRU:amenity=parking");
 				return l;}
 
-			if (temp.equals("JUZGADO")){
+			if (temp.equals("JUZGADO") || temp.equals("JUZGADOS")){
 				s[0] = "amenity"; s[1] ="courthouse";
-				l.add(s);
-				return l;}
-
-			if (temp.equals("MONASTERIO") ||
-					temp.equals("CONVENTO")) {
-				s[0] = "amenity"; s[1] ="place_of_worship";
 				l.add(s);
 				return l;}
 
 			if (temp.equals("CAMPO DE GOLF")){
 				s[0] = "leisure"; s[1] = "golf_course";
 				l.add(s);
+				setTtggss("CONSTRU:leisure=golf_course");
 				return l;}
 
 			if (temp.equals("ESTADIO")){
 				s[0] = "leisure"; s[1] = "stadium";
 				l.add(s);
+				setTtggss("CONSTRU:leisure=stadium");
 				return l;}
 
-			if (temp.equals("POLIDEPORTIVO") ||
-					temp.contains("DEPORTIVO")) {
+			if (temp.equals("POLIDEPORTIVO") || temp.contains("DEPORTIVO")) {
 				s[0] = "leisure"; s[1] = "sports_centre";
 				l.add(s);
+				setTtggss("CONSTRU:leisure=sports_centre");
 				return l;}
 
-			if (temp.equals("BOMBEROS")) {
+			if (temp.contains("BOMBEROS")) {
 				s[0] = "amenity"; s[1] = "fire_station";
 				l.add(s);
 				return l;}
 
-			if (temp.equals("CENTRO COMERCIAL")){
+			if (temp.contains("CENTRO COMERCIAL")){
 				s[0] = "shop"; s[1] = "mall";
 				l.add(s);
-				setTtggss("landuse=retail");
 				return l;}
 
-			if (temp.contains("SUPERMERCADO") ||
-					temp.contains("HIPERMERCADO")  ||
-					temp.contains("HIPER")) {
+			if (temp.contains("SUPERMERCADO") || temp.contains("HIPERMERCADO")  || temp.contains("HIPER")) {
 				s[0] = "shop"; s[1] = "supermarket";
 				l.add(s);
-				setTtggss("landuse=retail");
 				return l;}
 
 			if (temp.equals("MERCADO")){
 				s[0] = "amenity"; s[1] = "marketplace";
 				l.add(s);
-				setTtggss("landuse=retail");
 				return l;}
 
 			if (temp.contains("GASOLINERA")){
@@ -457,32 +481,12 @@ public class ShapeElemtex extends Shape {
 				l.add(s);
 				return l;}
 
-			if (temp.equals("GUARDERIA") ||
-					temp.equals("GUARDERÍA")){
+			if (temp.equals("GUARDERIA") || temp.equals("GUARDERÍA")){
 				s[0] = "amenity"; s[1] = "kindergarten";
 				l.add(s);
 				return l;}
 
-			if (temp.contains("FACULTAD") ||
-					temp.contains("UNIVERSIDAD") ||
-					temp.contains("UNIVERSITARI")){
-				s[0] = "amenity"; s[1] = "university";
-				l.add(s);
-				return l;}
-
-			if (temp.equals("ESCUELA") ||
-					temp.equals("COLEGIO")){ 
-				s[0] = "amenity"; s[1] = "school";
-				l.add(s);
-				return l;}
-
-			if (temp.equals("INSTITUTO")){
-				s[0] = "amenity"; s[1] = "college";
-				l.add(s);
-				return l;}
-
-			if (temp.contains("CENTRO") &&
-					temp.contains("SOCIAL")) {
+			if (temp.contains("CENTRO") && temp.contains("SOCIAL")) {
 				s[0] = "amenity"; s[1] = "social_facility";
 				l.add(s);
 				return l;}
@@ -492,7 +496,7 @@ public class ShapeElemtex extends Shape {
 				l.add(s);
 				return l;}
 
-			if (temp.equals("IGLESIA")){
+			if (temp.contains("IGLESIA")){
 				s[0] = "amenity"; s[1] = "place_of_worship";
 				l.add(s);
 				s = new String[2];
@@ -504,9 +508,10 @@ public class ShapeElemtex extends Shape {
 				s = new String[2];
 				s[0] = "building"; s[1] = "church";
 				l.add(s);
+				setTtggss("CONSTRU:amenity=place_of_worship,religion=christian,denomination=catholic");
 				return l;}
 
-			if (temp.equals("CATEDRAL")){
+			if (temp.contains("CATEDRAL")){
 				s[0] = "amenity"; s[1] = "place_of_worship";
 				l.add(s);
 				s = new String[2];
@@ -518,10 +523,10 @@ public class ShapeElemtex extends Shape {
 				s = new String[2];
 				s[0] = "building"; s[1] = "cathedral";
 				l.add(s);
+				setTtggss("CONSTRU:amenity=place_of_worship,religion=christian,denomination=catholic,building=cathedral");
 				return l; }
 
-			if (temp.equals("CAPILLA") ||
-					temp.equals("ERMITA")){
+			if (temp.contains("CAPILLA")){
 				s[0] = "amenity"; s[1] = "place_of_worship";
 				l.add(s);
 				s = new String[2];
@@ -533,9 +538,61 @@ public class ShapeElemtex extends Shape {
 				s = new String[2];
 				s[0] = "building"; s[1] = "chapel";
 				l.add(s);
+				setTtggss("CONSTRU:amenity=place_of_worship,denomination=catholic,religion=christian,building=chapel");
 				return l; }
+			
+			if (temp.contains("ERMITA")){
+				s[0] = "amenity"; s[1] = "place_of_worship";
+				l.add(s);
+				s = new String[2];
+				s[0] = "denomination"; s[1] = "catholic";
+				l.add(s);
+				s = new String[2];
+				s[0] = "religion"; s[1] = "christian";
+				l.add(s);
+				s = new String[2];
+				s[0] = "building"; s[1] = "hermitage";
+				l.add(s);
+				setTtggss("CONSTRU:amenity=place_of_worship,denomination=catholic,religion=christian,building=hermitage");
+				return l; }
+			
+			if (temp.contains("BASÍLICA") || temp.contains("BASILICA")){
+				s[0] = "amenity"; s[1] = "place_of_worship";
+				l.add(s);
+				s = new String[2];
+				s[0] = "denomination"; s[1] = "catholic";
+				l.add(s);
+				s = new String[2];
+				s[0] = "religion"; s[1] = "christian";
+				l.add(s);
+				s = new String[2];
+				s[0] = "building"; s[1] = "basilica";
+				l.add(s);
+				setTtggss("CONSTRU:amenity=place_of_worship,denomination=catholic,religion=christian,building=basilica");
+				return l; }
+			
+			if (temp.contains("PARROQUIA")){
+				s[0] = "amenity"; s[1] = "place_of_worship";
+				l.add(s);
+				s = new String[2];
+				s[0] = "denomination"; s[1] = "catholic";
+				l.add(s);
+				s = new String[2];
+				s[0] = "religion"; s[1] = "christian";
+				l.add(s);
+				s = new String[2];
+				s[0] = "building"; s[1] = "parish_church";
+				l.add(s);
+				setTtggss("CONSTRU:amenity=place_of_worship,denomination=catholic,religion=christian,building=parish_church");
+				return l; }
+			
+			if (temp.equals("MONASTERIO") || temp.equals("CONVENTO")) {
+				s[0] = "amenity"; s[1] ="place_of_worship";
+				l.add(s);
+				return l;}
 
 			if (temp.equals("ESTABLO")){
+				l.remove(0);
 				s[0] = "building"; s[1] = "stable";
 				l.add(s);
 				return l;}
@@ -552,6 +609,7 @@ public class ShapeElemtex extends Shape {
 				return l; }
 
 			if (temp.equals("MERENDERO")){
+				l.remove(0);
 				s[0] = "tourism"; s[1] = "picnic_site";
 				l.add(s);
 				return l;}
@@ -576,10 +634,10 @@ public class ShapeElemtex extends Shape {
 			if (temp.contains("PLAYA")){
 				s[0] = "natural"; s[1] = "beach";
 				l.add(s);
+				setTtggss("PARCELA:natural=beach");
 				return l;}
 
-			if (temp.contains("CAFETERIA") ||
-					temp.contains("CAFETERÍA")){
+			if (temp.contains("CAFETERIA") || temp.contains("CAFETERÍA")){
 				s[0] = "amenity"; s[1] = "cafe";
 				l.add(s);
 				return l;}
@@ -587,10 +645,11 @@ public class ShapeElemtex extends Shape {
 			if (temp.contains("CAMPING")){
 				s[0] = "tourism"; s[1] = "camp_site";
 				l.add(s);
+				setTtggss("CONSTRU:tourism=camp_site");
 				return l;}
 
-			if (temp.contains("RESTAURANTE") ||
-					temp.equals("RTE.")){ 
+			if (temp.contains("RESTAURANTE") || temp.equals("RTE.")){
+				l.remove(0);
 				s[0] = "amenity"; s[1] = "restaurant";
 				l.add(s);
 				s = new String[2];
@@ -598,8 +657,8 @@ public class ShapeElemtex extends Shape {
 				l.add(s);
 				return l;}
 
-			if (temp.equals("BASCULA") ||
-					temp.equals("BÁSCULA")){
+			if (temp.equals("BASCULA") || temp.equals("BÁSCULA")){
+				l.remove(0);
 				s[0] = "man_made"; s[1] = "weighbridge";
 				l.add(s);
 				return l;}
@@ -610,13 +669,16 @@ public class ShapeElemtex extends Shape {
 				return l;}
 
 			if (temp.equals("BAR")){
+				l.remove(0);
 				s[0] = "amenity"; s[1] = "bar";
 				l.add(s);
 				return l;}
 
 			else{
+				if (!Cat2OsmUtils.getModoElemtex())
 				setTtggss("0");
-				return l;}
+				return l;
+				}
 		}
 		return l;
 	}

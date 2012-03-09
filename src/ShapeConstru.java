@@ -22,12 +22,6 @@ public class ShapeConstru extends Shape {
 	private Long relation; // Relacion de sus ways
 	private String refCatastral; // Referencia catastral
 	private String constru; // Campo Constru solo en Constru.shp
-	private boolean edificioTageable = false; // Campo para saber si es un edificio con alturas y por lo tanto
-	// si se le pueden anadir tags de bienes inmuebles leidos en los .Cat
-	// Los registros 14 y 15 no hay forma de relacionarlos a que construccion de todas las de la
-	// parcela hace referencia, por tanto no se pueden anadir esos tags. Con este campo vamos a intentar
-	// afinar para que al menos algunos tags de construcciones podamos asignarlo unicamente a los
-	// edificios de la parcela.
 	private List<ShapeAttribute> atributos;
 
 
@@ -398,7 +392,6 @@ public class ShapeConstru extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
-			edificioTageable = true;
 			return l;
 
 		case "JD":
@@ -417,7 +410,6 @@ public class ShapeConstru extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
-			edificioTageable = true;
 			return l;
 
 		case "VOL":
@@ -429,7 +421,6 @@ public class ShapeConstru extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
-			edificioTageable = true;
 			return l;
 
 		case "RUINA":
@@ -576,13 +567,7 @@ public class ShapeConstru extends Shape {
 
 		s[0] = "NUM"; s[1] = sumaTotal+"";
 		l.add(s);
-		edificioTageable = true;
 		return l;
-	}
-
-
-	public boolean esEdificio() {
-		return edificioTageable;
 	}
 
 }

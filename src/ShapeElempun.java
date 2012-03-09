@@ -95,11 +95,6 @@ public class ShapeElempun extends Shape {
 	public Long getRelationId() {
 		return null;
 	}
-	
-
-	public boolean esEdificio() {
-		return false;
-	}
 
 
 	public List<LineString> getPoligons() {

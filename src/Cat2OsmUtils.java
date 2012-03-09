@@ -20,8 +20,11 @@ public class Cat2OsmUtils {
 	// Listaa de relations
 	private final ConcurrentHashMap <RelationOsm, Long> totalRelations = new ConcurrentHashMap <RelationOsm, Long>();
 	
-	// Booleanos para el modo de calcular las entradas
-	private static boolean modoEntradas = false;
+	// Booleanos para el modo de calcular los portales, ver todos los Elemtex y sacar los Usos de los
+	//inmuebles que no se pueden asociar
+	private static boolean portales = false;
+	private static boolean elemtex = false;
+	private static boolean usos = false;
 	
 	public synchronized ConcurrentHashMap<NodeOsm, Long> getTotalNodes() {
 		return totalNodes;
@@ -121,7 +124,6 @@ public class Cat2OsmUtils {
 	 * de lo contrario crea el nuevo nodo. Despues devuelve el id
 	 * @param coor Coordenadas del nodo
 	 * @param tags Tags del nodo
-	 * @param nodes Lista de nodos existentes
 	 * @return Devuelve el id del nodo ya sea creado o el que existia
 	 */
 	@SuppressWarnings("unchecked")
@@ -250,13 +252,44 @@ public class Cat2OsmUtils {
         
         return nodes;
     }
+    
+	/** Dada una lista de identificadores de nodes, borra esos nodes
+     * @param ids Lista de nodos
+     */
+    @SuppressWarnings("unchecked")
+    public synchronized void deleteNodes(List<Long> ids){
+    	
+    	for (Long id : ids){
+    		
+    		NodeOsm node = ((NodeOsm) getKeyFromValue((Map<Object, Long>) ((Object)totalNodes), id));
+    		if (node != null)
+    		totalNodes.remove(node);
+    		
+    	}
+    }
 
-	public static boolean getModoEntradas() {
-		return modoEntradas;
+	public static boolean getModoPortales() {
+		return portales;
 	}
 
-	public void setModoEntradas(boolean modoEntradas) {
-		Cat2OsmUtils.modoEntradas = modoEntradas;
+	public void setModoPortales(boolean modoPortales) {
+		Cat2OsmUtils.portales = modoPortales;
+	}
+
+	public static boolean getModoElemtex() {
+		return elemtex;
+	}
+
+	public void setModoElemtex(boolean elemtex) {
+		Cat2OsmUtils.elemtex = elemtex;
+	}
+
+	public static boolean getModoUsos() {
+		return usos;
+	}
+
+	public void setModoUsos(boolean usos) {
+		Cat2OsmUtils.usos = usos;
 	}
 	
 }

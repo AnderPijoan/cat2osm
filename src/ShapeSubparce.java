@@ -280,11 +280,6 @@ public class ShapeSubparce extends Shape {
 	public String getTtggss() {
 		return "";
 	}
-	
-	
-	public boolean esEdificio() {
-		return false;
-	}
 
 
 	public boolean shapeValido (){

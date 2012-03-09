@@ -182,11 +182,6 @@ public class ShapeMasa extends Shape {
 	public String getRefCat(){
 		return null;
 	}
-	
-	
-	public boolean esEdificio() {
-		return false;
-	}
 
 	
 	public Coordinate[] getCoordenadas(int i){
