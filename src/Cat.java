@@ -8,8 +8,9 @@ public class Cat {
 	String subparce; // Codigo Subparcela
 	int numOrdenConstru; // Numero de orden de construccion
 	List<String[]> atributos;
-	long fechaAlta; // Formato AAAAMMDD
-	long fechaBaja;
+	long fechaConstru = Long.MAX_VALUE; // Fecha de construccion AAAAMMDD
+	// Empieza en el valor maximo y se reduce a la menor fecha de construccion de los inmuebles
+	// de la parcela
 
 	
 	/** Constructor
@@ -18,10 +19,6 @@ public class Cat {
 	public Cat(int r){
 		tipoRegistro = r;
 		atributos = new ArrayList<String[]>();
-		// Valor minimo posible
-		fechaAlta = 00000101;
-		// Valor maximo posible
-		fechaBaja = 99999999;
 	}
 	
 	
@@ -58,28 +55,18 @@ public class Cat {
 	public String getSubparce(){
 		return subparce;
 	}
-	
-	
-	public void setFechaAlta(long l){
-		fechaAlta = l;
-	}
-	
-	
-	public void setFechaBaja(long a){
-		fechaBaja = a;
-	}
-	
-	
-	public long getFechaAlta(){
-		return fechaAlta;
-	}
-	
-	
-	public long getFechaBaja(){
-		return fechaBaja;
-	}
 
 	
+	public long getFechaConstru() {
+		return fechaConstru;
+	}
+
+
+	public void setFechaConstru(long fechaConstru) {
+		this.fechaConstru = fechaConstru;
+	}
+
+
 	/** Anade un atributo leido a la lista
 	 * @param nombre Clave del atributo
 	 * @param valor Valor del atributo

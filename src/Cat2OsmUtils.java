@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.vividsolutions.jts.algorithm.LineIntersector;
+import com.vividsolutions.jts.algorithm.RobustLineIntersector;
 import com.vividsolutions.jts.geom.Coordinate;
 
 
@@ -23,7 +25,6 @@ public class Cat2OsmUtils {
 	// Booleanos para el modo de calcular los portales, ver todos los Elemtex y sacar los Usos de los
 	//inmuebles que no se pueden asociar
 	private static boolean portales = false;
-	private static boolean elemtex = false;
 	private static boolean usos = false;
 	
 	public synchronized ConcurrentHashMap<NodeOsm, Long> getTotalNodes() {
@@ -276,14 +277,6 @@ public class Cat2OsmUtils {
 		Cat2OsmUtils.portales = modoPortales;
 	}
 
-	public static boolean getModoElemtex() {
-		return elemtex;
-	}
-
-	public void setModoElemtex(boolean elemtex) {
-		Cat2OsmUtils.elemtex = elemtex;
-	}
-
 	public static boolean getModoUsos() {
 		return usos;
 	}
@@ -291,5 +284,18 @@ public class Cat2OsmUtils {
 	public void setModoUsos(boolean usos) {
 		Cat2OsmUtils.usos = usos;
 	}
+	
+	 public static boolean nodeOnWay(Coordinate node, Coordinate[] wayCoors) {
+	        LineIntersector lineIntersector = new RobustLineIntersector();
+	        for (int i = 1; i < wayCoors.length; i++) {
+	            Coordinate p0 = wayCoors[i - 1];
+	            Coordinate p1 = wayCoors[i];
+	            lineIntersector.computeIntersection(node, p0, p1);
+	            if (lineIntersector.hasIntersection()) {
+	                return true;
+	            }
+	        }
+	        return false;
+	    }
 	
 }

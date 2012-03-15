@@ -30,6 +30,7 @@ public class ShapeSubparce extends Shape {
 	private String subparce; // Clave de Subparcela
 	private String cultivo; // Codigo de cultivo de la subparcela
 	private List<ShapeAttribute> atributos;
+	private long area; // Area para saber si poner landuse allotments (<400m2) o el que sea
 	private static final Map<String,Map<String,String>> lSub = new HashMap<String,Map<String,String>>(); // Mapa <RefCat<ClaveSubparce,CodigoCultivo>> (para el Subparce.shp)
 
 
@@ -89,6 +90,21 @@ public class ShapeSubparce extends Shape {
 		if (subparce != null){
 			cultivo = getCultivo(refCatastral,subparce);
 		}
+		
+		// Al campo AREA puede estar en distintos formatos, ogr2ogr cambia el formato
+		if (f.getAttribute("AREA") instanceof Double){
+			double a = (Double) f.getAttribute("AREA");
+			setArea((long) a);
+		}
+		else if (f.getAttribute("AREA") instanceof Long){
+			setArea((Long) f.getAttribute("AREA"));
+		}
+		else if (f.getAttribute("AREA") instanceof Integer){
+			int a = (Integer) f.getAttribute("AREA");
+			setArea((long) a);
+		}
+		else System.out.println("["+new Timestamp(new Date().getTime())+"] No se reconoce el tipo del atributo AREA "
+				+ f.getAttribute("AREA").getClass().getName());	
 		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -151,7 +167,7 @@ public class ShapeSubparce extends Shape {
 		if (nodes.size()>pos)
 			return ways.get(pos);
 		else
-			return null;
+			return new ArrayList<Long>();
 	}
 
 
@@ -306,7 +322,10 @@ public class ShapeSubparce extends Shape {
 		case"A-":
 		case"A":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "rice";
@@ -322,7 +341,10 @@ public class ShapeSubparce extends Shape {
 		case"HK":
 		case"HR":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "vegetables";
@@ -338,7 +360,10 @@ public class ShapeSubparce extends Shape {
 
 		case"AM":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "almond_trees";
@@ -350,7 +375,10 @@ public class ShapeSubparce extends Shape {
 
 		case"AO":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "hazels";
@@ -362,7 +390,10 @@ public class ShapeSubparce extends Shape {
 
 		case"AP":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "vineyard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "vineyard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "olives";
@@ -373,7 +404,10 @@ public class ShapeSubparce extends Shape {
 		case"AY":
 		case"AZ":
 			s = new String[2];
-			s[0] = "natural"; s[1] = "scrub";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "natural"; s[1] = "scrub";
 			l.add(s);
 			s = new String[2];
 			s[0] = "scrub"; s[1] = "esparto";
@@ -382,7 +416,10 @@ public class ShapeSubparce extends Shape {
 
 		case"AV":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "hazels";
@@ -394,7 +431,10 @@ public class ShapeSubparce extends Shape {
 
 		case"BB":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmyard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "livestock";
@@ -409,7 +449,10 @@ public class ShapeSubparce extends Shape {
 
 		case"BC":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmyard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "livestock";
@@ -424,7 +467,10 @@ public class ShapeSubparce extends Shape {
 
 		case"BL":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmyard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "livestock";
@@ -439,7 +485,10 @@ public class ShapeSubparce extends Shape {
 
 		case"BM":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmyard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "building"; s[1] = "livestock";
@@ -455,7 +504,10 @@ public class ShapeSubparce extends Shape {
 		case"C-":
 		case"C":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "irrigated"; s[1] = "no";
@@ -473,7 +525,10 @@ public class ShapeSubparce extends Shape {
 		case"HT":
 		case"HV":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "cereal";
@@ -485,7 +540,10 @@ public class ShapeSubparce extends Shape {
 
 		case"CC":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "chestnut_trees";
@@ -497,7 +555,10 @@ public class ShapeSubparce extends Shape {
 
 		case"CE":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "holm_oaks";
@@ -509,7 +570,10 @@ public class ShapeSubparce extends Shape {
 
 		case"CF":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "fruit_trees";
@@ -521,7 +585,10 @@ public class ShapeSubparce extends Shape {
 
 		case"CG":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "oaks";
@@ -533,7 +600,10 @@ public class ShapeSubparce extends Shape {
 
 		case"CH":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "prickly_pears";
@@ -578,7 +648,10 @@ public class ShapeSubparce extends Shape {
 		case"CT":
 		case"CV":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "cereal";
@@ -593,7 +666,10 @@ public class ShapeSubparce extends Shape {
 
 		case"CR":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "irrigated"; s[1] = "yes";
@@ -602,7 +678,10 @@ public class ShapeSubparce extends Shape {
 
 		case"CS":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "cork_oaks";
@@ -625,7 +704,10 @@ public class ShapeSubparce extends Shape {
 		case"E-":
 		case"E":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "meadow";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "meadow";
 			l.add(s);
 			s = new String[2];
 			s[0] = "meadow"; s[1] = "perpetual";
@@ -634,7 +716,10 @@ public class ShapeSubparce extends Shape {
 
 		case"EA":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmyard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmyard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "use"; s[1] = "agricultural";
@@ -643,7 +728,10 @@ public class ShapeSubparce extends Shape {
 
 		case"EE":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "meadow";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "meadow";
 			l.add(s);
 			s = new String[2];
 			s[0] = "meadow"; s[1] = "perpetual";
@@ -667,7 +755,10 @@ public class ShapeSubparce extends Shape {
 
 		case"EO":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "meadow";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "meadow";
 			l.add(s);
 			s = new String[2];
 			s[0] = "meadow"; s[1] = "perpetual";
@@ -698,7 +789,10 @@ public class ShapeSubparce extends Shape {
 
 		case"EX":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmfield";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmfield";
 			return l;
 
 		case"F-":
@@ -706,7 +800,10 @@ public class ShapeSubparce extends Shape {
 		case"FY":
 		case"FZ":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "irrigated"; s[1] = "no";
@@ -716,7 +813,10 @@ public class ShapeSubparce extends Shape {
 		case"FA":
 		case"TF":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			return l;
 
@@ -725,7 +825,10 @@ public class ShapeSubparce extends Shape {
 		case"FR":
 		case"FV":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "irrigated"; s[1] = "yes";
@@ -802,7 +905,10 @@ public class ShapeSubparce extends Shape {
 
 		case"FM":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "peach_trees";
@@ -814,7 +920,10 @@ public class ShapeSubparce extends Shape {
 
 		case"FN":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "apple_trees";
@@ -826,7 +935,10 @@ public class ShapeSubparce extends Shape {
 
 		case"FO":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "cherry_trees";
@@ -838,7 +950,10 @@ public class ShapeSubparce extends Shape {
 
 		case"FP":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "pear_trees";
@@ -850,7 +965,10 @@ public class ShapeSubparce extends Shape {
 
 		case"FQ":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "apricot_trees_trees";
@@ -860,7 +978,10 @@ public class ShapeSubparce extends Shape {
 		case"FS":
 		case"ZS":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "cork_oaks";
@@ -869,7 +990,10 @@ public class ShapeSubparce extends Shape {
 
 		case"FU":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "plum_trees";
@@ -882,7 +1006,10 @@ public class ShapeSubparce extends Shape {
 		case"G-":
 		case"G":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "carobs";
@@ -900,7 +1027,10 @@ public class ShapeSubparce extends Shape {
 
 		case"GR":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "carobs";
@@ -922,7 +1052,10 @@ public class ShapeSubparce extends Shape {
 		case"HY":
 		case"HZ":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "vegetables";
@@ -931,13 +1064,16 @@ public class ShapeSubparce extends Shape {
 
 		case"HG":
 			s = new String[2];
-			s[0] = "natural"; s[1] = "water";
+			s[0] = "waterway"; s[1] = "riverbank";
 			l.add(s);
 			return l;
 
 		case"HS":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "vegetables";
@@ -980,7 +1116,10 @@ public class ShapeSubparce extends Shape {
 
 		case"IR":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "irrigated"; s[1] = "yes";
@@ -1325,7 +1464,10 @@ public class ShapeSubparce extends Shape {
 		case"NK":
 		case"NR":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "citrus_trees";
@@ -1337,7 +1479,10 @@ public class ShapeSubparce extends Shape {
 
 		case"NJ":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "orange_trees";
@@ -1346,7 +1491,10 @@ public class ShapeSubparce extends Shape {
 
 		case"NL":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "lemon_trees";
@@ -1355,7 +1503,10 @@ public class ShapeSubparce extends Shape {
 
 		case"NM":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "tangerine_trees";
@@ -1364,7 +1515,10 @@ public class ShapeSubparce extends Shape {
 
 		case"NS":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "citrus_trees";
@@ -1379,7 +1533,10 @@ public class ShapeSubparce extends Shape {
 		case"OY":
 		case"TO":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "olives";
@@ -1392,7 +1549,10 @@ public class ShapeSubparce extends Shape {
 		case"OS":
 		case"OV":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "olives";
@@ -1405,7 +1565,10 @@ public class ShapeSubparce extends Shape {
 		case"OZ":
 		case"VO":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "olives";
@@ -1417,7 +1580,10 @@ public class ShapeSubparce extends Shape {
 
 		case"PA":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "herbs";
@@ -1443,7 +1609,10 @@ public class ShapeSubparce extends Shape {
 		case"PH":
 		case"PP":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "meadow";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "meadow";
 			l.add(s);
 			s = new String[2];
 			s[0] = "use"; s[1] = "agricultural";
@@ -1467,7 +1636,10 @@ public class ShapeSubparce extends Shape {
 
 		case"PM":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "palm_trees";
@@ -1480,7 +1652,10 @@ public class ShapeSubparce extends Shape {
 		case"PR":
 		case"PT":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "meadow";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "meadow";
 			l.add(s);
 			s = new String[2];
 			s[0] = "use"; s[1] = "agricultural";
@@ -1512,7 +1687,10 @@ public class ShapeSubparce extends Shape {
 		case"R":
 		case"RR":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "fig_trees";
@@ -1530,7 +1708,10 @@ public class ShapeSubparce extends Shape {
 
 		case"TA":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "almond_trees";
@@ -1539,7 +1720,10 @@ public class ShapeSubparce extends Shape {
 
 		case"TG":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "carobs";
@@ -1548,7 +1732,10 @@ public class ShapeSubparce extends Shape {
 
 		case"TM":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "tomatoes";
@@ -1560,7 +1747,10 @@ public class ShapeSubparce extends Shape {
 
 		case"TN":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "citrus_trees";
@@ -1569,7 +1759,10 @@ public class ShapeSubparce extends Shape {
 
 		case"TP":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "orchard";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "orchard";
 			l.add(s);
 			s = new String[2];
 			s[0] = "trees"; s[1] = "banana_trees";
@@ -1588,7 +1781,6 @@ public class ShapeSubparce extends Shape {
 
 		case"V-":
 		case"V":
-			
 			s = new String[2];
 			s[0] = "landuse"; s[1] = "vineyard";
 			l.add(s);
@@ -1629,7 +1821,10 @@ public class ShapeSubparce extends Shape {
 			
 		case"Z-":
 			s = new String[2];
-			s[0] = "landuse"; s[1] = "farmland";
+			if (this.area <= 400){
+				s[0] = "landuse"; s[1] = "allotments";}
+			else
+				s[0] = "landuse"; s[1] = "farmland";
 			l.add(s);
 			s = new String[2];
 			s[0] = "crop"; s[1] = "sumac";
@@ -1648,7 +1843,13 @@ public class ShapeSubparce extends Shape {
 
 		}
 
+	}
 
+	public long getArea() {
+		return area;
+	}
 
+	public void setArea(long area) {
+		this.area = area;
 	}
 }

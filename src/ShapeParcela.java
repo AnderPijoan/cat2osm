@@ -134,7 +134,7 @@ public class ShapeParcela extends Shape {
 		if (nodes.size()>pos)
 			return ways.get(pos);
 		else
-			return null;
+			return new ArrayList<Long>();
 	}
 	
 	

@@ -40,7 +40,7 @@ public class Gui extends JFrame {
 
 
 		JPanel labels = new JPanel();
-		labels.setLayout(new GridLayout(15,1));
+		labels.setLayout(new GridLayout(13,1));
 
 		String[] labelsText = {"Carpeta donde se exportarán los archivos temporales y el resultado.\n(Tiene que tener privilegios lectura/escritura).",
 				"Nombre del archivo que exportará Cat2Osm como resultado.",
@@ -49,8 +49,8 @@ public class Gui extends JFrame {
 				"Ruta al ARCHIVO EXTRAIDO .CAT URBANO.",
 				"Ruta al ARCHIVO EXTRAIDO .CAT RÚSTICO.", 
 				"Ruta al directorio principal de FWTools.\n(De momento no es necesario)", 
-				"Ruta al ARCHIVO de la rejilla de la península (PENR2009.gsb o peninsula.gsb).\n(Necesario para reprojectar, se puede descargar en http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM)",
-				"Projección en la que se encuentran los archivos shapefile." +
+				"Ruta al ARCHIVO de la rejilla de la península (PENR2009.gsb o peninsula.gsb).\n(Necesario para reproyectar, se puede descargar en http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM)",
+				"Proyección en la que se encuentran los archivos shapefile." +
 						"\n32628 para WGS84/ Zona UTM 29N"+
 						"\n23029 para ED_1950/ Zona UTM 29N,"+
 						"\n23030 para ED_1950/ Zona UTM 30N,"+
@@ -62,11 +62,10 @@ public class Gui extends JFrame {
 				"Si se quiere delimitar una fecha desde la cual coger los datos de catastro (Formato AAAAMMDD).\nTomará los datos que se han dado de alta a partir de esta fecha.\nEjemeplo: 20060127 (27 de Enero del 2006)",
 				"Si se quiere delimitar una fecha hasta la cual coger los datos (Formato AAAAMMDD).\nTomará los shapes que se han dado de alta hasta esta fecha y siguen sin darse de baja después.\nEjemeplo: 20060127 (27 de Enero del 2006)", 
 				"Tipo de Registro de catastro a usar (0 = todos).\nLos registros de catastro tienen la mayoría de la información necesaria para los shapefiles.",
-				"Cambiar tags de las construcciones si contienen sobre ellas un texto (Elemtex) al cual se le puede asociar un tag distinto.\nPor ejemplo si es un cementerio modificar el landuse a landuse=cemetery. (Ralentiza un poco el proceso)",
 				"Imprimir tanto en las vías como en las relaciones la lista de shapes que las componen o las utilizan.\nEs para casos de debugging si se quiere tener los detalles."};
 
 		JPanel buttons = new JPanel();
-		buttons.setLayout(new GridLayout(15,1));
+		buttons.setLayout(new GridLayout(13,1));
 
 
 		JButton resultPath, urbanoShpPath, rusticoShpPath, urbanoCatFile, rusticoCatFile, rejillaFile = null;
@@ -95,7 +94,6 @@ public class Gui extends JFrame {
 		final JTextField fhasta= new JTextField("99999999");
 
 		final JComboBox<String> tipoReg = new JComboBox<String>();
-		final JComboBox<String> texAConstru = new JComboBox<String>();
 		final JComboBox<String> shapesId = new JComboBox<String>();
 
 		for (int x = 0; x < labelsText.length; x++){
@@ -206,13 +204,6 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 12:{
-				texAConstru.addItem("SI");
-				texAConstru.addItem("NO");
-				texAConstru.setBackground(new Color(255,255,255));
-				buttons.add(texAConstru);
-				break;
-			}
-			case 13:{
 				shapesId.addItem("NO");
 				shapesId.addItem("SI");
 				shapesId.setBackground(new Color(255,255,255));
@@ -287,7 +278,7 @@ public class Gui extends JFrame {
 			}
 
 			if (!popupText.getText().isEmpty()){
-				popupText.append("Para más ayuda o ver como debería ser el árbol de directorios consulte: http://wiki.openstreetmap.org/wiki/Catastro_España");
+				popupText.append("Para más ayuda o ver como debería ser el árbol de directorios consulte: http://wiki.openstreetmap.org/wiki/Cat2Osm");
 				popup.add(popupText, BorderLayout.CENTER);
 				popup.setVisible(true);
 				popup.show();
@@ -315,7 +306,6 @@ public class Gui extends JFrame {
 					out.write("\nFechaDesde="+fdesde.getText());
 					out.write("\nFechaHasta="+fhasta.getText());
 					out.write("\nTipoRegistro="+tipoReg.getSelectedItem());
-					out.write("\nElemtexAConstru="+(texAConstru.getItemCount()-texAConstru.getSelectedIndex()-1));
 					out.write("\nShapesId="+shapesId.getSelectedIndex());
 
 					out.close();
@@ -328,7 +318,7 @@ public class Gui extends JFrame {
 		}  
 		});  
 
-		this.add(new JLabel("GUÍA DE USO EN: http://wiki.openstreetmap.org/wiki/Catastro_España"),BorderLayout.NORTH);
+		this.add(new JLabel("GUÍA DE USO EN: http://wiki.openstreetmap.org/wiki/Cat2Osm"),BorderLayout.NORTH);
 		this.setVisible(true);
 	}
 

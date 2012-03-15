@@ -197,8 +197,7 @@ public class ShapeElempun extends Shape {
 	 * @return Lista de ids de ways del poligono en posicion pos
 	 */
 	public List<Long> getWaysIds(int pos) {
-		List<Long> l = new ArrayList<Long>();
-		return l;
+		return new ArrayList<Long>();
 	}
 
 

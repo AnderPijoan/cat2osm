@@ -29,7 +29,10 @@ public class WayOsm {
 		nodos.add(l);
 	}
 	
-	
+	/** Anade un nodo machacando el valor que habia en esa posicion
+	 * @param pos
+	 * @param l
+	 */
 	public void addNode(int pos, Long l){
 		if (!nodos.contains(l))
 		nodos.add(pos, l);
@@ -173,7 +176,7 @@ public class WayOsm {
 	 * @return Devuelve en un String el way listo para imprimir
 	 */
 	public String printWay(Long id){
-		String s = null;
+		String s = "";
 		
 		// Si un way no tiene mas de dos nodos, es incorrecto
 		if (nodos.size()<2)

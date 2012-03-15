@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RelationOsm {
 
@@ -15,6 +17,7 @@ public class RelationOsm {
 	private List <String> roles; // Roles de los members
 	private String refCatastral; // Referencia catastral para manejar las relaciones de relaciones
 	private List<String[]> tags;
+	private long fechaConstru = 0; // Fecha de construccion AAAAMMDD
 
 
 	public RelationOsm(List <Long> ids, List<String> types, List<String> roles){
@@ -22,6 +25,15 @@ public class RelationOsm {
 		this.types = types;
 		this.roles = roles;
 		tags = new ArrayList<String[]>();
+		
+		// Iniciamos la fechaConstru con la fecha del archivo .cat
+		// Luego a medida que se lean los registros se ira actualizando hasta llegar a la real
+		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
+		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
+		if (m.find()) {
+			fechaConstru = Long.parseLong(m.group().substring(0, 4)+"0101");
+		}
+		
 	}
 
 
@@ -30,6 +42,19 @@ public class RelationOsm {
 			ids.add(id);
 			types.add(type);
 			roles.add(role);}
+	}
+	
+	/** Inserta un nuevo member machacando el que haya en la posicion
+	 * @param pos
+	 * @param id
+	 * @param type
+	 * @param role
+	 */
+	public void addMember(int pos, Long id , String type, String role){
+		if (!ids.contains(id)){
+			ids.add(pos,id);
+			types.add(pos,type);
+			roles.add(pos,role);}
 	}
 
 
@@ -87,7 +112,7 @@ public class RelationOsm {
 		String[] s = {tag[0].replace("*", ""), tag[1].replaceAll("\"", "")};
 
 		for (int x = 0; !encontrado && x < this.tags.size(); x++){
-			if (tag[0].startsWith("*") && (s[0].equals(this.tags.get(x)[0]) || (this.tags.get(x)[0].equals("natural") && this.tags.get(x)[1].equals("water")) ))
+			if (tag[0].startsWith("*") && (s[0].equals(this.tags.get(x)[0]) || (this.tags.get(x)[0].equals("natural") && this.tags.get(x)[1].equals("water")) || (this.tags.get(x)[0].equals("waterway") && this.tags.get(x)[1].equals("riverbank")) ))
 				encontrado = true;
 
 			else if (this.tags.get(x)[0].equals(s[0])){
@@ -121,7 +146,7 @@ public class RelationOsm {
 			String[] s = {tags.get(x)[0].replace("*", ""), tags.get(x)[1].replaceAll("\"", "")};
 
 			for (int y = 0; !encontrado && y < this.tags.size(); y++){
-				if (tags.get(x)[0].startsWith("*") && (s[0].equals(this.tags.get(y)[0]) || (this.tags.get(y)[0].equals("natural") && this.tags.get(y)[1].equals("water")) ))
+				if (tags.get(x)[0].startsWith("*") && (s[0].equals(this.tags.get(y)[0]) || (this.tags.get(y)[0].equals("natural") && this.tags.get(y)[1].equals("water")) || (this.tags.get(x)[0].equals("waterway") && this.tags.get(x)[1].equals("riverbank")) ))
 					encontrado = true;
 				else if (this.tags.get(y)[0].equals(s[0])){
 					this.tags.get(y)[1] = s[1];
@@ -200,8 +225,10 @@ public class RelationOsm {
 	 */
 	@SuppressWarnings("unchecked")
 	public String printRelation(Long id, Cat2OsmUtils utils){
-		String s = null;
-
+		String s = "";
+		
+		if ( fechaConstru < Long.parseLong(Config.get("FechaConstruDesde")) || fechaConstru > Long.parseLong(Config.get("FechaConstruHasta")))
+			return s;
 
 		if (ids.size()<1)
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Relation id="+ id +" con menos de un way. No se imprimira.");
@@ -280,6 +307,7 @@ public class RelationOsm {
 
 			s += ("</way>\n");
 		}
+		
 		// En caso de que tenga varios ways, si que se imprime como una relacion de ways.
 		else {
 			s = ("<relation id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" visible=\"true\"  version=\"6\">\n");
@@ -318,6 +346,17 @@ public class RelationOsm {
 		}
 
 		return s;
+	}
+
+
+	public long getFechaConstru() {
+		return fechaConstru;
+	}
+
+
+	public void setFechaConstru(long fechaConstru) {
+		if (this.fechaConstru > fechaConstru)
+		this.fechaConstru = fechaConstru;
 	}
 
 }

@@ -70,7 +70,7 @@ public class ShapeConstru extends Shape {
 		refCatastral = (String) f.getAttribute("REFCAT");
 
 		constru = (String) f.getAttribute("CONSTRU");
-
+		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
 			for (int x = 1; x < f.getAttributes().size(); x++){
@@ -81,7 +81,6 @@ public class ShapeConstru extends Shape {
 	public String getShapeId(){
 		return shapeId;
 	}
-
 
 	public void addNode(int pos, long nodeId){
 		if (poligons.size()>pos)
@@ -132,7 +131,7 @@ public class ShapeConstru extends Shape {
 		if (nodes.size()>pos)
 			return ways.get(pos);
 		else
-			return null;
+			return new ArrayList<Long>();
 	}
 
 
@@ -279,6 +278,9 @@ public class ShapeConstru extends Shape {
 				l.add(s);
 				s = new String[2];
 				s[0] = "min_height"; s[1] = alturaMin*3+"";
+				l.add(s);
+				s = new String[2];
+				s[0] = "building"; s[1] ="yes";
 				l.add(s);
 			}
 		}

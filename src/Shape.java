@@ -11,8 +11,8 @@ import com.vividsolutions.jts.geom.LineString;
 public abstract class Shape {
 
 	private List<ShapeAttribute> atributos;
-	protected long fechaAlta; // Formato AAAAMMDD
-	protected long fechaBaja;
+	protected long fechaAlta; // Fecha de Alta en catastro Formato AAAAMMDD
+	protected long fechaBaja; // Fecha de Baja en catastro Formato AAAAMMDD
 	protected volatile static Long Id = (long) 0; // Id que tomaran los shapes
 	// para la simplificacion de ways
 

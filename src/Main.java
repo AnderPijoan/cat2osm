@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Main {
@@ -16,10 +18,10 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
 
-		if (args.length == 1 && args[0].equals("-v")){
+		if ((args.length == 1 && args[0].equals("-v")) || (args.length == 2 && args[0].equals("-v"))){
 			System.out.println("Cat2Osm versión 2012-03-09.");
 		}
-		else if (args.length == 1 && args[0].equals("-ui")){
+		else if ((args.length == 1 && args[0].equals("-ui")) || (args.length == 2 && args[0].equals("-ui"))){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando interfaz visual para crear el archivo de configuración.");
 			// Iniciar el interfaz visual
 			new Gui();
@@ -55,7 +57,7 @@ public class Main {
 			crearPortales();
 		}
 		else if (args.length == 2 && args[1].replaceAll("-", "").equals("usos") && new File(args[0]).exists()){
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando Cat2Osm con el archivo de configuración para exportar únicamente el archivo de entradas a parcelas a corregir.");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando Cat2Osm con el archivo de configuración para exportar únicamente el archivo de destinos a corregir.");
 			// Ruta al fichero de configuracion por parametro
 			new Config(args[0]);
 			// Iniciar metodo de creacion de puntos de entrada
@@ -80,7 +82,7 @@ public class Main {
 			System.out.println("rutaarchivoconfig -portales       Generar un archivo con los números de portal del archivo ELEMTEX y ajustándolos a su parcela más cercana");
 			System.out.println("rutaarchivoconfig -usos           Generar un archivo con los usos de inmuebles que no se pueden asignar directamente a una construcción");
 			System.out.println("Para mas informacion acceder a:");
-			System.out.println("http://wiki.openstreetmap.org/wiki/Spanish_Catastro");
+			System.out.println("http://wiki.openstreetmap.org/wiki/Cat2Osm");
 		}
 	}
 
@@ -95,7 +97,6 @@ public class Main {
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
-		utils.setModoElemtex(archivo.equals("ELEMTEX"));
 
 		if (!new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm").exists()
 				&& !new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm").exists()
@@ -119,7 +120,6 @@ public class Main {
 							filesU[i].getName().toUpperCase().equals("CONSTRU") ||
 							filesU[i].getName().toUpperCase().equals("ELEMLIN") ||
 							filesU[i].getName().toUpperCase().equals("ELEMPUN") ||
-							filesU[i].getName().toUpperCase().equals("ELEMTEX") ||
 							filesU[i].getName().toUpperCase().equals("PARCELA") ||
 							filesU[i].getName().toUpperCase().equals("SUBPARCE")
 							))
@@ -149,7 +149,6 @@ public class Main {
 							filesR[i].getName().toUpperCase().equals("CONSTRU") ||
 							filesR[i].getName().toUpperCase().equals("ELEMLIN") ||
 							filesR[i].getName().toUpperCase().equals("ELEMPUN") ||
-							filesR[i].getName().toUpperCase().equals("ELEMTEX") ||
 							filesR[i].getName().toUpperCase().equals("PARCELA") ||
 							filesR[i].getName().toUpperCase().equals("SUBPARCE") 
 							))
@@ -176,22 +175,31 @@ public class Main {
 			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 				try {
 					System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo archivo Cat urbano.");
-					catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
+					
+					Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
+					Matcher m = p.matcher(Config.get("UrbanoCATFile"));
+					if (m.find()) {
+						catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
+					}
+					else
+						System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Urbano debe tener el formato de nombre que viene por defecto en Catastro. El nombre debe traer la fecha de creación y en este no se ha encontrado.");
+					
 				}catch(Exception e)
 				{System.out.println("["+new Timestamp(new Date().getTime())+"] Fallo al leer archivo Cat urbano. " + e.getMessage());}
 
 				try {
 					System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo archivo Cat rústico.");
-					catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
+					
+					Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
+					Matcher m = p.matcher(Config.get("RusticoCATFile"));
+					if (m.find()) {
+						catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
+					}
+					else
+						System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Rústico debe tener el formato de nombre que viene por defecto en Catastro. El nombre debe traer la fecha de creación y en este no se ha encontrado.");
+				
 				}catch(Exception e)
 				{System.out.println("["+new Timestamp(new Date().getTime())+"] Fallo al leer archivo Cat rústico. " + e.getMessage());}	
-			}
-			// Anadimos si es posible tags de los Elemtex a las parcelas y construcciones.
-			// Los Elemtex tienen informacion que puede determinar con mas exactitud detalles
-			// de la parcela sobre la que se encuentran.
-			if (archivo.equals("*") && Config.get("ElemtexAConstru").equals("1")){
-				System.out.println("["+new Timestamp(new Date().getTime())+"] Traspasando posibles tags de Elemtex a geometrías sobre las que se sitúa.");
-				shapes = catastro.pasarElemtexLanduseAConstru(shapes);
 			}
 
 			// Simplificamos los ways
@@ -293,23 +301,26 @@ public class Main {
 			Iterator<Shape> iterator = shapes.iterator();
 
 			while(iterator.hasNext()) {
-				Shape shape = iterator.next();
-				if(shape instanceof ShapeParcela){
+			Shape shape = iterator.next();
+			if(shape instanceof ShapeParcela){
 					iterator.remove();
 					for(int x = 0; x < shape.getPoligons().size(); x++)
 						utils.deleteNodes(shape.getNodesIds(x));
 				}
 			}
+		
 			
 			//Escribir los datos
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo nodos");
 			catastro.printNodes( Cat2Osm.utils.getTotalNodes());
+		}
+		else 
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Se han encontrado 3 archivos temporales de una posible ejecución interrumpida, se procederá a juntarlos en un archivo resultado.");
 
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo el archivo resultado");
 			catastro.juntarFiles(Config.get("ResultFileName")+"PORTALES");
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado");
 
-		}
 	}
 
 	

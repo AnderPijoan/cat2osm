@@ -85,52 +85,19 @@ public class Cat2Osm {
 
 		return shapeList;
 	}
-
-
-	/** Los elementos textuales traen informacion sobre que hay en alguna construccion o parcela como pueden ser cementerios,
-	 * hospitales, playas etc. Los registros de catastro traen unos valores de uso de suelo limitados (ya que el codigo de destino
-	 * no se puede saber a que construccion esta ligado directamente) y asi con este metodo puede hacer que cambie su landuse u 
-	 * otros tags. Se calcula si un elemtex se encuentra sobre una constru o parcela y se anaden los tags.
-	 * @param shapes Lista de shapes original
-	 * @return lista de shapes con los tags modificados
+	
+	/** Busca en la lista de shapes los que sean construcciones
+	 * @param shapes lista de shapes
+	 * @return List<Shape> lista de shapes que coinciden  
 	 */
-	@SuppressWarnings("unchecked")
-	public List<Shape> pasarElemtexLanduseAConstru(List<Shape> shapes){
+	private static List<Shape> buscarConstru(List<Shape> shapes){
+		List<Shape> shapeList = new ArrayList<Shape>();
 
-		GeometryFactory factory = new GeometryFactory();
+		for(Shape shape : shapes)
+			if (shape instanceof ShapeConstru)
+				shapeList.add(shape);
 
-		for (Shape shape: shapes){
-
-			// Si le hemos modificado el ttggss para que ahora cambie alguno de los tags
-			if (shape instanceof ShapeElemtex && (shape.getTtggss().startsWith("CONSTRU:") || shape.getTtggss().startsWith("PARCELA:"))){
-
-				for (Shape s: shapes)
-
-					if ((shape.getTtggss().startsWith("CONSTRU:") && s instanceof ShapeConstru) || (shape.getTtggss().startsWith("PARCELA:") && s instanceof ShapeParcela) && s.getPoligons() != null){
-						LinearRing l = factory.createLinearRing(s.getPoligons().get(0).getCoordinates());
-						Polygon parcela = factory.createPolygon(l, null);
-						Point coor = factory.createPoint(shape.getCoor());
-
-						// Si cumple, cambiamos el tag de la relacion
-						if (coor.intersects(parcela)){
-							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), s.getRelationId()));
-
-							// Los tags vienen como "key=value,key=value" almacenados
-							// en el ttggss
-							String[] pares = shape.getTtggss().replace("CONSTRU:", "").replace("PARCELA:", "").split(",");
-							List<String[]> tags = new ArrayList<String[]>();
-
-							for (String par : pares)
-								tags.add(par.split("="));
-
-							r.addTags(tags);
-						}
-					}
-
-				shape.getCoor();
-			}
-		}
-		return shapes;
+		return shapeList;
 	}
 
 
@@ -206,8 +173,7 @@ public class Cat2Osm {
 						}
 					}
 				}
-			}	
-
+			}
 		return shapes;
 	}
 
@@ -251,7 +217,7 @@ public class Cat2Osm {
 				time = System.currentTimeMillis();
 			}
 
-			for (int x = 0; shape.getPoligons() != null && !shape.getPoligons().isEmpty() && x < shape.getPoligons().size(); x++)
+			for (int x = 0; shape != null && shape.getPoligons() != null && !shape.getPoligons().isEmpty() && x < shape.getPoligons().size(); x++)
 
 				for(int y = 0; shape.getWaysIds(x) != null && !shape.getWaysIds(x).isEmpty() && y < shape.getWaysIds(x).size()+1; y++){
 
@@ -291,7 +257,7 @@ public class Cat2Osm {
 									String shapeId = removeWay.getShapes().get(shapeIds);
 
 									for (Shape s : shapes)
-										if (s.getShapeId() == shapeId)
+										if (s != null && s.getShapeId() == shapeId)
 											for (int pos = 0; pos < s.getPoligons().size(); pos++)
 												s.deleteWay(pos,wayId);
 								}
@@ -541,8 +507,6 @@ public class Cat2Osm {
 		BufferedReader bufRdr  = new BufferedReader(new FileReader(cat));
 		String line = null; // Para cada linea leida del archivo .cat
 
-		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
-		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 		int tipoRegistro = Integer.parseInt(Config.get("TipoRegistro"));
 
 		// Lectura del archivo .cat
@@ -551,28 +515,42 @@ public class Cat2Osm {
 			try {
 				Cat c = catLineParser(line);
 
-				if ( c.getFechaAlta() >= fechaDesde && c.getFechaAlta() < fechaHasta && c.getFechaBaja() >= fechaHasta && (c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0)){
+				if ( (c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0)){
 
 					// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
 					List <Shape> matches = buscarRefCat(shapesTotales, c.getRefCatastral());
 
+					switch (c.getTipoRegistro()){
+					
 					// El registro 11 solo se tiene que asignar a parcelas
-					if (c.getTipoRegistro() == 11)
+					case 11:
 						matches = buscarParce(matches);
+						break;
+					
+					// El registro 14 es para cada bien inmueble
+					case 14:
+						matches = buscarConstru(matches);
+						break;
+					
 					// Para los tipos de registro de subparcelas, buscamos la subparcela concreta para
 					// anadirle los atributos
-					if (c.getTipoRegistro() == 17)
+					case 17:
 						matches = buscarSubparce(matches, c.getSubparce());
+						break;
+							
+					}
 
 					// Puede que no haya shapes para esa refCatastral
 					if (matches != null)
 					for (Shape shape : matches)
 						if (shape != (null)){
-							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalRelations()), shape.getRelationId()));
+							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape.getRelationId()));
+							if (r != null)
 							r.addTags(c.getAttributes());
-
+							
+							// Ponemos a la relacion su fecha de construccion
+							r.setFechaConstru(c.getFechaConstru());
 						}
-
 				}
 			}
 			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
@@ -589,7 +567,6 @@ public class Cat2Osm {
 	 * @param t solo sirve para diferenciar del otro metodo
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unchecked")
 	public void catUsosParser(File cat, List<Shape> shapesTotales) throws IOException{
 
 		BufferedReader bufRdr  = new BufferedReader(new FileReader(cat));
@@ -620,7 +597,7 @@ public class Cat2Osm {
 							// Metemos los tags de uso de inmuebles con el numero de inmueble por delante
 							tags.addAll(destinoParser(line.substring(70,73).trim()));
 							for (String[] tag : tags){
-								tag[0] = line.substring(44,48)+ ":" + tag[0].replace("*", "");
+								tag[0] = line.substring(44,48) + ":" + "addr:floor"+line.substring(64,67) + ":" + tag[0].replace("*", "");
 							}
 							
 							// Anadimos la referencia catastral
@@ -634,7 +611,6 @@ public class Cat2Osm {
 			}
 			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
 		}
-		
 	}
 	
 
@@ -651,8 +627,6 @@ public class Cat2Osm {
 
 		List<Cat> l = new ArrayList<Cat>();
 
-		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
-		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 		int tipoRegistro = Integer.parseInt(Config.get("tipoRegistro"));
 
 		while((line = bufRdr.readLine()) != null)
@@ -660,7 +634,7 @@ public class Cat2Osm {
 			Cat c = catLineParser(line);
 			// No todos los tipos de registros de catastro tienen FechaAlta y FechaBaja
 			// Los que no tienen, pasan el filtro
-			if ((c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0) && c.getFechaAlta() >= fechaDesde && c.getFechaAlta() <= fechaHasta && c.getFechaBaja() >= fechaHasta)
+			if ((c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0) )
 				l.add(c);
 		}
 		bufRdr.close();
@@ -668,8 +642,7 @@ public class Cat2Osm {
 	}
 
 
-	/** De la lista de shapes con la misma referencia catastral (deduzco que es la
-	 * misma parcela pero puede haber cambiado algo por obras) devuelve la mas actual
+	/** De la lista de shapes con la misma referencia catastral devuelve la mas actual
 	 * del periodo indicado.
 	 * @param shapes Lista de shapes
 	 * @returns El shape que hay para el periodo indicado porque hay shapes que 
@@ -729,12 +702,6 @@ public class Cat2Osm {
 			 */
 			break;}
 		case 11: {
-
-			// Este tipo no tiene fechaAlta ni fechaBaja
-			// Deben salir todos siempre porque son los datos de las fincas a las que luego
-			// se hace referencia en los demas tipos de registro.
-			c.setFechaAlta(fechaDesde);
-			c.setFechaBaja(fechaHasta);
 
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2)); 
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
@@ -836,8 +803,7 @@ public class Cat2Osm {
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(215,240));
 			c.addAttribute("addr:full",eliminarComillas(line.substring(215,240).trim()));
 			//c.addAttribute("ANO DE CONSTRUCCION (AAAA)",line.substring(295,299));
-			c.setFechaAlta(Long.parseLong(line.substring(295,299)+"0101")); 
-			c.setFechaBaja(fechaHasta);
+			c.setFechaConstru(Long.parseLong(line.substring(295,299)+"0101"));
 			//c.addAttribute("INDICADOR DE EXACTITUD DEL ANO DE CONTRUCCION",line.substring(299,300));
 			//c.addAttribute("SUPERFICIE DE SUELO OCUPADA POR LA UNIDAD CONSTRUCTIVA",line.substring(300,307));
 			c.addAttribute("catastro:surface",eliminarCerosString(line.substring(300,307)));
@@ -869,8 +835,6 @@ public class Cat2Osm {
 			//c.addAttribute("INDICADOR DEL TIPO DE REFORMA O REHABILITACION",line.substring(73,74));
 			//c.addAttribute("ANO DE REFORMA EN CASO DE EXISTIR",line.substring(74,78));
 			//c.addAttribute("ANO DE ANTIGUEDAD EFECTIVA EN CATASTRO",line.substring(78,82)); 
-			c.setFechaAlta(Long.parseLong(line.substring(78,82)+"0101")); 
-			c.setFechaBaja(fechaHasta);
 			//c.addAttribute("INDICADOR DE LOCAL INTERIOR (S/N)",line.substring(82,83));
 			//c.addAttribute("SUPERFICIE TOTAL DEL LOCAL A EFECTOS DE CATASTRO",line.substring(83,90));
 			//c.addAttribute("SUPERFICIA DE PORCHES Y TERRAZAS DEL LOCAL",line.substring(90,97));
@@ -880,7 +844,7 @@ public class Cat2Osm {
 
 			return c;}
 		case 15: {
-
+			
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DEL MUNICIPIO",line.substring(25,28));
@@ -938,8 +902,6 @@ public class Cat2Osm {
 			//c.addAttribute("NOMBRE DEL PARAJE",line.substring(307,337));
 			//c.addAttribute("NUMERO DE ORDEN DEL INMUEBLE EN LA ESCRITURA DE DIVISION HORIZONTAL",line.substring(367,371));
 			//c.addAttribute("ANO DE ANTIGUEDAD DEL BIEN INMUEBLE",line.substring(371,375)); 
-			c.setFechaAlta(Long.parseLong(line.substring(371,375)+"0101")); 
-			c.setFechaBaja(fechaHasta);
 			//c.addAttribute("CLAVE DE GRUPO DE LOS BIENES INMUEBLES DE CARAC ESPECIALES",line.substring(427,428));
 			c.addAttribute(usoInmueblesParser(line.substring(427,428).trim()));
 			//c.addAttribute("SUPERFICIE DEL ELEMENTO O ELEMENTOS CONSTRUCTIVOS ASOCIADOS AL INMUEBLE",line.substring(441,451));
@@ -949,10 +911,6 @@ public class Cat2Osm {
 
 			return c;}
 		case 16: {
-
-			// Este tipo no tiene fechaAlta ni fechaBaja
-			c.setFechaAlta(fechaDesde); 
-			c.setFechaBaja(fechaHasta);
 
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
@@ -966,10 +924,6 @@ public class Cat2Osm {
 
 			return c;}
 		case 17: {
-
-			// Este tipo no tiene fechaAlta ni fechaBaja
-			c.setFechaAlta(fechaDesde); 
-			c.setFechaBaja(fechaHasta);
 
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
@@ -1052,8 +1006,8 @@ public class Cat2Osm {
 	public static String nombreTipoViaParser(String codigo){
 
 		switch(codigo){
-		case "CL": return "Calle";
-		case "AL": return "Aldea/Alameda";
+		case "CL":return "Calle";
+		case "AL":return "Aldea/Alameda";
 		case "AR":return "Area/Arrabal";
 		case "AU":return "Autopista";
 		case "AV":return "Avenida";
@@ -1133,7 +1087,10 @@ public class Cat2Osm {
 	}
 
 
-	/** Traduce el codigo de uso de inmueble que traen los .cat a sus tags en OSM
+	/** Traduce el codigo de uso de inmueble que traen los registros 15 .cat a sus tags en OSM
+	 * Estos registros son para cada unidad constructiva dentro de la misma parcela. Estas unidades
+	 * todas tienen la misma refCat por lo que no se puede saber con precision a cual pertenece. 
+	 * Es por eso que cogemos solamente los tags mas representativos.
 	 * Como los cat se leen despues de los shapefiles, hay tags que los shapefiles traen
 	 * mas concretos, que esto los machacaria. Es por eso que si al tag le ponemos un '*'
 	 * por delante cuando son tipos genericos sin especificaciones,
@@ -1150,8 +1107,6 @@ public class Cat2Osm {
 
 		case "A":
 		case "B":
-			s[0] = "*landuse"; s[1] ="farmyard";
-			l.add(s);
 			return l;
 
 		case "C":
