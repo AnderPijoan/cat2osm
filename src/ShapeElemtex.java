@@ -90,13 +90,9 @@ public class ShapeElemtex extends Shape {
 		s[0] = "source"; s[1] = "catastro";
 		tags.add(s);
 
-		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
-		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
-		if (m.find()) {
-			s = new String[2];
-			s[0] = "source:date"; s[1] = m.group();
-			tags.add(s);
-		}
+		s = new String[2];
+		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
+		tags.add(s);
 
 		return tags;
 	}

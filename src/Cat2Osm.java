@@ -12,17 +12,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import org.geotools.geometry.jts.JTSFactoryFinder;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.index.SpatialIndex;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.linearref.LinearLocation;
@@ -39,6 +36,7 @@ public class Cat2Osm {
 	 */
 	public Cat2Osm (Cat2OsmUtils utils){
 		Cat2Osm.utils = utils;
+		
 	}
 
 
@@ -605,7 +603,10 @@ public class Cat2Osm {
 							
 							// Creamos el nodo en la lista de nodos de utils, pero no se lo anadimos al shape sino luego 
 							// lo borraria ya que eliminamos todos los nodos que sean de geometrias de shape
-							utils.getNodeId(new Coordinate(geom.getCentroid().getX(),geom.getCentroid().getY()), tags);
+							// Ademas a las coordenadas del nodo les sumamos un pequeno valor en funcion del numero de inmueble
+							// para que cree nodos distintos en el mismo punto. De ser la misma coordenada reutilizaria el nodo
+							float r = (float) (Integer.parseInt(line.substring(44,48))*0.0000002);
+							utils.getNodeId(new Coordinate(geom.getCentroid().getX()+r,geom.getCentroid().getY()), tags);
 						}
 				}
 			}
@@ -673,9 +674,6 @@ public class Cat2Osm {
 	 * @see http://www.catastro.meh.es/pdf/formatos_intercambio/catastro_fin_cat_2006.pdf
 	 */
 	private static Cat catLineParser(String line) throws IOException{
-
-		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
-		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 
 		Cat c = null;
 

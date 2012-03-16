@@ -59,12 +59,12 @@ FechaHasta=99999999
 # Si se quiere delimitar una fecha desde la cual coger los datos segun su ano de construccion (Formato AAAAMMDD)
 # Tomara los shapes que se han construido a partir de esa fecha
 # Ejemeplo: FechaDesde=20050101
-FechaConstruDesde=20010101
+FechaConstruDesde=0
 
 # Si se quiere delimitar una fecha hasta la cual coger los datos segun su ano de construccion (Formato AAAAMMDD)
 # Tomara los shapes que se han construido hasta esta fecha
 # Ejemeplo: FechaHasta=20060101
-FechaConstruHasta=20020101
+FechaConstruHasta=99999999
 
 # Tipo de Registro de catastro a usar (0 = todos)
 # Los registros de catastro tienen la mayoría de la información necesaria para los shapefiles.

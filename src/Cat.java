@@ -8,7 +8,7 @@ public class Cat {
 	String subparce; // Codigo Subparcela
 	int numOrdenConstru; // Numero de orden de construccion
 	List<String[]> atributos;
-	long fechaConstru = Long.MAX_VALUE; // Fecha de construccion AAAAMMDD
+	long fechaConstru = Cat2OsmUtils.getFechaActual(); // Fecha de construccion AAAAMMDD
 	// Empieza en el valor maximo y se reduce a la menor fecha de construccion de los inmuebles
 	// de la parcela
 

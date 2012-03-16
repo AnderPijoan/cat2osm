@@ -40,7 +40,7 @@ public class Gui extends JFrame {
 
 
 		JPanel labels = new JPanel();
-		labels.setLayout(new GridLayout(13,1));
+		labels.setLayout(new GridLayout(15,1));
 
 		String[] labelsText = {"Carpeta donde se exportarán los archivos temporales y el resultado.\n(Tiene que tener privilegios lectura/escritura).",
 				"Nombre del archivo que exportará Cat2Osm como resultado.",
@@ -59,13 +59,15 @@ public class Gui extends JFrame {
 						"\n25830 para ETRS_1989/ Zona UTM 30N,"+
 						"\n25831 para ETRS_1989/ Zona UTM 31N"+
 						"\n(Se puede comprobar abriendo con un editor de texto cualquiera de los archivos .PRJ)",
-				"Si se quiere delimitar una fecha desde la cual coger los datos de catastro (Formato AAAAMMDD).\nTomará los datos que se han dado de alta a partir de esta fecha.\nEjemeplo: 20060127 (27 de Enero del 2006)",
-				"Si se quiere delimitar una fecha hasta la cual coger los datos (Formato AAAAMMDD).\nTomará los shapes que se han dado de alta hasta esta fecha y siguen sin darse de baja después.\nEjemeplo: 20060127 (27 de Enero del 2006)", 
+				"Si se quiere delimitar una fecha de alta de los datos (Formato AAAAMMDD).\nTomará los datos que se han dado de alta a partir de esta fecha.\nEjemeplo: 20060127 (27 de Enero del 2006)",
+				"Si se quiere delimitar una fecha de baja de los datos (Formato AAAAMMDD).\nTomará los shapes que se han dado de alta hasta esta fecha y siguen sin darse de baja después.\nEjemeplo: 20060127 (27 de Enero del 2006)", 
+				"Si se quiere delimitar una fecha de construcción desde la cual coger los datos (Formato AAAAMMDD).\nÚnicamente imprimirá las relations que cumplan estar entre las fechas de construcción.\nEjemeplo: 20060127 (27 de Enero del 2006)",
+				"Si se quiere delimitar una fecha de construcción hasta la cual coger los datos (Formato AAAAMMDD).\nÚnicamente imprimirá las relations que cumplan estar entre las fechas de construcción.\nEjemeplo: 20060127 (27 de Enero del 2006)", 
 				"Tipo de Registro de catastro a usar (0 = todos).\nLos registros de catastro tienen la mayoría de la información necesaria para los shapefiles.",
 				"Imprimir tanto en las vías como en las relaciones la lista de shapes que las componen o las utilizan.\nEs para casos de debugging si se quiere tener los detalles."};
 
 		JPanel buttons = new JPanel();
-		buttons.setLayout(new GridLayout(13,1));
+		buttons.setLayout(new GridLayout(15,1));
 
 
 		JButton resultPath, urbanoShpPath, rusticoShpPath, urbanoCatFile, rusticoCatFile, rejillaFile = null;
@@ -92,6 +94,8 @@ public class Gui extends JFrame {
 
 		final JTextField fdesde = new JTextField("00000000");
 		final JTextField fhasta= new JTextField("99999999");
+		final JTextField fconstrudesde = new JTextField("00000000");
+		final JTextField fconstruhasta= new JTextField("99999999");
 
 		final JComboBox<String> tipoReg = new JComboBox<String>();
 		final JComboBox<String> shapesId = new JComboBox<String>();
@@ -192,6 +196,15 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 11:{
+				buttons.add(fconstrudesde);
+				break;
+			}
+			case 12:{
+				new JTextField("99999999");
+				buttons.add(fconstruhasta);
+				break;
+			}
+			case 13:{
 				tipoReg.addItem("0");
 				tipoReg.addItem("11");
 				tipoReg.addItem("13");
@@ -203,7 +216,7 @@ public class Gui extends JFrame {
 				buttons.add(tipoReg);
 				break;
 			}
-			case 12:{
+			case 14:{
 				shapesId.addItem("NO");
 				shapesId.addItem("SI");
 				shapesId.setBackground(new Color(255,255,255));
@@ -305,6 +318,8 @@ public class Gui extends JFrame {
 					out.write("\nProyeccion="+proj.getSelectedItem());
 					out.write("\nFechaDesde="+fdesde.getText());
 					out.write("\nFechaHasta="+fhasta.getText());
+					out.write("\nFechaConstruDesde="+fconstrudesde.getText());
+					out.write("\nFechaConstruHasta="+fconstruhasta.getText());
 					out.write("\nTipoRegistro="+tipoReg.getSelectedItem());
 					out.write("\nShapesId="+shapesId.getSelectedIndex());
 

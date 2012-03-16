@@ -18,10 +18,10 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
 
-		if ((args.length == 1 && args[0].equals("-v")) || (args.length == 2 && args[0].equals("-v"))){
-			System.out.println("Cat2Osm versión 2012-03-09.");
+		if ((args.length == 1 && args[0].equals("-v")) || (args.length == 2 && (args[1].equals("-v") || args[0].equals("-v") ))){
+			System.out.println("Cat2Osm versión 2012-03-16.");
 		}
-		else if ((args.length == 1 && args[0].equals("-ui")) || (args.length == 2 && args[0].equals("-ui"))){
+		else if ((args.length == 1 && args[0].equals("-ui")) || (args.length == 2 && (args[1].equals("-ui") || args[0].equals("-ui") ))){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando interfaz visual para crear el archivo de configuración.");
 			// Iniciar el interfaz visual
 			new Gui();
@@ -64,7 +64,7 @@ public class Main {
 			crearUsos();
 		}
 		else {
-			System.out.println("Cat2Osm versión 2012-03-09.\n");
+			System.out.println("Cat2Osm versión 2012-03-16.\n");
 			System.out.println("Forma de uso:");
 			System.out.println("java -jar [-XmxMemoria] cat2osm.jar [Opción] / [RutaArchivoConfig] [NombreArchivo]\n");
 			System.out.println("Es necesrio indicarle una opción y pasarle el archivo de configuración:");
@@ -97,6 +97,17 @@ public class Main {
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
+		
+		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
+		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
+		
+		if (m.find()) {
+			Cat2OsmUtils.setFechaActual(Long.parseLong(m.group().substring(0, 4)+"0101"));
+		}
+		else{
+			System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Urbano debe tener el formato de nombre que viene por defecto en Catastro. El nombre debe traer la fecha de creación y en este no se ha encontrado.");
+			System.exit(-1);
+		}
 
 		if (!new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm").exists()
 				&& !new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm").exists()
@@ -175,29 +186,13 @@ public class Main {
 			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 				try {
 					System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo archivo Cat urbano.");
-					
-					Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
-					Matcher m = p.matcher(Config.get("UrbanoCATFile"));
-					if (m.find()) {
-						catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
-					}
-					else
-						System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Urbano debe tener el formato de nombre que viene por defecto en Catastro. El nombre debe traer la fecha de creación y en este no se ha encontrado.");
-					
+					catastro.catParser(new File(Config.get("UrbanoCATFile")), shapes);
 				}catch(Exception e)
 				{System.out.println("["+new Timestamp(new Date().getTime())+"] Fallo al leer archivo Cat urbano. " + e.getMessage());}
 
 				try {
 					System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo archivo Cat rústico.");
-					
-					Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
-					Matcher m = p.matcher(Config.get("RusticoCATFile"));
-					if (m.find()) {
-						catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
-					}
-					else
-						System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Rústico debe tener el formato de nombre que viene por defecto en Catastro. El nombre debe traer la fecha de creación y en este no se ha encontrado.");
-				
+					catastro.catParser(new File(Config.get("RusticoCATFile")), shapes);
 				}catch(Exception e)
 				{System.out.println("["+new Timestamp(new Date().getTime())+"] Fallo al leer archivo Cat rústico. " + e.getMessage());}	
 			}
@@ -239,6 +234,17 @@ public class Main {
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 		Cat2Osm.utils.setModoPortales(true);
+		
+		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
+		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
+		
+		if (m.find()) {
+			Cat2OsmUtils.setFechaActual(Long.parseLong(m.group().substring(0, 4)+"0101"));
+		}
+		else{
+			System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Urbano debe tener el formato de nombre que viene por defecto en Catastro. El nombre debe traer la fecha de creación y en este no se ha encontrado.");
+			System.exit(-1);
+		}
 
 		if (!new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm").exists()
 				&& !new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm").exists()
@@ -330,6 +336,17 @@ public class Main {
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 		utils.setModoUsos(true);
+		
+		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
+		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
+		
+		if (m.find()) {
+			Cat2OsmUtils.setFechaActual(Long.parseLong(m.group().substring(0, 4)+"0101"));
+		}
+		else{
+			System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Urbano debe tener el formato de nombre que viene por defecto en Catastro. El nombre debe traer la fecha de creación y en este no se ha encontrado.");
+			System.exit(-1);
+		}
 
 		if (!new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm").exists()
 				&& !new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm").exists()

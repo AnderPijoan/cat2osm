@@ -6,9 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 public class RelationOsm {
 
@@ -17,7 +15,7 @@ public class RelationOsm {
 	private List <String> roles; // Roles de los members
 	private String refCatastral; // Referencia catastral para manejar las relaciones de relaciones
 	private List<String[]> tags;
-	private long fechaConstru = 0; // Fecha de construccion AAAAMMDD
+	private long fechaConstru = Cat2OsmUtils.getFechaActual(); // Fecha de construccion de la parcela que representa AAAAMMDD
 
 
 	public RelationOsm(List <Long> ids, List<String> types, List<String> roles){
@@ -25,15 +23,6 @@ public class RelationOsm {
 		this.types = types;
 		this.roles = roles;
 		tags = new ArrayList<String[]>();
-		
-		// Iniciamos la fechaConstru con la fecha del archivo .cat
-		// Luego a medida que se lean los registros se ira actualizando hasta llegar a la real
-		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
-		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
-		if (m.find()) {
-			fechaConstru = Long.parseLong(m.group().substring(0, 4)+"0101");
-		}
-		
 	}
 
 

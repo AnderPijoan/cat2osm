@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.vividsolutions.jts.algorithm.LineIntersector;
 import com.vividsolutions.jts.algorithm.RobustLineIntersector;
@@ -15,6 +17,10 @@ public class Cat2OsmUtils {
 	private volatile static long idnode = -1;    // Comienzo de id de nodos
 	private volatile static long idway = -1;     // Comienzo de id de ways
 	private volatile static long idrelation = -1; // Comienzo de id de relations
+	
+	// Fecha actual, leida del archivo .cat
+	private static long fechaActual;
+	
 	// Lista de nodos (para evitar repetidos)
 	private final ConcurrentHashMap <NodeOsm, Long> totalNodes = new ConcurrentHashMap <NodeOsm, Long>();
 	// Listaa de ways (para manejar los que se comparten)
@@ -297,5 +303,13 @@ public class Cat2OsmUtils {
 	        }
 	        return false;
 	    }
+
+	public static long getFechaActual() {
+		return fechaActual;
+	}
+
+	public static void setFechaActual(long fechaActual) {
+		Cat2OsmUtils.fechaActual = fechaActual;
+	}
 	
 }

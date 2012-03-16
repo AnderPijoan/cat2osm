@@ -215,13 +215,9 @@ public class ShapeSubparce extends Shape {
 		s[0] = "source"; s[1] = "catastro";
 		l.add(s);
 
-		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
-		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
-		if (m.find()) {
-			s = new String[2];
-			s[0] = "source:date"; s[1] = m.group();
-			l.add(s);
-		}
+		s = new String[2];
+		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
+		l.add(s);
 
 		return l;
 	}

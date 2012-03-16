@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class WayOsm {
@@ -12,8 +14,7 @@ public class WayOsm {
 	// Esta clase no tiene tags porque al leer los shapefiles, se parte la geometria en el
 	// numero maximo posible de ways de dos nodos. Los tags de esa geometria se almacenan en una relacion
 	// que estara compuesta por los ways que hemos partido y a la hora de imprimir si se ve que una 
-	// relacion solo tiene un mienbro, entonces esa relacion se imprime como way. 
-	
+	// relacion solo tiene un mienbro, entonces esa relacion se imprime como way.
 	
 	public WayOsm(List<Long> l){
 		if (l == null)
@@ -115,8 +116,6 @@ public class WayOsm {
 		long result = 17;
 		for (long l : sortNodes())
 			result = result * prime +  (int) (l^(l>>>32));
-		
-//		result = prime * result + ((sortNodos() == null) ? 0 :sortNodos().hashCode());
 		
 		return (int)result;
 	}
