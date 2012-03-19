@@ -1,3 +1,4 @@
+import java.io.UnsupportedEncodingException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,18 +46,23 @@ public class ShapeElemtex extends Shape {
 		// Los demas atributos son metadatos y de ellos sacamos 
 		ttggss = (String) f.getAttribute("TTGGSS");
 
-		rotulo = eliminarComillas((String) f.getAttribute("ROTULO"));
-
+//		try {
+//			rotulo = new String(f.getAttribute("ROTULO").toString().getBytes(), "UTF-8");
+//			rotulo = eliminarComillas(rotulo);			
+//		} catch (UnsupportedEncodingException e) {e.printStackTrace();}
+		
+		rotulo = eliminarComillas(f.getAttribute("ROTULO").toString());
+ 
 		// Dependiendo del ttggss se usa o no
 		if (ttggss != null){
 			tags.addAll(ttggssParser(ttggss));
 		}
 
 		// Si queremos coger todos los atributos del .shp
-		/*this.atributos = new ArrayList<ShapeAttribute>();
-		for (int x = 1; x < f.getAttributes().size(); x++){
-		atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
-		}*/
+//		this.atributos = new ArrayList<ShapeAttribute>();
+//		for (int x = 1; x < f.getAttributes().size(); x++){	
+//			atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
+//		}
 
 	}
 
@@ -186,42 +192,35 @@ public class ShapeElemtex extends Shape {
 	public List<String[]> ttggssParser(String ttggss){
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
-
-		if (ttggss.equals("189203") && rotulo.length()>2){ 
+		
+		if (rotulo != null && ttggss.equals("189203") && rotulo.length()>2){ 
 			s[0] = "place"; s[1] ="locality";
 			l.add(s);
-			if (rotulo != null){
-				s = new String[2];
-				s[0] = "name"; s[1] = rotulo;
-				l.add(s);
-			}
+			s = new String[2];
+			s[0] = "name"; s[1] = rotulo;
+			l.add(s);
+			
 			return l;}
 
-		else if (ttggss.equals("189300") && rotulo.length()>2){ 
-			if (rotulo != null){
+		else if (rotulo != null && ttggss.equals("189300") && rotulo.length()>2){ 
 				s = new String[2];
 				s[0] = "name"; s[1] = rotulo;
 				l.add(s);
-			}
 			return l;}
 
-		else if (ttggss.equals("189700") && rotulo.length()>2){ 
-			if (rotulo != null){
-				s = new String[2];
-				s[0] = "name"; s[1] = rotulo;
-				l.add(s);
-			}
+		else if (rotulo != null && ttggss.equals("189700") && rotulo.length()>2){ 
+			s = new String[2];
+			s[0] = "name"; s[1] = rotulo;
+			l.add(s);
 			return l;}
 		
-		else if (ttggss.equals("189401")){ 
-			if (rotulo != null){
-				s = new String[2];
-				s[0] = "entrance"; s[1] = "yes";
-				l.add(s);
-				s = new String[2];
-				s[0] = "addr:housenumber"; s[1] = rotulo;
-				l.add(s);
-			}
+		else if (rotulo != null && ttggss.equals("189401")){ 
+			s = new String[2];
+			s[0] = "entrance"; s[1] = "yes";
+			l.add(s);
+			s = new String[2];
+			s[0] = "addr:housenumber"; s[1] = rotulo;
+			l.add(s);
 			return l;}
 		
 		else {

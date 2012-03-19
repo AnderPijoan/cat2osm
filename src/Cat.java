@@ -8,6 +8,8 @@ public class Cat {
 	String subparce; // Codigo Subparcela
 	int numOrdenConstru; // Numero de orden de construccion
 	List<String[]> atributos;
+	String usoDestino; // Codigo de uso o destino para los registros 14 y 15
+	Double area; // Area
 	long fechaConstru = Cat2OsmUtils.getFechaActual(); // Fecha de construccion AAAAMMDD
 	// Empieza en el valor maximo y se reduce a la menor fecha de construccion de los inmuebles
 	// de la parcela
@@ -89,5 +91,25 @@ public class Cat {
 	
 	public List<String[]> getAttributes(){
 		return atributos;
+	}
+	
+	
+	public String getUsoDestino() {
+		return usoDestino;
+	}
+	
+	
+	public void setUsoDestino(String usoDestino) {
+		this.usoDestino = usoDestino;
+	}
+
+
+	public Double getArea() {
+		return area;
+	}
+
+
+	public void setArea(Double area) {
+		this.area = area;
 	}
 }

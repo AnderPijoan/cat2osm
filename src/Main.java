@@ -19,7 +19,7 @@ public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException {
 
 		if ((args.length == 1 && args[0].equals("-v")) || (args.length == 2 && (args[1].equals("-v") || args[0].equals("-v") ))){
-			System.out.println("Cat2Osm versión 2012-03-16.");
+			System.out.println("Cat2Osm versión 2012-03-19.");
 		}
 		else if ((args.length == 1 && args[0].equals("-ui")) || (args.length == 2 && (args[1].equals("-ui") || args[0].equals("-ui") ))){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando interfaz visual para crear el archivo de configuración.");
@@ -64,7 +64,7 @@ public class Main {
 			crearUsos();
 		}
 		else {
-			System.out.println("Cat2Osm versión 2012-03-16.\n");
+			System.out.println("Cat2Osm versión 2012-03-19.\n");
 			System.out.println("Forma de uso:");
 			System.out.println("java -jar [-XmxMemoria] cat2osm.jar [Opción] / [RutaArchivoConfig] [NombreArchivo]\n");
 			System.out.println("Es necesrio indicarle una opción y pasarle el archivo de configuración:");
@@ -98,6 +98,16 @@ public class Main {
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 		
+		// Nos aseguramos de que existe la carpeta result
+		File dir = new File(Config.get("ResultPath"));
+		if (!dir.exists()) 
+		{
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Creando el directorio donde almacenar el resultado ("+Config.get("ResultParh")+").");
+			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
+		
+		
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
 		
@@ -117,7 +127,6 @@ public class Main {
 			// Listas
 			List<Shape> shapes = new ArrayList<Shape>();
 			List<ShapeParser> parsers = new ArrayList<ShapeParser>();
-
 
 			// Recorrer los directorios Urbanos
 			File dirU = new File (Config.get("UrbanoSHPPath"));
@@ -197,6 +206,10 @@ public class Main {
 				{System.out.println("["+new Timestamp(new Date().getTime())+"] Fallo al leer archivo Cat rústico. " + e.getMessage());}	
 			}
 
+			// Calculando los usos / destinos de las parcelas en funcion del que mas area tiene
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Calculando usos de las parcelas.");
+			shapes = catastro.calcularUsos(shapes);
+			
 			// Simplificamos los ways
 			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("EJES") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Simplificando vias.");

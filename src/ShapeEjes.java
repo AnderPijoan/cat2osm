@@ -7,8 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -44,7 +42,7 @@ public class ShapeEjes extends Shape {
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
 
 			MultiLineString l = (MultiLineString) f.getDefaultGeometry();
-			line = new LineString(l.getCoordinates(),null , 0);
+			line = new LineString(l.getCoordinates(),null,0);
 
 		}
 		else {
@@ -89,15 +87,12 @@ public class ShapeEjes extends Shape {
 		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		l.add(s);
 		
-		// Partimos el TipoVia y NombreVia
+		// Via trae el tipo (substring de 0 a 2) y el nombre (substring de 3 en adelante)
+		// Se parsea el tipo para traducirlo al nombre del tipo y para sacar tags extra
 		List<String[]> tags = null;
 		if (via != null){
 			s = new String[2];
-			s[0] = "short_name"; s[1] = via.substring(3).toString();
-			l.add(s);
-			
-			s = new String[2];
-			s[0] = "name:type"; s[1] = nombreTipoViaParser(via.substring(0, 2));
+			s[0] = "name"; s[1] = nombreTipoViaParser(via.substring(0, 2)) +" "+ formatearNombreCalle(via.substring(3));
 			l.add(s);
 			
 			// En funcion del tipo de via, meter tags que la describan
@@ -107,11 +102,6 @@ public class ShapeEjes extends Shape {
 		
 		if (tags != null)
 			l.addAll(tags);
-		
-		// TODO
-		s = new String[2];
-		s[0] = "type"; s[1] = "route";
-		l.add(s);
 		
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";
@@ -235,8 +225,6 @@ public class ShapeEjes extends Shape {
 		return l;
 		
 		case "CR":
-			s[0] = "highway"; s[1] = "trunk";
-			l.add(s);
 		return l;
 		
 		case "ES":
@@ -275,16 +263,9 @@ public class ShapeEjes extends Shape {
 		return l;
 		
 		case "PZ":
-			s[0] = "highway"; s[1] = "pedestrian";
-			l.add(s);
-			s = new String[2];
-			s[0] = "area"; s[1] = "yes";
-			l.add(s);
 		return l;
 		
 		case "RD":
-			s[0] = "highway"; s[1] = "trunk";
-			l.add(s);
 		return l;
 		
 		case "RU":
@@ -344,22 +325,30 @@ public class ShapeEjes extends Shape {
 		inputStream = new FileInputStream(Config.get("RusticoSHPPath") + "/CARVIA/Carvia.DBF");
 		DBFReader reader = new DBFReader(inputStream);
 		
+		int indiceVia = 0;
+		int indiceDenomina = 0;
+		for (int i = 0; i < reader.getFieldCount(); i++)
+		{
+			if (reader.getField(i).getName().equals("VIA"))      indiceVia = i;
+			if (reader.getField(i).getName().equals("DENOMINA")) indiceDenomina = i;
+		}
+		
 		Object[] rowObjects;
 
 		while((rowObjects = reader.nextRecord()) != null) {
-
-			// La posicion 2 es el codigo de via
-			// La posicion 3 es la denominacion de via
-			if (rowObjects[2] instanceof Double){
-				double v = (Double) rowObjects[2];
-				ejesNames.put((long) v, (String) rowObjects[3]);
+			
+			// La posicion indiceVia es el codigo de via
+			// La posicion indiceDenomina es la denominacion de via
+			if (rowObjects[indiceVia] instanceof Double){
+				double v = (Double) rowObjects[indiceVia];
+				ejesNames.put((long) v, (String) rowObjects[indiceDenomina]);
 			}
-			else if (rowObjects[2] instanceof Long){
-				ejesNames.put((Long) rowObjects[2], (String) rowObjects[3]);
+			else if (rowObjects[indiceVia] instanceof Long){
+				ejesNames.put((Long) rowObjects[indiceVia], (String) rowObjects[indiceDenomina]);
 			}
-			else if (rowObjects[2] instanceof Integer){
-				int v = (Integer) rowObjects[2];
-				ejesNames.put((long) v, (String) rowObjects[3]);
+			else if (rowObjects[indiceVia] instanceof Integer){
+				int v = (Integer) rowObjects[indiceVia];
+				ejesNames.put((long) v, (String) rowObjects[indiceDenomina]);
 			}
 		}
 	}  
@@ -372,6 +361,30 @@ public class ShapeEjes extends Shape {
 	 */
 	public String getVia(long v){
 			return ejesNames.get(v);
-	} 
+	}
+	
+	
+	/** Pasa todo el nombre de la calle a minusculas y luego va poniendo en mayusculas las primeras
+	 * letras de todas las palabras a menos que sean DE|DEL|EL|LA|LOS|LAS
+	 * @param s El nombre de la calle
+	 * @return String con el nombre de la calle pasando los articulos a minusculas.
+	 */
+	public static String formatearNombreCalle(String c){
+
+		String[] l = c.toLowerCase().split(" ");
+		String ret = "";
+
+		for (String s : l){
+			if (!s.isEmpty() && !s.equals("de") && !s.equals("del") && !s.equals("la") && !s.equals("las") && !s.equals("el") && !s.equals("los")){
+				char mayus = Character.toUpperCase(s.charAt(0));
+				ret += mayus + s.substring(1, s.length())+" ";
+			}
+			else
+				ret += s+" ";
+		}
+
+		return ret.trim();
+	}
+	
 	
 }

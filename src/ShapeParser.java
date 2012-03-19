@@ -4,14 +4,23 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.activation.FileDataSource;
+
+import jj2000.j2k.codestream.HeaderInfo.SOT;
+
 import org.geotools.data.FeatureReader;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.util.CharsetConverterFactory;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -38,11 +47,11 @@ public class ShapeParser extends Thread{
 	public void run () {
 		
 		try {
-			
 		FileDataStore store = FileDataStoreFinder.getDataStore(file);
+		//ShapefileDataStore store = new ShapefileDataStore(file.toURL(),true,Charset.forName("ISO-8859-15"));
 		FeatureReader<SimpleFeatureType, SimpleFeature> reader = 
-			store.getFeatureReader();
-		
+			 ((FileDataStore) store).getFeatureReader();
+			
 		long fechaDesde = Long.parseLong(Config.get("FechaDesde"));
 		long fechaHasta = Long.parseLong(Config.get("FechaHasta"));
 		
@@ -50,7 +59,7 @@ public class ShapeParser extends Thread{
 		if (file.getName().toUpperCase().equals(tipo+"MASA.SHP"))
 
 			// Shapes del archivo MASA.SHP
-			while (reader.hasNext()) {
+			while (reader.hasNext()) {		
 				Shape shape = new ShapeMasa(reader.next(), tipo);
 
 				// Si cumple estar entre las fechas

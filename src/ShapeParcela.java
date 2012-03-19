@@ -1,9 +1,11 @@
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -16,12 +18,15 @@ import com.vividsolutions.jts.geom.Polygon;
 public class ShapeParcela extends Shape {
 	
 	private String shapeId = null; // Id del shape PARCELA+long
-	private List<LineString> poligons; //[0] Outer, [1..N] inner
-	private List<List<Long>> nodes; //[0] Outer, [1..N] inner
-	private List<List<Long>> ways; //[0] Outer, [1..N] inner
+	private List<LineString> poligons; // [0] Outer, [1..N] inner
+	private List<List<Long>> nodes; // [0] Outer, [1..N] inner
+	private List<List<Long>> ways; // [0] Outer, [1..N] inner
 	private Long relation; // Relacion de sus ways
 	private String refCatastral; // Referencia catastral
 	private List<ShapeAttribute> atributos;
+	
+	private HashMap<String,Double> usos; // Para definir cual de todos los usos y destinos asignar,
+	// se ha llegado a la conclusion de asignar el que mas area tenga
 
 
 	/** Constructor
@@ -198,6 +203,49 @@ public class ShapeParcela extends Shape {
 	
 	public boolean shapeValido (){
 		return true;
+	}
+
+
+	public HashMap<String,Double> getUsos() {
+		return usos;
+	}
+
+
+	public void setUsos(HashMap<String,Double> usos) {
+		this.usos = usos;
+	}
+	
+	public void addUso(String cod, double area){
+		if (usos == null)
+			usos = new HashMap <String, Double>();
+		
+		if (usos.get(cod) == null)
+			usos.put(cod, area);
+		else{
+			double a = usos.get(cod);
+			a += area;
+			usos.put(cod, a);
+		}
+	}
+	
+	public String getUsoMasArea(){
+		
+		if (usos == null)
+			return "";
+		
+		String uso = "";
+		double area = 0;
+		Iterator<Entry<String, Double>> it = usos.entrySet().iterator();
+
+		// Escribimos todos los nodos
+		while(it.hasNext()){
+			Map.Entry e = (Map.Entry)it.next();
+			if ((Double)e.getValue() > area){
+				area = (Double)e.getValue();
+				uso = (String)e.getKey();
+			}
+		}
+		return uso;
 	}
 	
 }

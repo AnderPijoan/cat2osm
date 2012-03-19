@@ -1,9 +1,11 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -12,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import org.geotools.geometry.jts.JTSFactoryFinder;
 
@@ -79,20 +80,6 @@ public class Cat2Osm {
 
 		for(Shape shape : shapes) 
 			if (shape instanceof ShapeParcela)
-				shapeList.add(shape);
-
-		return shapeList;
-	}
-	
-	/** Busca en la lista de shapes los que sean construcciones
-	 * @param shapes lista de shapes
-	 * @return List<Shape> lista de shapes que coinciden  
-	 */
-	private static List<Shape> buscarConstru(List<Shape> shapes){
-		List<Shape> shapeList = new ArrayList<Shape>();
-
-		for(Shape shape : shapes)
-			if (shape instanceof ShapeConstru)
 				shapeList.add(shape);
 
 		return shapeList;
@@ -175,6 +162,24 @@ public class Cat2Osm {
 		return shapes;
 	}
 
+	/** Recorre todos los shapes despues de haber leido todos los usos del .CAT
+	 * En las shapes de parcela se han almacenado los usos/destinos y sus areas y se cogera
+	 * el que mas area tenga
+	 * @param shapes
+	 * @return
+	 */
+	public List<Shape> calcularUsos(List<Shape> shapes){
+		
+		for (Shape shape : shapes)
+			if (shape != (null) && shape instanceof ShapeParcela){
+					RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape.getRelationId()));
+					if (r != null)
+					r.addTags(destinoParser(((ShapeParcela)shape).getUsoMasArea()));
+			}
+		return shapes;
+	}
+	
+	
 
 	/** Los ways inicialmente estan divididos lo maximo posible, es decir un way por cada
 	 * dos nodes. Este metodo compara los tags de los ways para saber que ways se pueden
@@ -501,8 +506,9 @@ public class Cat2Osm {
 	 */
 	@SuppressWarnings("unchecked")
 	public void catParser(File cat, List<Shape> shapesTotales) throws IOException{
-
-		BufferedReader bufRdr  = new BufferedReader(new FileReader(cat));
+		
+		BufferedReader bufRdr = 
+				new BufferedReader(new InputStreamReader(new FileInputStream(cat), "ISO-8859-15"));
 		String line = null; // Para cada linea leida del archivo .cat
 
 		int tipoRegistro = Integer.parseInt(Config.get("TipoRegistro"));
@@ -512,12 +518,13 @@ public class Cat2Osm {
 		{
 			try {
 				Cat c = catLineParser(line);
-
+				
 				if ( (c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0)){
 
 					// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
 					List <Shape> matches = buscarRefCat(shapesTotales, c.getRefCatastral());
 
+					if (matches != null)
 					switch (c.getTipoRegistro()){
 					
 					// El registro 11 solo se tiene que asignar a parcelas
@@ -525,9 +532,24 @@ public class Cat2Osm {
 						matches = buscarParce(matches);
 						break;
 					
-					// El registro 14 es para cada bien inmueble
+					// El registro 15 es para bienes inmuebles pero como no hay forma de relacionarlo
+					// se ha hecho que la parcela acumule todos los destinos y al final elija el que mas
+					// area tiene. Ese dato solo se almacena en el shape, luego habra que llamar al metodo
+					// que calcule los destinos para pasarlos a las relaciones.
 					case 14:
-						matches = buscarConstru(matches);
+						matches = buscarParce(matches);
+						for (Shape match : matches)
+								((ShapeParcela) match).addUso(c.getUsoDestino(), c.getArea());
+						break;
+						
+					// El registro 15 es para bienes inmuebles pero como no hay forma de relacionarlo
+					// se ha hecho que la parcela acumule todos los destinos y al final elija el que mas
+					// area tiene. Ese dato solo se almacena en el shape, luego habra que llamar al metodo
+					// que calcule los destinos para pasarlos a las relaciones.
+					case 15:
+						matches = buscarParce(matches);
+						for (Shape match : matches)
+								((ShapeParcela) match).addUso(c.getUsoDestino(), c.getArea());
 						break;
 					
 					// Para los tipos de registro de subparcelas, buscamos la subparcela concreta para
@@ -809,6 +831,7 @@ public class Cat2Osm {
 			//c.addAttribute("CODIGO DE UNIDAD CONSTRUCTIVA MATRIZ",line.substring(409,413));
 
 			return c; }
+		
 		case 14: {
 
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2)); 
@@ -829,18 +852,23 @@ public class Cat2Osm {
 			//c.addAttribute("PLANTA",line.substring(64,67));
 			//c.addAttribute("PUERTA",line.substring(67,70));
 			//c.addAttribute("CODIGO DE DESTINO SEGUN CODIFICACION DGC",line.substring(70,73));
-//TODO		c.addAttribute(destinoParser(line.substring(70,73).trim()));
+			c.setUsoDestino(line.substring(70,73).trim());
 			//c.addAttribute("INDICADOR DEL TIPO DE REFORMA O REHABILITACION",line.substring(73,74));
 			//c.addAttribute("ANO DE REFORMA EN CASO DE EXISTIR",line.substring(74,78));
 			//c.addAttribute("ANO DE ANTIGUEDAD EFECTIVA EN CATASTRO",line.substring(78,82)); 
 			//c.addAttribute("INDICADOR DE LOCAL INTERIOR (S/N)",line.substring(82,83));
 			//c.addAttribute("SUPERFICIE TOTAL DEL LOCAL A EFECTOS DE CATASTRO",line.substring(83,90));
+			if (esNumero(line.substring(83,90).trim()))
+				c.setArea(Double.parseDouble(line.substring(83,90).trim()));
+			else
+				c.setArea((double) 10);
 			//c.addAttribute("SUPERFICIA DE PORCHES Y TERRAZAS DEL LOCAL",line.substring(90,97));
 			//c.addAttribute("SUPERFICIE IMPUTABLE AL LOCAL SITUADA EN OTRAS PLANTAS",line.substring(97,104));
 			//c.addAttribute("TIPOLOGIA CONSTRUCTIVA SEGUN NORMAS TECNICAS DE VALORACION",line.substring(104,109));
 			//c.addAttribute("CODIGO DE MODALIDAD DE REPARTO",line.substring(111,114));
 
 			return c;}
+		
 		case 15: {
 			
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
@@ -901,13 +929,18 @@ public class Cat2Osm {
 			//c.addAttribute("NUMERO DE ORDEN DEL INMUEBLE EN LA ESCRITURA DE DIVISION HORIZONTAL",line.substring(367,371));
 			//c.addAttribute("ANO DE ANTIGUEDAD DEL BIEN INMUEBLE",line.substring(371,375)); 
 			//c.addAttribute("CLAVE DE GRUPO DE LOS BIENES INMUEBLES DE CARAC ESPECIALES",line.substring(427,428));
-			c.addAttribute(usoInmueblesParser(line.substring(427,428).trim()));
+			c.setUsoDestino(line.substring(427,428).trim());
 			//c.addAttribute("SUPERFICIE DEL ELEMENTO O ELEMENTOS CONSTRUCTIVOS ASOCIADOS AL INMUEBLE",line.substring(441,451));
+			if (esNumero(line.substring(441,451).trim()))
+				c.setArea(Double.parseDouble(line.substring(441,451).trim()));
+			else
+				c.setArea((double) 10);
 			//c.addAttribute("SUPERFICIE ASOCIADA AL INMUEBLE",line.substring(451,461));
 			//c.addAttribute("COEFICIENTE DE PROPIEDAD (3ent y 6deci)",line.substring(461,470));
 
 
 			return c;}
+		
 		case 16: {
 
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
@@ -916,13 +949,19 @@ public class Cat2Osm {
 			//c.addAttribute("PARCELA CATASTRAL",line.substring(30,44)); 
 			c.setRefCatastral(line.substring(30,44));
 			//c.addAttribute("NUMERO DE ORDEN DEL ELEMENTO CUYO VALOR SE REPARTE",line.substring(44,48));
+			if (esNumero(line.substring(44,48)) && Integer.parseInt(line.substring(44,48)) != 0)
+				c.setNumOrdenConstru(Integer.parseInt(line.substring(44,48)));
+			else
+				c.setSubparce(line.substring(44,48));
 			//c.addAttribute("CALIFICACION CATASTRAL DE LA SUBPARCELA",line.substring(48,50));
+			System.out.println(line.substring(48,50));
 			//c.addAttribute("BLOQUE REPETITIVO HASTA 15 VECES",line.substring(50,999));
 
 
 			return c;}
+		
 		case 17: {
-
+			
 			//c.addAttribute("TIPO DE REGISTRO",line.substring(0,2));
 			//c.addAttribute("CODIGO DE DELEGACION MEH",line.substring(23,25));
 			//c.addAttribute("CODIGO DEL MUNICIPIO",line.substring(25,28));
@@ -935,6 +974,10 @@ public class Cat2Osm {
 			//c.addAttribute("TIPO DE SUBPARCELA (T, A, D)",line.substring(54,55));
 			//c.addAttribute("SUPERFICIE DE LA SUBPARCELA (m cuadrad)",line.substring(55,65));
 			c.addAttribute("catastro:surface",eliminarCerosString(line.substring(55,65)));
+			if (esNumero(line.substring(55,65).trim()))
+				c.setArea(Double.parseDouble(line.substring(55,65).trim()));
+			else
+				c.setArea((double) 10);
 			//c.addAttribute("CALIFICACION CATASTRAL/CLASE DE CULTIVO",line.substring(65,67));
 			//c.addAttribute("DENOMINACION DE LA CLASE DE CULTIVO",line.substring(67,107));
 			//c.addAttribute("INTENSIDAD PRODUCTIVA",line.substring(107,109));

@@ -647,7 +647,7 @@ public abstract class Shape {
 	 * @return String sin las comillas
 	 */
 	public static String eliminarComillas(String s){
-		String ret = new String();
+		String ret = "";
 		for (int x = 0; x < s.length(); x++)
 			if (s.charAt(x) != '"') ret += s.charAt(x);
 		return ret;

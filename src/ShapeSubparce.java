@@ -272,8 +272,7 @@ public class ShapeSubparce extends Shape {
 
 
 	/**Relaciona el codigo de subparcela que trae el Subparce.shp con
-	 * el codigo de cultivo que trae Rusubparcela.dbf y este a su vez con el 
-	 * Rucultivo.dbf. Solo es para subparcelas rurales
+	 * el codigo de cultivo que trae Rusubparcela.dbf Solo es para subparcelas rurales
 	 * @param v Numero de subparcela a buscar
 	 * @return String tipo de cultivo
 	 */

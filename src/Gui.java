@@ -289,6 +289,14 @@ public class Gui extends JFrame {
 			if (fhasta.getText().equals(null)){
 				popupText.append("No ha especificado la fecha hasta la cual tomar los datos (AAAAMMDD). Por defecto para tomar todos los datos indique 99999999\n\n");
 			}
+			
+			if (fconstrudesde.getText().equals(null)){
+				popupText.append("No ha especificado la fecha de construcción desde la cual tomar los datos (AAAAMMDD). Por defecto para tomar todos los datos indique 00000000\n\n");
+			}
+
+			if (fconstruhasta.getText().equals(null)){
+				popupText.append("No ha especificado la fecha de construcción hasta la cual tomar los datos (AAAAMMDD). Por defecto para tomar todos los datos indique 99999999\n\n");
+			}
 
 			if (!popupText.getText().isEmpty()){
 				popupText.append("Para más ayuda o ver como debería ser el árbol de directorios consulte: http://wiki.openstreetmap.org/wiki/Cat2Osm");
@@ -303,10 +311,10 @@ public class Gui extends JFrame {
 					dir.mkdirs();
 
 				try {
-					FileWriter fstream = new FileWriter(""+fcResult.getSelectedFile()+"/Config");
+					FileWriter fstream = new FileWriter(""+fcResult.getSelectedFile()+"/config");
 					BufferedWriter out = new BufferedWriter(fstream);
 
-					exe.setText("ARCHIVO CREADO EN EL DIRECTORIO "+fcResult.getSelectedFile()+". AHORA EJECUTE CAT2OSM SEGÚN SE INDICA EN LA GUÍA DE USO.");
+					exe.setText("ARCHIVO CREADO EN EL DIRECTORIO "+fcResult.getSelectedFile()+". AHORA EJECUTE CAT2OSM SEGUN SE INDICA EN LA GUÍA DE USO.");
 
 					out.write("\nResultPath="+fcResult.getSelectedFile());
 					out.write("\nResultFileName="+resultFileName.getText());
@@ -321,7 +329,7 @@ public class Gui extends JFrame {
 					out.write("\nFechaConstruDesde="+fconstrudesde.getText());
 					out.write("\nFechaConstruHasta="+fconstruhasta.getText());
 					out.write("\nTipoRegistro="+tipoReg.getSelectedItem());
-					out.write("\nShapesId="+shapesId.getSelectedIndex());
+					out.write("\nShapesIds="+shapesId.getSelectedIndex());
 
 					out.close();
 
