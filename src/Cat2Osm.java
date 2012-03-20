@@ -907,8 +907,8 @@ public class Cat2Osm {
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(205,230));
 			c.addAttribute("addr:street",nombreTipoViaParser(line.substring(200,205).trim())+" "+formatearNombreCalle(eliminarComillas(line.substring(205,230).trim())));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(230,234));
-			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(230,234)));
 			//c.addAttribute("PRIMERA LETRA (CARACTER DE DUPLICADO)",line.substring(234,235));
+			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(230,234))+line.substring(234,235).trim());
 			//c.addAttribute("SEGUNDO NUMERO DE POLICIA",line.substring(235,239));
 			//c.addAttribute("SEGUNDA LETRA (CARACTER DE DUPLICADO)",line.substring(239,240));
 			//c.addAttribute("KILOMETRO (3enteros y 2decimales)",line.substring(240,245));
@@ -917,9 +917,9 @@ public class Cat2Osm {
 			//c.addAttribute("PLANTA",line.substring(251,254));
 			//c.addAttribute("PUERTA",line.substring(254,257));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(257,282));
-			c.addAttribute("addr:full",eliminarComillas(line.substring(257,282).trim()));
+			c.addAttribute("name",eliminarComillas(line.substring(257,282).trim()));
 			//c.addAttribute("CODIGO POSTAL",line.substring(282,287));
-			c.addAttribute("addr:postcode",eliminarCerosString(line.substring(282,287)));
+			c.addAttribute("addr:postcode",line.substring(282,287));
 			c.addAttribute("addr:country" ,"ES");
 			//c.addAttribute("DISTRITO MUNICIPAL",line.substring(287,289));
 			//c.addAttribute("CODIGO DEL MUNICIPIO DE ORIGEN EN CASO DE AGREGACION",line.substring(289,292));
