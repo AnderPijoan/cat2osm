@@ -617,11 +617,13 @@ public class Cat2Osm {
 							// Metemos los tags de uso de inmuebles con el numero de inmueble por delante
 							tags.addAll(destinoParser(line.substring(70,73).trim()));
 							for (String[] tag : tags){
-								tag[0] = line.substring(44,48) + ":" + "addr:floor"+line.substring(64,67) + ":" + tag[0].replace("*", "");
+								tag[0] = tag[0].replace("*", "");
 							}
 							
 							// Anadimos la referencia catastral
-							tags.add(new String[] {"catastro:ref", line.substring(30,44)});
+							tags.add(new String[] {"catastro:ref", line.substring(30,44) + line.substring(44,48)});
+							
+							tags.add(new String[] {"addr:floor", line.substring(64,67).trim() });
 							
 							// Creamos el nodo en la lista de nodos de utils, pero no se lo anadimos al shape sino luego 
 							// lo borraria ya que eliminamos todos los nodos que sean de geometrias de shape
@@ -954,7 +956,6 @@ public class Cat2Osm {
 			else
 				c.setSubparce(line.substring(44,48));
 			//c.addAttribute("CALIFICACION CATASTRAL DE LA SUBPARCELA",line.substring(48,50));
-			System.out.println(line.substring(48,50));
 			//c.addAttribute("BLOQUE REPETITIVO HASTA 15 VECES",line.substring(50,999));
 
 
