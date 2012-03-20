@@ -170,12 +170,51 @@ public class Cat2Osm {
 	 */
 	public List<Shape> calcularUsos(List<Shape> shapes){
 		
+		// Creamos los tags que se van a aplicar sólo a los edificios de la parcela
+		Map<String,List<String[]>> tagsBuildingMap = new HashMap <String,List<String[]>();								
+
 		for (Shape shape : shapes)
 			if (shape != (null) && shape instanceof ShapeParcela){
 					RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape.getRelationId()));
-					if (r != null)
-					r.addTags(destinoParser(((ShapeParcela)shape).getUsoMasArea()));
+					if (r != null) {
+						List<String[]> tags = destinoParser(((ShapeParcela)shape).getUsoMasArea());
+
+						tagsBuilding = new ArrayList<String[]>();
+							
+						// Determinamos los tags exclusivos de los edificios
+						// y los borramos de los tags de la parcela
+						Iterator<String[]> iter = tags.iterator();
+						while (iter.hasNext()) {
+							tag = iter.next();
+							if (tag[0].startsWith("@")) {
+								s = new String[2];
+								s[0] = tag[0].replace("@", "");
+								s[1] = tag[1];
+								tagsBuilding.add(s);
+								iter.remove();
+							}
+						}
+
+						r.addTags(tags);
+						tagsBuildingMap.put (shape.getRefCat(), tagsBuilding);
+						
+					}
+					
+					
 			}
+
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Calculando usos de los edificios.");
+		for (Shape shape2: shapes) {
+			if (shape2 != (null) && shape2 instanceof ShapeConstru) {
+				if (tagsBuildingMap.containsKey(shape2.getRefCat())) {
+					RelationOsm r2 = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape2.getRelationId()));	
+					r2.addTags(tagsBuildingMap.get(shape2.getRefCat()));
+				}
+			}
+		}
+
+		
+	
 		return shapes;
 	}
 	
@@ -610,12 +649,23 @@ public class Cat2Osm {
 
 							// Cogemos la geometria exterior de la parcela
 							Geometry geom = (LineString) shape.getPoligons().get(0);
-							
+
 							// Creamos los tags que tendra el nodo
 							List<String[]> tags = new ArrayList<String[]>();
-							
+
 							// Metemos los tags de uso de inmuebles con el numero de inmueble por delante
 							tags.addAll(destinoParser(line.substring(70,73).trim()));
+
+							// Determinamos los tags exclusivos de los edificios
+							// y los borramos de los tags, ya que no son aplicables a nodos
+							Iterator<String[]> iter = tags.iterator();
+							while (iter.hasNext()) {
+								tag = iter.next();
+								if (tag[0].startsWith("@")) {
+									iter.remove();
+								}
+							}
+
 							for (String[] tag : tags){
 								tag[0] = tag[0].replace("*", "");
 							}
@@ -624,6 +674,7 @@ public class Cat2Osm {
 							tags.add(new String[] {"catastro:ref", line.substring(30,44) + line.substring(44,48)});
 							
 							tags.add(new String[] {"addr:floor", line.substring(64,67).trim() });
+
 							
 							// Creamos el nodo en la lista de nodos de utils, pero no se lo anadimos al shape sino luego 
 							// lo borraria ya que eliminamos todos los nodos que sean de geometrias de shape
@@ -1227,6 +1278,7 @@ public class Cat2Osm {
 	 * por delante cuando son tipos genericos sin especificaciones,
 	 * comprueba que no exista ese tag antes de meterlo. En caso de existir
 	 * dejaria el que ya estaba.
+	 * Si al tag le ponemos un '@', sólo aplica a aquellos shapes que sean edificios.
 	 * @param codigo Codigo de uso de inmueble
 	 * @return Lista de tags que genera
 	 */
@@ -1241,7 +1293,7 @@ public class Cat2Osm {
 			
 		case "AAL":
 		case "BAL":
-			s[0] = "building"; s[1] = "warehouse";
+			s[0] = "@building"; s[1] = "warehouse";
 			l.add(s);
 			return l;
 
@@ -1256,13 +1308,13 @@ public class Cat2Osm {
 
 		case"ACR":
 		case"BCR":
-			s[0] = "building"; s[1] = "yes";
+			s[0] = "@building"; s[1] = "yes";
 			l.add(s);
 			return l;
 
 		case "ACT":
 		case "BCT":
-			s[0] = "building"; s[1] = "yes";
+			s[0] = "@building"; s[1] = "yes";
 			l.add(s);
 			s = new String[2];
 			s[0] = "power"; s[1] = "sub_station";
@@ -1271,7 +1323,7 @@ public class Cat2Osm {
 
 		case "AES":
 		case "BES":
-			s[0] = "building"; s[1] = "yes";
+			s[0] = "@building"; s[1] = "yes";
 			l.add(s);
 			s = new String[2];
 			s[0] = "public_transport"; s[1] = "station";
@@ -1280,7 +1332,7 @@ public class Cat2Osm {
 
 		case "AIG":
 		case "BIG":
-			s[0] = "building"; s[1] = "livestock";
+			s[0] = "@building"; s[1] = "livestock";
 			l.add(s);
 			s = new String[2];
 			s[0] = "landuse"; s[1] = "farmyard";
@@ -2277,7 +2329,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "townhall";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2289,7 +2341,7 @@ public class Cat2Osm {
 			s[0] = "operator"; s[1] = "autonomous_community";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2298,7 +2350,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "townhall";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2307,7 +2359,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "administrative";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2318,7 +2370,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "government";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2330,7 +2382,7 @@ public class Cat2Osm {
 			s[0] = "operator"; s[1] = "county";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2342,7 +2394,7 @@ public class Cat2Osm {
 			s[0] = "operator"; s[1] = "province";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2363,7 +2415,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "basilica";
+			s[0] = "@building"; s[1] = "basilica";
 			l.add(s);
 			return l;
 
@@ -2378,7 +2430,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "chapel";
+			s[0] = "@building"; s[1] = "chapel";
 			l.add(s);
 			return l;
 
@@ -2393,7 +2445,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "cathedral";
+			s[0] = "@building"; s[1] = "cathedral";
 			l.add(s);
 			return l;
 
@@ -2408,7 +2460,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "hermitage";
+			s[0] = "@building"; s[1] = "hermitage";
 			l.add(s);
 			return l;
 
@@ -2423,7 +2475,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "parish_church";
+			s[0] = "@building"; s[1] = "parish_church";
 			l.add(s);
 			return l;
 
