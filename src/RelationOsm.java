@@ -299,17 +299,25 @@ public class RelationOsm {
 		
 		// En caso de que tenga varios ways, si que se imprime como una relacion de ways.
 		else {
+
+			boolean with_data=false;
+
 			s = ("<relation id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" visible=\"true\"  version=\"6\">\n");
 
 			for (int x = 0; x < ids.size(); x++)
 				if (utils.getTotalWays().containsValue(ids.get(x)))
-					s += ("<member type=\""+ types.get(x) +"\" ref=\""+ ids.get(x)+"\" role=\""+ roles.get(x) +"\" />\n");
+					s += ("<member type=\""+ types.get(x) +"\" ref=\""+ ids.get(x)+"\" role=\""+ roles.get(x) +"\" />\n");			
 
 			for (int x = 0; x < tags.size(); x++){
 
 				// Filtramos para que no salgan todos los tags, abajo se explica el porque
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID")) {
+
+					if (!with_data && !tags.get(x)[0].equals("source") && !tags.get(x)[0].equals("source:date"))
+						with_data = true;
+
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
+				}
 
 				// El tag addr:housenumber, addr:street,  addr:full, addr:postcode y addr:country 
 				// solo se puede asignar a parcelas. Por eso habra
@@ -317,8 +325,10 @@ public class RelationOsm {
 				// shapeParcela	
 				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
 					for (String[] tag : tags)
-						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
+						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA")) {
+							with_data = true;
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
+						}
 				}
 
 				// Mostrar los shapes que utilizan esta relacion, para debugging
@@ -332,6 +342,9 @@ public class RelationOsm {
 				s += "<tag k=\"type\" v=\"multipolygon\"/>\n";
 
 			s += ("</relation>\n");
+
+			if (! with_data)
+				s = "";
 		}
 
 		return s;
