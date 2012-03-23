@@ -170,12 +170,51 @@ public class Cat2Osm {
 	 */
 	public List<Shape> calcularUsos(List<Shape> shapes){
 		
+		// Creamos los tags que se van a aplicar sólo a los edificios de la parcela
+		Map<String,List<String[]>> tagsBuildingMap = new HashMap <String,List<String[]>();								
+
 		for (Shape shape : shapes)
 			if (shape != null && shape instanceof ShapeParcela){
 					RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape.getRelationId()));
-					if (r != null)
-					r.addTags(destinoParser(((ShapeParcela)shape).getUsoMasArea()));
+					if (r != null) {
+						List<String[]> tags = destinoParser(((ShapeParcela)shape).getUsoMasArea());
+
+						tagsBuilding = new ArrayList<String[]>();
+							
+						// Determinamos los tags exclusivos de los edificios
+						// y los borramos de los tags de la parcela
+						Iterator<String[]> iter = tags.iterator();
+						while (iter.hasNext()) {
+							tag = iter.next();
+							if (tag[0].startsWith("@")) {
+								s = new String[2];
+								s[0] = tag[0].replace("@", "");
+								s[1] = tag[1];
+								tagsBuilding.add(s);
+								iter.remove();
+							}
+						}
+
+						r.addTags(tags);
+						tagsBuildingMap.put (shape.getRefCat(), tagsBuilding);
+						
+					}
+					
+					
 			}
+
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Calculando usos de los edificios.");
+		for (Shape shape2: shapes) {
+			if (shape2 != (null) && shape2 instanceof ShapeConstru) {
+				if (tagsBuildingMap.containsKey(shape2.getRefCat())) {
+					RelationOsm r2 = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape2.getRelationId()));	
+					r2.addTags(tagsBuildingMap.get(shape2.getRefCat()));
+				}
+			}
+		}
+
+		
+	
 		return shapes;
 	}
 	
@@ -607,12 +646,23 @@ public class Cat2Osm {
 
 							// Cogemos la geometria exterior de la parcela
 							Geometry geom = (LineString) shape.getPoligons().get(0);
-							
+
 							// Creamos los tags que tendra el nodo
 							List<String[]> tags = new ArrayList<String[]>();
-							
+
 							// Metemos los tags de uso de inmuebles con el numero de inmueble por delante
 							tags.addAll(destinoParser(line.substring(70,73).trim()));
+
+							// Determinamos los tags exclusivos de los edificios
+							// y los borramos de los tags, ya que no son aplicables a nodos
+							Iterator<String[]> iter = tags.iterator();
+							while (iter.hasNext()) {
+								tag = iter.next();
+								if (tag[0].startsWith("@")) {
+									iter.remove();
+								}
+							}
+
 							for (String[] tag : tags){
 								tag[0] = tag[0].replace("*", "");
 							}
@@ -621,6 +671,7 @@ public class Cat2Osm {
 							tags.add(new String[] {"catastro:ref", line.substring(30,44) + line.substring(44,48)});
 							
 							tags.add(new String[] {"addr:floor", line.substring(64,67).trim() });
+
 							
 							// Creamos el nodo en la lista de nodos de utils, pero no se lo anadimos al shape sino luego 
 							// lo borraria ya que eliminamos todos los nodos que sean de geometrias de shape
@@ -747,16 +798,16 @@ public class Cat2Osm {
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(163,188));
 			c.addAttribute("addr:street",nombreTipoViaParser(line.substring(158,163).trim())+" "+formatearNombreCalle(eliminarComillas(line.substring(163,188).trim())));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(188,192));
-			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(188,192)));
 			//c.addAttribute("PRIMERA LETRA (CARACTER DE DUPLICADO)",line.substring(192,193));
+			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(188,192))+line.substring(192,193).trim());
 			//c.addAttribute("SEGUNDO NUMERO DE POLICIA",line.substring(193,197));
 			//c.addAttribute("SEGUNDA LETRA (CARACTER DE DUPLICADO)",line.substring(197,198));
 			//c.addAttribute("KILOMETRO (3enteros y 2decimales)",line.substring(198,203));
 			//c.addAttribute("BLOQUE",line.substring(203,207));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(215,240));
-			c.addAttribute("addr:full",eliminarComillas(line.substring(215,240)));
+			c.addAttribute("name",eliminarComillas(line.substring(215,240)));
 			//c.addAttribute("CODIGO POSTAL",line.substring(240,245));
-			c.addAttribute("addr:postcode",eliminarCerosString(line.substring(240,245)));
+			c.addAttribute("addr:postcode", line.substring(240,245));
 			c.addAttribute("addr:country","ES");
 			//c.addAttribute("DISTRITO MUNICIPAL",line.substring(245,247));
 			//c.addAttribute("CODIGO DEL MUNICIPIO ORIGEN EN CASO DE AGREGACION",line.substring(247,250));
@@ -904,8 +955,8 @@ public class Cat2Osm {
 			//c.addAttribute("NOMBRE DE VIA PUBLICA",line.substring(205,230));
 			c.addAttribute("addr:street",nombreTipoViaParser(line.substring(200,205).trim())+" "+formatearNombreCalle(eliminarComillas(line.substring(205,230).trim())));
 			//c.addAttribute("PRIMER NUMERO DE POLICIA",line.substring(230,234));
-			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(230,234)));
 			//c.addAttribute("PRIMERA LETRA (CARACTER DE DUPLICADO)",line.substring(234,235));
+			c.addAttribute("addr:housenumber",eliminarCerosString(line.substring(230,234))+line.substring(234,235).trim());
 			//c.addAttribute("SEGUNDO NUMERO DE POLICIA",line.substring(235,239));
 			//c.addAttribute("SEGUNDA LETRA (CARACTER DE DUPLICADO)",line.substring(239,240));
 			//c.addAttribute("KILOMETRO (3enteros y 2decimales)",line.substring(240,245));
@@ -914,9 +965,9 @@ public class Cat2Osm {
 			//c.addAttribute("PLANTA",line.substring(251,254));
 			//c.addAttribute("PUERTA",line.substring(254,257));
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(257,282));
-			c.addAttribute("addr:full",eliminarComillas(line.substring(257,282).trim()));
+			c.addAttribute("name",eliminarComillas(line.substring(257,282).trim()));
 			//c.addAttribute("CODIGO POSTAL",line.substring(282,287));
-			c.addAttribute("addr:postcode",eliminarCerosString(line.substring(282,287)));
+			c.addAttribute("addr:postcode",line.substring(282,287));
 			c.addAttribute("addr:country" ,"ES");
 			//c.addAttribute("DISTRITO MUNICIPAL",line.substring(287,289));
 			//c.addAttribute("CODIGO DEL MUNICIPIO DE ORIGEN EN CASO DE AGREGACION",line.substring(289,292));
@@ -1156,11 +1207,6 @@ public class Cat2Osm {
 
 		case "E":
 		case "F":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "culture";
-			l.add(s);
 			return l;
 
 		case "G":
@@ -1175,11 +1221,6 @@ public class Cat2Osm {
 
 		case "K":
 		case "L":
-			s[0] = "*landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "sports";
-			l.add(s);
 			return l;
 
 		case "M":
@@ -1206,11 +1247,6 @@ public class Cat2Osm {
 
 		case "T":
 		case "U":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "entertainment";
-			l.add(s);
 			return l;
 
 		case "V":
@@ -1239,6 +1275,7 @@ public class Cat2Osm {
 	 * por delante cuando son tipos genericos sin especificaciones,
 	 * comprueba que no exista ese tag antes de meterlo. En caso de existir
 	 * dejaria el que ya estaba.
+	 * Si al tag le ponemos un '@', sólo aplica a aquellos shapes que sean edificios.
 	 * @param codigo Codigo de uso de inmueble
 	 * @return Lista de tags que genera
 	 */
@@ -1249,13 +1286,11 @@ public class Cat2Osm {
 		switch (codigo){
 		case "A":
 		case "B":
-			s[0] = "*landuse"; s[1] ="farmyard";
-			l.add(s);
 			return l;
 			
 		case "AAL":
 		case "BAL":
-			s[0] = "building"; s[1] = "warehouse";
+			s[0] = "@building"; s[1] = "warehouse";
 			l.add(s);
 			return l;
 
@@ -1264,19 +1299,19 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "parking";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Comprobar que sea parking publico o al aire libre, en caso de no serlo deberia ser building=garage o landuse=garages";
+			s[0] = "fixme"; s[1] = "Comprobar que sea parking publico o al aire libre. En caso de no serlo, si ocupa todo el edificio deberia ser building=garage o landuse=garages";
 			l.add(s);
 			return l;
 
 		case"ACR":
 		case"BCR":
-			s[0] = "building"; s[1] = "yes";
+			s[0] = "@building"; s[1] = "yes";
 			l.add(s);
 			return l;
 
 		case "ACT":
 		case "BCT":
-			s[0] = "building"; s[1] = "yes";
+			s[0] = "@building"; s[1] = "yes";
 			l.add(s);
 			s = new String[2];
 			s[0] = "power"; s[1] = "sub_station";
@@ -1285,7 +1320,7 @@ public class Cat2Osm {
 
 		case "AES":
 		case "BES":
-			s[0] = "building"; s[1] = "yes";
+			s[0] = "@building"; s[1] = "yes";
 			l.add(s);
 			s = new String[2];
 			s[0] = "public_transport"; s[1] = "station";
@@ -1294,7 +1329,7 @@ public class Cat2Osm {
 
 		case "AIG":
 		case "BIG":
-			s[0] = "building"; s[1] = "livestock";
+			s[0] = "@building"; s[1] = "livestock";
 			l.add(s);
 			s = new String[2];
 			s[0] = "landuse"; s[1] = "farmyard";
@@ -1510,7 +1545,7 @@ public class Cat2Osm {
 
 		case "ECL":
 		case "FCL":
-			s[0] = "amenity"; s[1] = "comunity_centre";
+			s[0] = "amenity"; s[1] = "community_centre";
 			l.add(s);
 			return l;
 
@@ -1747,18 +1782,15 @@ public class Cat2Osm {
 
 		case "GT1":
 		case "HT1":
-			return l;
-
 		case "GT2":
 		case "HT2":
-			return l;
-
 		case "GT3":
 		case "HT3":
-			return l;
-
 		case "GTL":
 		case "HTL":
+			// Como no sabemos a qué se puede referir esto, mejor ponemos un fixme
+			s[0] = "fixme"; s[1] = "Documentar codificación de los usos de los bienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/wiki/Traduccion_metadatos_catastro_a_map_features#Codificacion_de_los_usos_de_los_bienes_inmuebles";
+			l.add(s);
 			return l;
 
 		case "I":
@@ -1770,9 +1802,9 @@ public class Cat2Osm {
 			l.add(s);
 			return l;
 
-		case "IAJ":
+		case "IAG":
 		case "JAG":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
 			s[0] = "man_made"; s[1] = "works";
@@ -1784,7 +1816,7 @@ public class Cat2Osm {
 
 		case "IAL":
 		case "JAL":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
 			s[0] = "man_made"; s[1] = "works";
@@ -1796,7 +1828,7 @@ public class Cat2Osm {
 
 		case "IAM":
 		case "JAM":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
 			s[0] = "man_made"; s[1] = "storage_tank";
@@ -1808,10 +1840,10 @@ public class Cat2Osm {
 
 		case "IAR":
 		case "JAR":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "agricultural";
@@ -1820,7 +1852,7 @@ public class Cat2Osm {
 
 		case "IAS":
 		case "JAS":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
 			s[0] = "craft"; s[1] = "sawmill";
@@ -1829,10 +1861,10 @@ public class Cat2Osm {
 
 		case "IBB":
 		case "JBB":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "drinks";
@@ -1841,10 +1873,10 @@ public class Cat2Osm {
 
 		case "IBD":
 		case "JBD":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "winery";
@@ -1853,10 +1885,10 @@ public class Cat2Osm {
 
 		case "IBR":
 		case "JBR":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "ceramic";
@@ -1865,10 +1897,10 @@ public class Cat2Osm {
 
 		case "ICH":
 		case "JCH":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "mushrooms";
@@ -1877,10 +1909,10 @@ public class Cat2Osm {
 
 		case "ICN":
 		case "JCN":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "building";
@@ -1889,10 +1921,10 @@ public class Cat2Osm {
 
 		case "ICT":
 		case "JCT":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "quarry";
@@ -1901,10 +1933,10 @@ public class Cat2Osm {
 
 		case "IEL":
 		case "JEL":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "electric";
@@ -1919,10 +1951,10 @@ public class Cat2Osm {
 
 		case "IIM":
 		case "JIM":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "chemistry";
@@ -1937,10 +1969,10 @@ public class Cat2Osm {
 
 		case "IMD":
 		case "JMD":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "wood";
@@ -1949,10 +1981,10 @@ public class Cat2Osm {
 
 		case "IMN":
 		case "JMN":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "manufacturing";
@@ -1961,10 +1993,10 @@ public class Cat2Osm {
 
 		case "IMT":
 		case "JMT":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "metal";
@@ -1973,10 +2005,10 @@ public class Cat2Osm {
 
 		case "IMU":
 		case "JMU":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "machinery";
@@ -1985,10 +2017,10 @@ public class Cat2Osm {
 
 		case "IPL":
 		case "JPL":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "plastics";
@@ -1997,10 +2029,10 @@ public class Cat2Osm {
 
 		case "IPP":
 		case "JPP":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "paper";
@@ -2009,10 +2041,10 @@ public class Cat2Osm {
 
 		case "IPS":
 		case "JPS":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "fishing";
@@ -2021,10 +2053,10 @@ public class Cat2Osm {
 
 		case "IPT":
 		case "JPT":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "petroleum";
@@ -2033,10 +2065,10 @@ public class Cat2Osm {
 
 		case "ITB":
 		case "JTB":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "tobacco";
@@ -2045,10 +2077,10 @@ public class Cat2Osm {
 
 		case "ITX":
 		case "JTX":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "clothing";
@@ -2057,10 +2089,10 @@ public class Cat2Osm {
 
 		case "IVD":
 		case "JVD":
-			s[0] = "tourism"; s[1] = "hostel";
+			s[0] = "landuse"; s[1] = "industrial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "man_made"; s[1] = "storage_tank";
+			s[0] = "man_made"; s[1] = "works";
 			l.add(s);
 			s = new String[2];
 			s[0] = "works"; s[1] = "glass";
@@ -2069,19 +2101,13 @@ public class Cat2Osm {
 
 		case "K":
 		case "L":
-			s[0] = "*landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "sports";
+			s[0] = "*landuse"; s[1] = "sports";
 			l.add(s);
 			return l;
 
 		case "KDP":
 		case "LDP":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "sports";
+			s[0] = "landuse"; s[1] = "sports";
 			l.add(s);
 			s = new String[2];
 			s[0] = "leisure"; s[1] = "pitch";
@@ -2093,10 +2119,7 @@ public class Cat2Osm {
 
 		case "KES":
 		case "LES":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "sports";
+			s[0] = "landuse"; s[1] = "sports";
 			l.add(s);
 			s = new String[2];
 			s[0] = "leisure"; s[1] = "stadium";
@@ -2108,10 +2131,7 @@ public class Cat2Osm {
 
 		case "KPL":
 		case "LPL":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "sports";
+			s[0] = "landuse"; s[1] = "sports";
 			l.add(s);
 			s = new String[2];
 			s[0] = "leisure"; s[1] = "sports_centre";
@@ -2123,10 +2143,7 @@ public class Cat2Osm {
 
 		case "KPS":
 		case "LPS":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "sports";
+			s[0] = "landuse"; s[1] = "sports";
 			l.add(s);
 			s = new String[2];
 			s[0] = "leisure"; s[1] = "swimming_pool";
@@ -2153,7 +2170,7 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "commercial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", Profesional superior. Afinar office=X si es posible.";
 			l.add(s);
 			return l;
 
@@ -2162,7 +2179,7 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "commercial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", Profesional medio. Afinar office=X si es posible.";
 			l.add(s);
 			return l;
 
@@ -2171,7 +2188,7 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "commercial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", Médicos, abogados... Afinar office=X si es posible.";
 			l.add(s);
 			return l;
 
@@ -2192,7 +2209,7 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "commercial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", Profesores Mercant. Afinar office=X si es posible.";
 			l.add(s);
 			return l;
 
@@ -2201,7 +2218,7 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "commercial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", Profesores Universitarios. Afinar office=X si es posible.";
 			l.add(s);
 			return l;
 
@@ -2246,7 +2263,7 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "commercial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", agentes. Afinar office=X si es posible.";
 			l.add(s);
 			return l;
 
@@ -2291,16 +2308,16 @@ public class Cat2Osm {
 			s[0] = "landuse"; s[1] = "commercial";
 			l.add(s);
 			s = new String[2];
-			s[0] = "fixme"; s[1] = "Codigo="+codigo+", afinar office=X si es posible.";
+			s[0] = "fixme"; s[1] = "Codigo="+codigo+", otras actividades. Afinar office=X si es posible.";
 			l.add(s);
 			return l;
 
 		case "P":
 		case "Q":
-			s[0] = "amenity"; s[1] = "public_building";
+			s[0] = "*amenity"; s[1] = "public_building";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "*building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2309,7 +2326,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "townhall";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2321,7 +2338,7 @@ public class Cat2Osm {
 			s[0] = "operator"; s[1] = "autonomous_community";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2330,7 +2347,7 @@ public class Cat2Osm {
 			s[0] = "amenity"; s[1] = "townhall";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2339,7 +2356,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "administrative";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2350,7 +2367,7 @@ public class Cat2Osm {
 			s[0] = "office"; s[1] = "government";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2362,7 +2379,7 @@ public class Cat2Osm {
 			s[0] = "operator"; s[1] = "county";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2374,7 +2391,7 @@ public class Cat2Osm {
 			s[0] = "operator"; s[1] = "province";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "public";
+			s[0] = "@building"; s[1] = "public";
 			l.add(s);
 			return l;
 
@@ -2395,7 +2412,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "basilica";
+			s[0] = "@building"; s[1] = "basilica";
 			l.add(s);
 			return l;
 
@@ -2410,7 +2427,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "chapel";
+			s[0] = "@building"; s[1] = "chapel";
 			l.add(s);
 			return l;
 
@@ -2425,7 +2442,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "cathedral";
+			s[0] = "@building"; s[1] = "cathedral";
 			l.add(s);
 			return l;
 
@@ -2440,7 +2457,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "hermitage";
+			s[0] = "@building"; s[1] = "hermitage";
 			l.add(s);
 			return l;
 
@@ -2455,7 +2472,7 @@ public class Cat2Osm {
 			s[0] = "denomination"; s[1] = "catholic";
 			l.add(s);
 			s = new String[2];
-			s[0] = "building"; s[1] = "parish_church";
+			s[0] = "@building"; s[1] = "parish_church";
 			l.add(s);
 			return l;
 
@@ -2470,69 +2487,34 @@ public class Cat2Osm {
 
 		case "T":
 		case "U":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "entertainment";
-			l.add(s);
 			return l;
 
 		case "TAD":
 		case "UAD":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "entertainment";
-			l.add(s);
-			s = new String[2];
 			s[0] = "amenity"; s[1] = "auditorium";
 			l.add(s);
 			return l;
 
 		case "TCM":
 		case "UCM":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "entertainment";
-			l.add(s);
-			s = new String[2];
 			s[0] = "amenity"; s[1] = "cinema";
 			l.add(s);
 			return l;
 
 		case "TCN":
 		case "UCN":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "entertainment";
-			l.add(s);
-			s = new String[2];
 			s[0] = "amenity"; s[1] = "cinema";
 			l.add(s);
 			return l;
 
 		case "TSL":
 		case "USL":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "entertainment";
-			l.add(s);
-			s = new String[2];
 			s[0] = "amenity"; s[1] = "hall";
 			l.add(s);
 			return l;
 
 		case "TTT":
 		case "UTT":
-			s[0] = "landuse"; s[1] = "recreation_ground";
-			l.add(s);
-			s = new String[2];
-			s[0] = "recreation_type"; s[1] = "entertainment";
-			l.add(s);
-			s = new String[2];
 			s[0] = "amenity"; s[1] = "theatre";
 			l.add(s);
 			return l;
@@ -2544,13 +2526,7 @@ public class Cat2Osm {
 			return l;
 
 		case "Y":
-			s[0] = "*landuse"; s[1] = "health";
-			l.add(s);
-			return l;
-
 		case "Z":
-			s[0] = "*landuse"; s[1] = "farm";
-			l.add(s);
 			return l;
 
 		case "YAM":
@@ -2673,6 +2649,9 @@ public class Cat2Osm {
 
 		case "YHG":
 		case "ZHG":
+			// Como no sabemos a qué se puede referir esto, mejor ponemos un fixme
+			s[0] = "fixme"; s[1] = "Documentar codificación de los usos de los bienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/wiki/Traduccion_metadatos_catastro_a_map_features#Codificacion_de_los_usos_de_los_bienes_inmuebles";
+			l.add(s);
 			return l;
 
 		case "YHS":
@@ -2766,7 +2745,7 @@ public class Cat2Osm {
 
 		default:
 			if (!codigo.isEmpty()){
-				s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los vienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/wiki/Traduccion_metadatos_catastro_a_map_features#Codificacion_de_los_usos_de_los_bienes_inmuebles";
+				s[0] = "fixme"; s[1] = "Documentar nuevo codificación de los usos de los bienes inmuebles en catastro código="+ codigo +" en http://wiki.openstreetmap.org/wiki/Traduccion_metadatos_catastro_a_map_features#Codificacion_de_los_usos_de_los_bienes_inmuebles";
 				l.add(s);}
 
 
