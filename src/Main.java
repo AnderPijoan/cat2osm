@@ -19,7 +19,7 @@ public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException {
 
 		if ((args.length == 1 && args[0].equals("-v")) || (args.length == 2 && (args[1].equals("-v") || args[0].equals("-v") ))){
-			System.out.println("Cat2Osm versión 2012-03-20.");
+			System.out.println("Cat2Osm versión 2012-03-23.");
 		}
 		else if ((args.length == 1 && args[0].equals("-ui")) || (args.length == 2 && (args[1].equals("-ui") || args[0].equals("-ui") ))){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando interfaz visual para crear el archivo de configuración.");
@@ -64,7 +64,7 @@ public class Main {
 			crearUsos();
 		}
 		else {
-			System.out.println("Cat2Osm versión 2012-03-20.\n");
+			System.out.println("Cat2Osm versión 2012-03-23.\n");
 			System.out.println("Forma de uso:");
 			System.out.println("java -jar [-XmxMemoria] cat2osm.jar [Opción] / [RutaArchivoConfig] [NombreArchivo]\n");
 			System.out.println("Es necesrio indicarle una opción y pasarle el archivo de configuración:");

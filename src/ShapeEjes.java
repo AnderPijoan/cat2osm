@@ -34,7 +34,7 @@ public class ShapeEjes extends Shape {
 
 		shapeId = "EJES" + super.newShapeId();
 
-		if (ejesNames.isEmpty()){
+		if (tipo.equals("UR") && ejesNames.isEmpty()){
 			readCarvia(tipo);
 		}
 		
@@ -50,14 +50,14 @@ public class ShapeEjes extends Shape {
 		f.getDefaultGeometry().getClass().getName() +" desconocido del shapefile EJES");
 		}
 
-		if (f.getAttribute("VIA") instanceof Double){
+		if (tipo.equals("UR") && f.getAttribute("VIA") instanceof Double){
 			double v = (Double) f.getAttribute("VIA");
 			via = getVia((long) v);
 		}
-		else if (f.getAttribute("VIA") instanceof Long){
+		else if (tipo.equals("UR") && f.getAttribute("VIA") instanceof Long){
 			via = getVia((Long) f.getAttribute("VIA"));
 		}
-		else if (f.getAttribute("VIA") instanceof Integer){
+		else if (tipo.equals("UR") && f.getAttribute("VIA") instanceof Integer){
 			int v = (Integer) f.getAttribute("VIA");
 			via = getVia((long) v);
 		}
@@ -90,7 +90,7 @@ public class ShapeEjes extends Shape {
 		// Via trae el tipo (substring de 0 a 2) y el nombre (substring de 3 en adelante)
 		// Se parsea el tipo para traducirlo al nombre del tipo y para sacar tags extra
 		List<String[]> tags = null;
-		if (via != null){
+		if (via != null && !via.isEmpty()){
 			s = new String[2];
 			s[0] = "name"; s[1] = nombreTipoViaParser(via.substring(0, 2)) +" "+ formatearNombreCalle(via.substring(3));
 			l.add(s);

@@ -49,7 +49,7 @@ public class Cat2Osm {
 		List<Shape> shapeList = new ArrayList<Shape>();
 
 		for(Shape shape : shapes) 
-			if (shape.getRefCat() != null && shape.getRefCat().equals(ref)) shapeList.add(shape);
+			if (shape != null && shape.getRefCat() != null && shape.getRefCat().equals(ref)) shapeList.add(shape);
 
 		return shapeList;
 	}
@@ -64,7 +64,7 @@ public class Cat2Osm {
 		List<Shape> shapeList = new ArrayList<Shape>();
 
 		for(Shape shape : shapes) 
-			if (shape instanceof ShapeSubparce)
+			if (shape != null && shape instanceof ShapeSubparce)
 				if (((ShapeSubparce) shape).getSubparce().equals(subparce))
 					shapeList.add(shape);
 
@@ -79,7 +79,7 @@ public class Cat2Osm {
 		List<Shape> shapeList = new ArrayList<Shape>();
 
 		for(Shape shape : shapes) 
-			if (shape instanceof ShapeParcela)
+			if (shape != null && shape instanceof ShapeParcela)
 				shapeList.add(shape);
 
 		return shapeList;
@@ -171,7 +171,7 @@ public class Cat2Osm {
 	public List<Shape> calcularUsos(List<Shape> shapes){
 		
 		for (Shape shape : shapes)
-			if (shape != (null) && shape instanceof ShapeParcela){
+			if (shape != null && shape instanceof ShapeParcela){
 					RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape.getRelationId()));
 					if (r != null)
 					r.addTags(destinoParser(((ShapeParcela)shape).getUsoMasArea()));
@@ -516,9 +516,8 @@ public class Cat2Osm {
 		// Lectura del archivo .cat
 		while((line = bufRdr.readLine()) != null)
 		{
-			try {
-				Cat c = catLineParser(line);
-				
+			Cat c = catLineParser(line);
+			
 				if ( (c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0)){
 
 					// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
@@ -573,8 +572,6 @@ public class Cat2Osm {
 						}
 				}
 			}
-			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
-		}
 	}
 
 	
