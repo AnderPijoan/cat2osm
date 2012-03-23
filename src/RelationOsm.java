@@ -249,7 +249,7 @@ public class RelationOsm {
 										if ( (this.tags.get(w)[0]).equals(((RelationOsm) e.getKey()).getTags().get(z)[0]) && (this.tags.get(w)[1]).equals(((RelationOsm) e.getKey()).getTags().get(z)[1]))
 											this.tags.remove(w);
 
-						// Este metodo se carga el building=yes y es necesario si tiene un building:levels
+						// Este metodo de arriba se carga el building=yes y es necesario si tiene un building:levels
 						for (String[] tag : ((RelationOsm) e.getKey()).getTags())
 							if (tag[0].equals("building:levels")){
 								String[] temp = {"building","yes"};

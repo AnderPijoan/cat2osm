@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -171,7 +172,7 @@ public class Cat2Osm {
 	public List<Shape> calcularUsos(List<Shape> shapes){
 		
 		// Creamos los tags que se van a aplicar sólo a los edificios de la parcela
-		Map<String,List<String[]>> tagsBuildingMap = new HashMap <String,List<String[]>();								
+		Map<String,List<String[]>> tagsBuildingMap = new HashMap <String,List<String[]>>();								
 
 		for (Shape shape : shapes)
 			if (shape != null && shape instanceof ShapeParcela){
@@ -179,15 +180,15 @@ public class Cat2Osm {
 					if (r != null) {
 						List<String[]> tags = destinoParser(((ShapeParcela)shape).getUsoMasArea());
 
-						tagsBuilding = new ArrayList<String[]>();
+						List<String[]> tagsBuilding = new ArrayList<String[]>();
 							
 						// Determinamos los tags exclusivos de los edificios
 						// y los borramos de los tags de la parcela
 						Iterator<String[]> iter = tags.iterator();
 						while (iter.hasNext()) {
-							tag = iter.next();
+							String[] tag = iter.next();
 							if (tag[0].startsWith("@")) {
-								s = new String[2];
+								String[] s = new String[2];
 								s[0] = tag[0].replace("@", "");
 								s[1] = tag[1];
 								tagsBuilding.add(s);
@@ -196,7 +197,7 @@ public class Cat2Osm {
 						}
 
 						r.addTags(tags);
-						tagsBuildingMap.put (shape.getRefCat(), tagsBuilding);
+						tagsBuildingMap.put(shape.getRefCat(), tagsBuilding);
 						
 					}
 					
@@ -212,8 +213,6 @@ public class Cat2Osm {
 				}
 			}
 		}
-
-		
 	
 		return shapes;
 	}
@@ -657,7 +656,7 @@ public class Cat2Osm {
 							// y los borramos de los tags, ya que no son aplicables a nodos
 							Iterator<String[]> iter = tags.iterator();
 							while (iter.hasNext()) {
-								tag = iter.next();
+								String [] tag = iter.next();
 								if (tag[0].startsWith("@")) {
 									iter.remove();
 								}
@@ -807,7 +806,9 @@ public class Cat2Osm {
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(215,240));
 			c.addAttribute("name",eliminarComillas(line.substring(215,240)));
 			//c.addAttribute("CODIGO POSTAL",line.substring(240,245));
+			if (!line.substring(240,245).equals("00000"))
 			c.addAttribute("addr:postcode", line.substring(240,245));
+			if (!line.substring(240,245).isEmpty() && !line.substring(240,245).equals("00000"))
 			c.addAttribute("addr:country","ES");
 			//c.addAttribute("DISTRITO MUNICIPAL",line.substring(245,247));
 			//c.addAttribute("CODIGO DEL MUNICIPIO ORIGEN EN CASO DE AGREGACION",line.substring(247,250));
@@ -967,7 +968,9 @@ public class Cat2Osm {
 			//c.addAttribute("TEXTO DE DIRECCION NO ESTRUCTURADA",line.substring(257,282));
 			c.addAttribute("name",eliminarComillas(line.substring(257,282).trim()));
 			//c.addAttribute("CODIGO POSTAL",line.substring(282,287));
+			if (!line.substring(282,287).equals("00000"))
 			c.addAttribute("addr:postcode",line.substring(282,287));
+			if (!line.substring(282,287).isEmpty() && !line.substring(282,287).equals("00000"))
 			c.addAttribute("addr:country" ,"ES");
 			//c.addAttribute("DISTRITO MUNICIPAL",line.substring(287,289));
 			//c.addAttribute("CODIGO DEL MUNICIPIO DE ORIGEN EN CASO DE AGREGACION",line.substring(289,292));
