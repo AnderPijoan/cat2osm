@@ -24,15 +24,16 @@ public class ShapeEjes extends Shape {
 	private Long relation; // Relacion de sus ways
 	private String via; // Nombre de via, solo en Ejes.shp, lo coge de Carvia.dbf
 	private List<ShapeAttribute> atributos;
+	private String tipo; // Tipo de ejes Rusticos o Urbanos. Todos los urbanos tendran highway=residential
 	private static final Map<Long,String> ejesNames = new HashMap<Long,String>(); // Lista de codigos y nombres de vias (para el Ejes.shp)
 
 
 	public ShapeEjes(SimpleFeature f, String tipo) throws IOException {
 		
 		super(f, tipo);
-		
 
-		shapeId = "EJES" + super.newShapeId();
+		this.shapeId = "EJES" + super.newShapeId();
+		this.tipo = tipo;
 
 		if (tipo.equals("UR") && ejesNames.isEmpty()){
 			readCarvia(tipo);
@@ -49,7 +50,7 @@ public class ShapeEjes extends Shape {
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Formato geometrico "+
 		f.getDefaultGeometry().getClass().getName() +" desconocido del shapefile EJES");
 		}
-
+		
 		if (tipo.equals("UR") && f.getAttribute("VIA") instanceof Double){
 			double v = (Double) f.getAttribute("VIA");
 			via = getVia((long) v);
@@ -61,7 +62,11 @@ public class ShapeEjes extends Shape {
 			int v = (Integer) f.getAttribute("VIA");
 			via = getVia((long) v);
 		}
-		else System.out.println("["+new Timestamp(new Date().getTime())+"] No se reconoce el tipo del atributo VIA "+ f.getAttribute("VIA").getClass().getName() );	
+		else if (tipo.equals("UR") && f.getAttribute("VIA") instanceof String){
+			int v = Integer.parseInt((String) f.getAttribute("VIA"));
+			via = getVia((long) v);
+		}
+		else if(tipo.equals("UR"))  System.out.println("["+new Timestamp(new Date().getTime())+"] No se reconoce el tipo del atributo VIA "+ f.getAttribute("VIA").getClass().getName() );	
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -90,6 +95,7 @@ public class ShapeEjes extends Shape {
 		// Via trae el tipo (substring de 0 a 2) y el nombre (substring de 3 en adelante)
 		// Se parsea el tipo para traducirlo al nombre del tipo y para sacar tags extra
 		List<String[]> tags = null;
+		
 		if (via != null && !via.isEmpty()){
 			s = new String[2];
 			s[0] = "name"; s[1] = nombreTipoViaParser(via.substring(0, 2)) +" "+ formatearNombreCalle(via.substring(3));
@@ -100,8 +106,14 @@ public class ShapeEjes extends Shape {
 			
 		}
 		
-		if (tags != null)
+		if (tags != null && !tags.isEmpty())
 			l.addAll(tags);
+		
+		if (tipo.equals("UR")){
+			s = new String[2];
+			s[0] = "highway"; s[1] = "residential";
+			l.add(s);
+		}
 		
 		s = new String[2];
 		s[0] = "source"; s[1] = "catastro";

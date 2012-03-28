@@ -211,6 +211,120 @@ public class ShapeConstru extends Shape {
 
 
 	public boolean shapeValido (){
+		
+		switch(constru){
+
+		case "B":
+			return false;
+
+		case "T":
+			return false;
+
+		case "TZA":
+			return false;
+
+		case "POR":
+			return false;
+
+		case "SOP":
+			return false;
+
+		case "PJE":
+			return false;
+
+		case "MAR":
+			return false;
+
+		case "P":
+			return false;
+
+		case "CO":
+			return true;
+
+		case "EPT":
+			return false;
+
+		case "SS":
+			return false;
+
+		case "ALT":
+			return false;
+
+		case "PI":
+			return true;
+
+		case "TEN":
+			return true;
+
+		case "ETQ":
+			return true;
+
+		case "SILO":
+			return true;
+
+		case "SUELO":
+		case "TERRENY":
+		case "SOLAR":
+			return true;
+
+		case "PRG":
+			return false;
+
+		case "DEP":
+			return true;
+
+		case "ESC":
+			return true;
+
+		case "TRF":
+			return true;
+
+		case "JD":
+			return true;
+
+		case "YJD":
+			return true;
+
+		case "FUT":
+			return true;
+
+		case "VOL":
+			return false;
+
+		case "ZD":
+			return true;
+
+		case "RUINA":
+			return true;
+
+		case "CONS":
+			return true;
+
+		case "PRESA":
+			return true;
+
+		case "ZBE":
+			return true;
+
+		case "ZPAV":
+			return false;
+
+		case "GOLF":
+			return true;
+
+		case "CAMPING":
+			return true;
+
+		case "HORREO":
+			return false;
+
+		case "PTLAN":
+			return true;
+
+		case "DARSENA":
+			return true;
+		}
+		
 		return true;
 	}
 
@@ -255,7 +369,7 @@ public class ShapeConstru extends Shape {
 			}
 			String[] s = new String[2];
 
-			if (alturaMin == 0 && alturaMax != 0){
+			if (alturaMax != 0){
 				s[0] = "building:levels"; s[1] = alturaMax+""; 
 				l.add(s);
 				s = new String[2];
@@ -291,7 +405,7 @@ public class ShapeConstru extends Shape {
 
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
-
+		
 		switch(elem){
 
 		case "B":
@@ -349,6 +463,8 @@ public class ShapeConstru extends Shape {
 			return l;
 
 		case "ETQ":
+			s[0]="landuse"; s[1]="reservoir";
+			l.add(s);
 			return l;
 
 		case "SILO":
@@ -441,6 +557,8 @@ public class ShapeConstru extends Shape {
 			return l;
 
 		case "ZBE":
+			s[0]="landuse"; s[1]="reservoir";
+			l.add(s);
 			return l;
 
 		case "ZPAV":
@@ -479,6 +597,8 @@ public class ShapeConstru extends Shape {
 			l.addAll(numRomanoParser(elem));
 		}
 
+
+		
 		return l;
 
 	}

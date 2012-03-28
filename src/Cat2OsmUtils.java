@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.ibm.icu.math.BigDecimal;
 import com.vividsolutions.jts.algorithm.LineIntersector;
 import com.vividsolutions.jts.algorithm.RobustLineIntersector;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -67,8 +68,19 @@ public class Cat2OsmUtils {
 	}
 	
 	
+	/** Metodo para truncar las coordenadas de los shapefiles para eliminar nodos practicamente duplicados
+	 * @param d numero
+	 * @param decimalPlace posicion a truncar
+	 * @return
+	 */
+	public static double round(double d, int decimalPlace) {
+	    BigDecimal bd = new BigDecimal(d);
+	    bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+	    return bd.doubleValue();
+	}
+
+	
 	/** Junta dos ways en uno.
-	 * dar.
 	 * @param w1 Way1 Dependiendo del caso se eliminara un way o el otro
 	 * @param w2 Way2
 	 * @return long Id de way que hay que eliminar de los shapes, porque se ha juntado al otro
@@ -109,11 +121,11 @@ public class Cat2OsmUtils {
 			}
 			
 			// Caso2: w1.primero = w2.final
-			else if (w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1)) && totalWays.get(w1) != null  && totalWays.get(w2) != null){
+			else if (totalWays.get(w1) != null  && totalWays.get(w2) != null && w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1))){
 				
 				// Es igual que el Caso1 pero cambiados de orden.
 				return unirWays(w2, w1);
-			}			
+			}
 		}
 		return null;
 	}
@@ -134,14 +146,16 @@ public class Cat2OsmUtils {
 	 * @return Devuelve el id del nodo ya sea creado o el que existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long getNodeId(Coordinate coor, List<String[]> tags){
+	public synchronized long getNodeId(Coordinate coor, List<String[]> tags, List<String> shapes){
 
 		Long id = null;
 		if (!totalNodes.isEmpty())
 			id = totalNodes.get(new NodeOsm(coor));
 		if (id != null){
+			NodeOsm n = ((NodeOsm) getKeyFromValue((Map<Object, Long>) ((Object) totalNodes), id));
 			if (tags != null)
-				((NodeOsm) getKeyFromValue((Map<Object, Long>) ((Object) totalNodes), id)).addTags(tags);
+				n.addTags(tags);
+			n.addShapes(shapes);
 			return id;
 			}
 		else{
@@ -149,6 +163,7 @@ public class Cat2OsmUtils {
 			NodeOsm n = new NodeOsm(coor);
 			if (tags != null)
 				n.addTags(tags);
+			n.setShapes(shapes);
 			totalNodes.putIfAbsent(n, idnode);
 			return idnode;
 		}
@@ -194,7 +209,7 @@ public class Cat2OsmUtils {
 	 * @return devuelve el id de la relacion creada o el de la que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long getRelationId(List<Long> ids, List<String> types, List<String> roles, List<String[]> tags){
+	public synchronized long getRelationId(List<Long> ids, List<String> types, List<String> roles, List<String[]> tags, List<String> shapesId){
 		
 		Long id = null;
 		if (!totalRelations.isEmpty())
@@ -207,6 +222,7 @@ public class Cat2OsmUtils {
 		else{
 			idrelation--;
 			RelationOsm r = new RelationOsm(ids,types,roles);
+			r.setShapes(shapesId);
 			if (tags != null)
 				r.addTags(tags);
 			totalRelations.putIfAbsent(r, idrelation);
@@ -240,6 +256,7 @@ public class Cat2OsmUtils {
 		List<WayOsm> ways = new ArrayList<WayOsm>();
 		
 		for (Long l: ids)
+			if ((WayOsm) getKeyFromValue((Map<Object, Long>) ((Object)totalWays), l) != null)
 			ways.add(((WayOsm) getKeyFromValue((Map<Object, Long>) ((Object)totalWays), l)));
 		
 		return ways;
@@ -255,6 +272,7 @@ public class Cat2OsmUtils {
         List<NodeOsm> nodes = new ArrayList<NodeOsm>();
         
         for (Long l: ids)
+        	if ((NodeOsm) getKeyFromValue((Map<Object, Long>) ((Object)totalNodes), l) != null)
             nodes.add(((NodeOsm) getKeyFromValue((Map<Object, Long>) ((Object)totalNodes), l)));
         
         return nodes;
@@ -303,7 +321,7 @@ public class Cat2OsmUtils {
 	        }
 	        return false;
 	    }
-
+	 
 	public static long getFechaActual() {
 		return fechaActual;
 	}

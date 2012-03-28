@@ -15,6 +15,7 @@ public class RelationOsm {
 	private List <String> roles; // Roles de los members
 	private String refCatastral; // Referencia catastral para manejar las relaciones de relaciones
 	private List<String[]> tags;
+	private List<String> shapes; // Ids de los shapes a los que pertenece
 	private long fechaConstru = Cat2OsmUtils.getFechaActual(); // Fecha de construccion de la parcela que representa AAAAMMDD
 
 
@@ -23,6 +24,7 @@ public class RelationOsm {
 		this.types = types;
 		this.roles = roles;
 		tags = new ArrayList<String[]>();
+		shapes = new ArrayList<String>();
 	}
 
 
@@ -32,7 +34,7 @@ public class RelationOsm {
 			types.add(type);
 			roles.add(role);}
 	}
-	
+
 	/** Inserta un nuevo member machacando el que haya en la posicion
 	 * @param pos
 	 * @param id
@@ -215,12 +217,46 @@ public class RelationOsm {
 	@SuppressWarnings("unchecked")
 	public String printRelation(Long id, Cat2OsmUtils utils){
 		String s = "";
-		
-		if ( fechaConstru < Long.parseLong(Config.get("FechaConstruDesde")) || fechaConstru > Long.parseLong(Config.get("FechaConstruHasta")))
-			return s;
 
-		if (ids.size()<1)
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Relation id="+ id +" con menos de un way. No se imprimira.");
+		// Si no esta dentro de las fechas de construccion indicadas
+		if ( fechaConstru < Long.parseLong(Config.get("FechaConstruDesde")) || fechaConstru > Long.parseLong(Config.get("FechaConstruHasta"))){
+
+			List<WayOsm> ways = utils.getWays(ids);
+
+			for (WayOsm way : ways)
+				if (way != null)
+					for (String sId : shapes){
+						List<NodeOsm> nodes = utils.getNodes(way.getNodes());
+
+						for (NodeOsm node : nodes)
+							if (node != null)
+								node.deleteShape(sId);
+
+						way.deleteShape(sId);
+					}
+			
+			return "";
+		}
+
+		if (ids.size()<1){
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Relation id="+ id +" con menos de un way. No se imprimirá.");
+
+			List<WayOsm> ways = utils.getWays(ids);
+
+			for (WayOsm way : ways)
+				if (way != null)
+					for (String sId : shapes){
+						List<NodeOsm> nodes = utils.getNodes(way.getNodes());
+
+						for (NodeOsm node : nodes)
+							if (node != null)
+								node.deleteShape(sId);
+
+						way.deleteShape(sId);
+					}
+			
+			return "";
+		}
 
 		// Si una relation tiene menos de dos ways, deberia quedarse como way
 		// ya que sino es redundante.
@@ -261,7 +297,13 @@ public class RelationOsm {
 			}
 
 			WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), ids.get(0)));
-
+			
+			if (way == null){
+				System.out.println("["+new Timestamp(new Date().getTime())+"] Una vía ha dado un error y no se imprimirá. Esto dejará sus nodos sueltos.");
+				return "";
+				}
+				
+			
 			s = ("<way id=\""+ ids.get(0) +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\">\n");
 
 			// Referencias a los nodos
@@ -276,14 +318,14 @@ public class RelationOsm {
 			for (int x = 0; x < tags.size(); x++) {
 
 				// Filtramos para que no salgan todos los tags, siguiente bucle se explica el porque
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 
-				// El tag addr:housenumber, addr:street,  addr:full, addr:postcode y addr:country 
+				// El tag addr:housenumber, addr:street, addr:postcode, addr:country y name 
 				// solo se puede asignar a parcelas. Por eso habra
 				// que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela
-				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country")|| tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
+				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country")|| tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("name")){
 					for (String[] tag : tags)
 						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
@@ -296,7 +338,7 @@ public class RelationOsm {
 
 			s += ("</way>\n");
 		}
-		
+
 		// En caso de que tenga varios ways, si que se imprime como una relacion de ways.
 		else {
 
@@ -311,9 +353,9 @@ public class RelationOsm {
 			for (int x = 0; x < tags.size(); x++){
 
 				// Filtramos para que no salgan todos los tags, abajo se explica el porque
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("addr:full") && !tags.get(x)[0].equals("CAT2OSMSHAPEID")) {
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].equals("CAT2OSMSHAPEID")) {
 
-					if (!with_data && !tags.get(x)[0].equals("source") && !tags.get(x)[0].equals("source:date"))
+					if (!with_data && !tags.get(x)[0].equals("source") && !tags.get(x)[0].equals("source:date") && !tags.get(x)[0].equals("type") && !tags.get(x)[0].equals("catastro:ref"))
 						with_data = true;
 
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
@@ -323,7 +365,7 @@ public class RelationOsm {
 				// solo se puede asignar a parcelas. Por eso habra
 				// que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela	
-				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("addr:full")){
+				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("name")){
 					for (String[] tag : tags)
 						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA")) {
 							with_data = true;
@@ -343,11 +385,43 @@ public class RelationOsm {
 
 			s += ("</relation>\n");
 
-			if (! with_data)
-				s = "";
+			if (!with_data){
+
+				List<WayOsm> ways = utils.getWays(ids);
+
+				for (WayOsm way : ways)
+					if (way != null)
+						for (String sId : shapes){
+							List<NodeOsm> nodes = utils.getNodes(way.getNodes());
+
+							for (NodeOsm node : nodes)
+								if (node != null)
+									node.deleteShape(sId);
+
+							way.deleteShape(sId);
+						}
+				return "";
+			}
+
 		}
 
 		return s;
+	}
+
+
+	public List<String> getShapes() {
+		return shapes;
+	}
+
+
+	public void setShapes(List<String> shapes) {
+		this.shapes = shapes;
+	}
+
+
+	public void addShapes(String shape) {
+		if (!this.shapes.contains(shape))
+			this.shapes.add(shape);
 	}
 
 
@@ -358,7 +432,7 @@ public class RelationOsm {
 
 	public void setFechaConstru(long fechaConstru) {
 		if (this.fechaConstru > fechaConstru)
-		this.fechaConstru = fechaConstru;
+			this.fechaConstru = fechaConstru;
 	}
 
 }

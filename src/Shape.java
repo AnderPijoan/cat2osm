@@ -135,6 +135,7 @@ public abstract class Shape {
 
 		switch (codigo){
 		case "CL":return "Calle";
+		case "AG":return "Agregado";
 		case "AL":return "Aldea/Alameda";
 		case "AR":return "Area/Arrabal";
 		case "AU":return "Autopista";
@@ -212,6 +213,85 @@ public abstract class Shape {
 		}
 
 		return codigo;
+		
+//		switch(codigo){
+//		case "CL":return "Carrer";
+//		case "AG":return "Agregat";
+//		case "AL":return "Llogaret";
+//		case "AR":return "Raval";
+//		case "AU":return "Autopista";
+//		case "AV":return "Avinguda";
+//		case "AY":return "Rierol";
+//		case "BJ":return "Baixada";
+//		case "BO":return "Barri";
+//		case "BR":return "Barranc";
+//		case "CA":return "-";
+//		case "CG":return "-";
+//		case "CH":return "Xalet";
+//		case "CI":return "Cinturó";
+//		case "CJ":return "Carreró";
+//		case "CM":return "Camí";
+//		case "CN":return "Colònia";
+//		case "CO":return "-";
+//		case "CP":return "Camp";
+//		case "CR":return "Carretera";
+//		case "CS":return "Mas ??";
+//		case "CT":return "Pujada";
+//		case "CU":return "Conjunt";
+//		case "DE":return "-";
+//		case "DP":return "Diputació";
+//		case "DS":return "Disseminats";
+//		case "ED":return "Edificis";
+//		case "EM":return "Extramurs";
+//		case "EN":return "Eixample ??";
+//		case "ER":return "Extraradi";
+//		case "ES":return "Escalinata";
+//		case "EX":return "Pla";
+//		case "FC":return "Ferrocarril";
+//		case "FN":return "Finca";
+//		case "GL":return "-";
+//		case "GR":return "Grup";
+//		case "GV":return "Gran Vía";
+//		case "HT":return "Hort";
+//		case "JR":return "Jardins";
+//		case "LD":return "Vessant ??";
+//		case "LG":return "Lloc ??";
+//		case "MC":return "Mercat";
+//		case "ML":return "Moll";
+//		case "MN":return "Municipi";
+//		case "MS":return "Masies";
+//		case "MT":return "Muntanya ??";
+//		case "MZ":return "Illa ??";
+//		case "PB":return "Poblat ??";
+//		case "PD":return "-";
+//		case "PJ":return "Passatge";
+//		case "PL":return "Polígon";
+//		case "PM":return "-";
+//		case "PQ":return "-";
+//		case "PR":return "-";
+//		case "PS":return "Passeig";
+//		case "PT":return "Pont";
+//		case "PZ":return "Plaça";
+//		case "QT":return "-";
+//		case "RB":return "Rambla";
+//		case "RC":return "-";
+//		case "RD":return "Ronda";
+//		case "RM":return "-";
+//		case "RP":return "Rampa";
+//		case "RR":return "Riera";
+//		case "RU":return "Rua";
+//		case "SA":return "Sortida";
+//		case "SD":return "Sender";
+//		case "SL":return "Solar";
+//		case "SN":return "-";
+//		case "SU":return "Pujada";
+//		case "TN":return "Terrenys";
+//		case "TO":return "Torrent";
+//		case "TR":return "Travessera";
+//		case "UR":return "Urbanització";
+//		case "VR":return "-";
+//		case "CY":return "-";}
+		
 	}
 
 
@@ -317,7 +397,7 @@ public abstract class Shape {
 			l.add(s);
 			return l;
 		case "038102": 
-			s[0] = "man_made"; s[1] ="water_well";
+			s[0] = "amenity"; s[1] ="fountain";
 			l.add(s);
 			return l;
 		case "037102": 
@@ -604,7 +684,7 @@ public abstract class Shape {
 			l.add(s);
 			return l;
 		case "168113": 
-			s[0] = "power"; s[1] ="tower";
+			s[0] = "power"; s[1] ="pole";
 			l.add(s);
 			return l;
 		case "168116": 

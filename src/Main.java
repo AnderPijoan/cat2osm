@@ -19,7 +19,7 @@ public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException {
 
 		if ((args.length == 1 && args[0].equals("-v")) || (args.length == 2 && (args[1].equals("-v") || args[0].equals("-v") ))){
-			System.out.println("Cat2Osm versión 2012-03-23.");
+			System.out.println("Cat2Osm versión "+Cat2Osm.VERSION+".");
 		}
 		else if ((args.length == 1 && args[0].equals("-ui")) || (args.length == 2 && (args[1].equals("-ui") || args[0].equals("-ui") ))){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando interfaz visual para crear el archivo de configuración.");
@@ -64,7 +64,7 @@ public class Main {
 			crearUsos();
 		}
 		else {
-			System.out.println("Cat2Osm versión 2012-03-23.\n");
+			System.out.println("Cat2Osm versión "+Cat2Osm.VERSION+".\n");
 			System.out.println("Forma de uso:");
 			System.out.println("java -jar [-XmxMemoria] cat2osm.jar [Opción] / [RutaArchivoConfig] [NombreArchivo]\n");
 			System.out.println("Es necesrio indicarle una opción y pasarle el archivo de configuración:");
@@ -97,7 +97,7 @@ public class Main {
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
-		
+
 		// Nos aseguramos de que existe la carpeta result
 		File dir = new File(Config.get("ResultPath"));
 		if (!dir.exists()) 
@@ -106,11 +106,11 @@ public class Main {
 			try                { dir.mkdirs(); }
 			catch (Exception e){ e.printStackTrace(); }
 		}
-		
-		
+
+
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
-		
+
 		if (m.find()) {
 			Cat2OsmUtils.setFechaActual(Long.parseLong(m.group().substring(0, 4)+"0101"));
 		}
@@ -119,10 +119,12 @@ public class Main {
 			System.exit(-1);
 		}
 
-		if (!new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm").exists()
-				&& !new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm").exists()
-				&& !new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm").exists()){
+		if (new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm").exists()
+				&& new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm").exists()
+				&& new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm").exists())
 
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Se han encontrado 3 archivos temporales de una posible ejecución interrumpida, se procederá a juntarlos en un archivo resultado.");
+		else {
 
 			// Listas
 			List<Shape> shapes = new ArrayList<Shape>();
@@ -209,26 +211,24 @@ public class Main {
 			// Calculando los usos / destinos de las parcelas en funcion del que mas area tiene
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Calculando usos de las parcelas.");
 			shapes = catastro.calcularUsos(shapes);
-			
-			// Simplificamos los ways
+
+			// Operacion de simplifiacion de vias
 			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("EJES") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Simplificando vias.");
 				shapes = catastro.simplificarWays(shapes);
 			}
-			
+
 			// Escribir los datos
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo nodos");
-			catastro.printNodes( Cat2Osm.utils.getTotalNodes());
-			
 			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("EJES") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
-				System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo ways");
-				catastro.printWays(Cat2Osm.utils.getTotalWays());
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo relations");
 				catastro.printRelations( Cat2Osm.utils.getTotalRelations());
+				System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo ways");
+				catastro.printWays(Cat2Osm.utils.getTotalWays());
 			}
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo nodos");
+			catastro.printNodes( Cat2Osm.utils.getTotalNodes());
+
 		}
-		else 
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Se han encontrado 3 archivos temporales de una posible ejecución interrumpida, se procederá a juntarlos en un archivo resultado.");
 
 		System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo el archivo resultado");
 		catastro.juntarFiles(Config.get("ResultFileName") + (archivo.equals("*")? "" : archivo.toUpperCase()));
@@ -247,10 +247,10 @@ public class Main {
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 		Cat2Osm.utils.setModoPortales(true);
-		
+
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
-		
+
 		if (m.find()) {
 			Cat2OsmUtils.setFechaActual(Long.parseLong(m.group().substring(0, 4)+"0101"));
 		}
@@ -320,15 +320,15 @@ public class Main {
 			Iterator<Shape> iterator = shapes.iterator();
 
 			while(iterator.hasNext()) {
-			Shape shape = iterator.next();
-			if(shape instanceof ShapeParcela){
+				Shape shape = iterator.next();
+				if(shape instanceof ShapeParcela){
 					iterator.remove();
 					for(int x = 0; x < shape.getPoligons().size(); x++)
 						utils.deleteNodes(shape.getNodesIds(x));
 				}
 			}
-		
-			
+
+
 			//Escribir los datos
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo nodos");
 			catastro.printNodes( Cat2Osm.utils.getTotalNodes());
@@ -336,23 +336,23 @@ public class Main {
 		else 
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Se han encontrado 3 archivos temporales de una posible ejecución interrumpida, se procederá a juntarlos en un archivo resultado.");
 
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo el archivo resultado");
-			catastro.juntarFiles(Config.get("ResultFileName")+"PORTALES");
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo el archivo resultado");
+		catastro.juntarFiles(Config.get("ResultFileName")+"PORTALES");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado");
 
 	}
 
-	
+
 	public static void crearUsos() throws IOException, InterruptedException{
 
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 		utils.setModoUsos(true);
-		
+
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
-		
+
 		if (m.find()) {
 			Cat2OsmUtils.setFechaActual(Long.parseLong(m.group().substring(0, 4)+"0101"));
 		}
@@ -431,7 +431,7 @@ public class Main {
 			}catch(Exception e)
 			{System.out.println("["+new Timestamp(new Date().getTime())+"] Fallo al leer archivo Cat rústico. " + e.getMessage());}	
 
-			
+
 			// Borramos todos los nodos shapes de parcelas para que no los dibuje
 			Iterator<Shape> iterator = shapes.iterator();
 
@@ -443,12 +443,12 @@ public class Main {
 						utils.deleteNodes(shape.getNodesIds(x));
 				}
 			}
-			
+
 
 			// Escribir los datos
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo nodos");
 			catastro.printNodes( Cat2Osm.utils.getTotalNodes());
-			
+
 		}
 		else 
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Se han encontrado 3 archivos temporales de una posible ejecución interrumpida, se procederá a juntarlos en un archivo resultado.");
@@ -457,5 +457,5 @@ public class Main {
 		catastro.juntarFiles(Config.get("ResultFileName") + "USOS");
 		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado");
 	}
-	
+
 }

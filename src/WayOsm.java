@@ -3,8 +3,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class WayOsm {
@@ -42,14 +40,22 @@ public class WayOsm {
 	
 	public void addNodes(List<Long> l){
 		for (int x = 0; x < l.size(); x++)
-				nodos.add(l.get(x));
+			if (x != l.size()-1){
+				if(!nodos.contains(l.get(x))) 
+					nodos.add(l.get(x));
+			}
+			else
+				if (!nodos.contains(l.get(x)))
+					nodos.add(l.get(x));
+				else
+					if (l.get(x) == nodos.get(0))
+						nodos.add(l.get(x));
 	}
 	
 	
 	public List<Long> getNodes() {
 		return nodos;
 	}
-	
 	
 	
 	public void setShapes(List<String> s){
@@ -66,6 +72,10 @@ public class WayOsm {
 		for (String s : shapes)
 			if (!this.shapes.contains(s))
 				this.shapes.add(s);
+	}
+	
+	public synchronized void deleteShape(String shape){
+		shapes.remove(shape);
 	}
 	
 	
@@ -178,9 +188,20 @@ public class WayOsm {
 		String s = "";
 		
 		// Si un way no tiene mas de dos nodos, es incorrecto
-		if (nodos.size()<2)
+		if (nodos.size()<2){
 			System.out.println("Way id="+ id +" con menos de dos nodos. No se imprimira.");
-		else {
+			return "";
+		}
+		
+		// Si no pertenece a ningun shape porque se ha visto que no tenia tags representativos
+		// o se ha delimitado la busqueda
+		if (shapes.isEmpty()){
+			return "";
+		}
+		
+		
+		// Si pertenece a algun shape, es decir si sus shapes no se han desechado por no tener informacion relevante
+			if (!shapes.isEmpty()){
 		s = ("<way id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\">\n");
 		
 		// Referencias a los nodos

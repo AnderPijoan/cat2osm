@@ -10,6 +10,7 @@ public class NodeOsm {
 
 	private Coordinate coor;
 	private List<String[]> tags; // Se usan para los Elemtex y Elempun
+	private List<String> shapes; // Lista de shapes a los que pertenece
 	
 	
 	public NodeOsm(Coordinate c){
@@ -19,6 +20,7 @@ public class NodeOsm {
 		this.coor.x = c.x; 
 		this.coor.y = c.y;
 		this.coor.z = c.z;
+		shapes = new ArrayList<String>();
 	}
 
 
@@ -48,6 +50,27 @@ public class NodeOsm {
 		return true;
 	}
 	
+	
+	public List<String> getShapes() {
+		return shapes;
+	}
+
+
+	public void setShapes(List<String> shapes) {
+		this.shapes = shapes;
+	}
+	
+	
+	public synchronized void deleteShape(String shape){
+		shapes.remove(shape);
+	}
+	
+	
+	public synchronized void addShapes(List<String> shapes){
+		for (String s : shapes)
+			if (!this.shapes.contains(s))
+				this.shapes.add(s);
+	}
 	
 	public Coordinate getCoor(){
 		return coor;
@@ -128,10 +151,16 @@ public class NodeOsm {
 	 * @throws UnsupportedEncodingException 
 	 */
 	public String printNode(Long id){
-		String s = null;
-			
-		s = ("<node id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
+		String s = "";
 		
+		// Si no pertenece a ningun shape porque se ha visto que no tenia tags representativos
+		// o se ha delimitado la busqueda
+		if (shapes.isEmpty()){
+			return s;
+		}
+		
+		
+		s = ("<node id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\" lat=\""+this.coor.y+"\" lon=\""+this.coor.x+"\">\n");
 		
 		if (tags != null)
 			for (int x = 0; x < tags.size(); x++)
