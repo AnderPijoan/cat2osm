@@ -67,6 +67,8 @@ public class NodeOsm {
 	
 	
 	public synchronized void addShapes(List<String> shapes){
+		if (this.shapes == null && !shapes.isEmpty())
+			this.shapes = new ArrayList<String>();
 		for (String s : shapes)
 			if (!this.shapes.contains(s))
 				this.shapes.add(s);

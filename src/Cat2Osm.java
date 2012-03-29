@@ -22,6 +22,9 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.index.SpatialIndex;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.linearref.LinearLocation;
@@ -40,7 +43,6 @@ public class Cat2Osm {
 	 */
 	public Cat2Osm (Cat2OsmUtils utils){
 		Cat2Osm.utils = utils;
-
 	}
 
 
@@ -96,9 +98,9 @@ public class Cat2Osm {
 	 * @return lista de shapes con los tags modificados
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> calcularPortales(List<Shape> shapes){
+	public List<Shape> calcularEntradas(List<Shape> shapes){
 
-		// Creamos la factoria para crear objetos de GeoTools
+		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
 		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
 
 		// Creamos una cache para meter las geometrias de las parcelas y una lista con los numeros de policia de esas parcelas
@@ -119,13 +121,13 @@ public class Cat2Osm {
 				if (!env.isNull())
 					index.insert(env, new LocationIndexedLine(geom));
 			}
-
-
+		
 		// Para cada shape de elemtex que tengamos, que son los portales,
 		// metemos su coordenada en una lista
 		for (Shape shapeTex : shapes)
-			if (shapeTex instanceof ShapeElemtex){
+			if (shapeTex instanceof ShapeElemtex && shapeTex.getTtggss().equals("189401")){
 
+				Coordinate insideCoor = new Coordinate();
 				com.vividsolutions.jts.geom.Point point = gf.createPoint(shapeTex.getCoor());
 
 				double minDist = 0.00008; // Distancia minima ~ 80 metros
@@ -144,24 +146,50 @@ public class Cat2Osm {
 				// geometria de la parcela
 				for (LocationIndexedLine line : lines) {
 					LinearLocation here = line.project(point.getCoordinate());
-					Coordinate fixedCoor = line.extractPoint(here);
-					double dist = fixedCoor.distance(point.getCoordinate());
+					Coordinate tempCoor = line.extractPoint(here);
+					double dist = tempCoor.distance(point.getCoordinate());
 
 					if (dist < minDist) {
-						// Acualizamos la variable minDist
+						// Acualizamos la variable minDist y la coordenada que tomara al final
 						minDist = dist;
-
-						// Actualizamos la coordenada en el shape
-						((ShapeElemtex) shapeTex).setCoor(fixedCoor);
-
-						// Y Actualizamos la coordenada en el nodeOsm
-						if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
-							NodeOsm node = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
-							node.setCoor(fixedCoor);
-						}
+						
+						// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
+						//((ShapeElemtex) shapeTex).getCoor();
+						// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
+						//tempCoor
+						
+						//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
+						insideCoor = new Coordinate(tempCoor.x+(tempCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
+								tempCoor.y+(tempCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
+								0);
 					}
 				}
+
+				// Una vez que ya tenemos la coordenada
+
+				
+				List<Shape> matches = getParcela(shapes, insideCoor);
+				
+				System.out.println(matches.size());
+				
+				// Llamamos al metodo de crear nuevo nodo con la coordenada nueva (creamos nuevo por si se pudiese reutilizar uno antiguo)
+				// y eliminamos el antiguo
+				if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
+
+					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
+
+					if (nodeTex != null){
+						//utils.getNodeId(insideCoor, nodeTex.getTags(), nodeTex.getShapes());
+						nodeTex.setCoor(insideCoor);
+						//utils.getTotalNodes().remove(nodeTex);
+					}
+				}
+				
+				// Actualizamos la coordenada en el shape
+				((ShapeElemtex) shapeTex).setCoor(insideCoor);
 			}
+		
+			
 		return shapes;
 	}
 
@@ -171,6 +199,7 @@ public class Cat2Osm {
 	 * @param shapes
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public List<Shape> calcularUsos(List<Shape> shapes){
 
 		// Creamos los tags que se van a aplicar sólo a los edificios de la parcela
@@ -218,6 +247,38 @@ public class Cat2Osm {
 		return shapes;
 	}
 
+	
+	  /** Devuelve el shape de parcela sobre el que se encuentra el punto indicado
+	   * @param shapes Lista de shapes original
+	   * @return lista de shapes con los tags modificados
+	   */
+	@SuppressWarnings("unchecked")
+	public List<Shape> getParcela(List<Shape> shapes, Coordinate coor){
+
+		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
+		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
+
+		List<Shape> matches = new ArrayList<Shape>();
+		
+		for (Shape s: shapes)
+
+			if (s instanceof ShapeParcela && s.getPoligons() != null){
+
+				// Cogemos el outer de la parcela que esta en la posicion[0]
+				LinearRing l = gf.createLinearRing(s.getPoligons().get(0).getCoordinates());
+				Polygon parcela = gf.createPolygon(l, null);
+				Point point = gf.createPoint(coor);
+
+				// Si cumple lo anadimos
+				if (point.intersects(parcela)){
+					matches.add(s);
+				}
+			}
+
+		return matches;
+	} 
+	
+	
 
 	/** Los ways inicialmente estan divididos lo maximo posible, es decir un way por cada
 	 * dos nodes. Este metodo compara los tags de los ways para saber que ways se pueden
@@ -309,6 +370,7 @@ public class Cat2Osm {
 				}
 		}
 
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado");
 		return shapes;
 	}
 

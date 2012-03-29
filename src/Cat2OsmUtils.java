@@ -29,10 +29,10 @@ public class Cat2OsmUtils {
 	// Listaa de relations
 	private final ConcurrentHashMap <RelationOsm, Long> totalRelations = new ConcurrentHashMap <RelationOsm, Long>();
 	
-	// Booleanos para el modo de calcular los portales, ver todos los Elemtex y sacar los Usos de los
-	//inmuebles que no se pueden asociar
-	private static boolean portales = false;
-	private static boolean usos = false;
+	// Booleanos para el modo de calcular las entradas o ver todos los Elemtex y sacar los Usos de los
+	// inmuebles que no se pueden asociar
+	private static boolean onlyEntrances = true;
+	private static boolean onlyUsos = false;
 	
 	public synchronized ConcurrentHashMap<NodeOsm, Long> getTotalNodes() {
 		return totalNodes;
@@ -293,20 +293,20 @@ public class Cat2OsmUtils {
     	}
     }
 
-	public static boolean getModoPortales() {
-		return portales;
+	public static boolean getOnlyEntrances() {
+		return onlyEntrances;
 	}
 
-	public void setModoPortales(boolean modoPortales) {
-		Cat2OsmUtils.portales = modoPortales;
+	public void setOnlyEntrances(boolean entrances) {
+		Cat2OsmUtils.onlyEntrances = entrances;
 	}
 
-	public static boolean getModoUsos() {
-		return usos;
+	public static boolean getOnlyUsos() {
+		return onlyUsos;
 	}
 
-	public void setModoUsos(boolean usos) {
-		Cat2OsmUtils.usos = usos;
+	public void setOnlyUsos(boolean usos) {
+		Cat2OsmUtils.onlyUsos = usos;
 	}
 	
 	 public static boolean nodeOnWay(Coordinate node, Coordinate[] wayCoors) {

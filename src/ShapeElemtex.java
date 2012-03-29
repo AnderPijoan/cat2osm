@@ -221,6 +221,7 @@ public class ShapeElemtex extends Shape {
 			s = new String[2];
 			s[0] = "addr:housenumber"; s[1] = rotulo;
 			l.add(s);
+			
 			return l;}
 		
 		else {
@@ -237,7 +238,9 @@ public class ShapeElemtex extends Shape {
 	 */
 	public boolean shapeValido (){
 
-		if (!Cat2OsmUtils.getModoPortales()){
+		if (!Cat2OsmUtils.getOnlyEntrances()){
+			// Modo todos los elemtex de Parajes y Comarcas, Informacion urbana 
+			// y rustica y Vegetacion y Accidentes demograficos
 			if (ttggss.equals("189203"))
 				return true;
 			else if (ttggss.equals("189300"))
@@ -248,6 +251,7 @@ public class ShapeElemtex extends Shape {
 				return false;
 		}
 		else{
+			// Modo solo portales, solamente sacar los portales
 			if (ttggss.equals("189401"))
 				return true;
 			else

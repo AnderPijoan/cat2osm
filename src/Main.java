@@ -97,6 +97,10 @@ public class Main {
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
+		
+		// Cuando queremos ver todo el archivo Elemtex, tendremos que mostrar no solo las entradas sino todo
+		if (archivo.equals("ELEMTEX"))
+			Cat2Osm.utils.setOnlyEntrances(false);
 
 		// Nos aseguramos de que existe la carpeta result
 		File dir = new File(Config.get("ResultPath"));
@@ -142,6 +146,7 @@ public class Main {
 							filesU[i].getName().toUpperCase().equals("CONSTRU") ||
 							filesU[i].getName().toUpperCase().equals("ELEMLIN") ||
 							filesU[i].getName().toUpperCase().equals("ELEMPUN") ||
+							filesU[i].getName().toUpperCase().equals("ELEMTEX") ||
 							filesU[i].getName().toUpperCase().equals("PARCELA") ||
 							filesU[i].getName().toUpperCase().equals("SUBPARCE")
 							))
@@ -171,6 +176,7 @@ public class Main {
 							filesR[i].getName().toUpperCase().equals("CONSTRU") ||
 							filesR[i].getName().toUpperCase().equals("ELEMLIN") ||
 							filesR[i].getName().toUpperCase().equals("ELEMPUN") ||
+							filesR[i].getName().toUpperCase().equals("ELEMTEX") ||
 							filesR[i].getName().toUpperCase().equals("PARCELA") ||
 							filesR[i].getName().toUpperCase().equals("SUBPARCE") 
 							))
@@ -208,16 +214,22 @@ public class Main {
 				{System.out.println("["+new Timestamp(new Date().getTime())+"] Fallo al leer archivo Cat rústico. " + e.getMessage());}	
 			}
 
-			// Calculando los usos / destinos de las parcelas en funcion del que mas area tiene
+			// Calcular los usos / destinos de las parcelas en funcion del que mas area tiene
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Calculando usos de las parcelas.");
 			shapes = catastro.calcularUsos(shapes);
 
+			// Mover las entradas de las casas a sus respectivas parcelas
+			if (archivo.equals("*")){
+						System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
+						shapes = catastro.calcularEntradas(shapes);
+			}
+			
 			// Operacion de simplifiacion de vias
 			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("EJES") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Simplificando vias.");
 				shapes = catastro.simplificarWays(shapes);
 			}
-
+			
 			// Escribir los datos
 			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("EJES") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Escribiendo relations");
@@ -246,7 +258,7 @@ public class Main {
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
-		Cat2Osm.utils.setModoPortales(true);
+		Cat2Osm.utils.setOnlyEntrances(true);
 
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));
@@ -314,7 +326,7 @@ public class Main {
 
 			// Mover las entradas de las casas a sus respectivas parcelas
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
-			shapes = catastro.calcularPortales(shapes);
+			shapes = catastro.calcularEntradas(shapes);
 
 			// Borramos todos los nodos shapes de parcelas para que no los dibuje
 			Iterator<Shape> iterator = shapes.iterator();
@@ -348,7 +360,7 @@ public class Main {
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
-		utils.setModoUsos(true);
+		utils.setOnlyUsos(true);
 
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));

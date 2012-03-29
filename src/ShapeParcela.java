@@ -24,6 +24,7 @@ public class ShapeParcela extends Shape {
 	private Long relation; // Relacion de sus ways
 	private String refCatastral; // Referencia catastral
 	private List<ShapeAttribute> atributos;
+	private int numSymbol;
 	
 	private HashMap<String,Double> usos; // Para definir cual de todos los usos y destinos asignar,
 	// se ha llegado a la conclusion de asignar el que mas area tenga
@@ -76,6 +77,19 @@ public class ShapeParcela extends Shape {
 
 		// Los demas atributos son metadatos y de ellos sacamos 
 		refCatastral = (String) f.getAttribute("REFCAT");
+		
+		
+		// El NUMSYMBOL 4 de las parcelas son las que a pesar de tener datos no se tienen que dibujar
+		// como carreteras, la parcela rustica que cubre toda la zona urbana y alguna mas
+		if (f.getAttribute("NUMSYMBOL") instanceof Double){
+			numSymbol = (Integer) f.getAttribute("NUMSYMBOL");
+		}
+		else if (f.getAttribute("NUMSYMBOL") instanceof Long){
+			numSymbol = (Integer) f.getAttribute("NUMSYMBOL");
+		}
+		else if (f.getAttribute("NUMSYMBOL") instanceof Integer){
+			numSymbol = (Integer) f.getAttribute("NUMSYMBOL");
+		}
 
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
@@ -202,7 +216,7 @@ public class ShapeParcela extends Shape {
 	
 	
 	public boolean shapeValido (){
-		return true;
+		 return (numSymbol != 4? true: false) ;
 	}
 
 
