@@ -35,8 +35,8 @@ public class Cat2Osm {
 
 	public static final String VERSION = "2012-03-27";
 	public static Cat2OsmUtils utils;
-	
-	
+
+
 	/** Constructor
 	 * @param utils Clase utils en la que se almacenan los nodos, ways y relaciones 
 	 * y tiene funciones para manejarlos
@@ -122,14 +122,30 @@ public class Cat2Osm {
 					index.insert(env, new LocationIndexedLine(geom));
 			}
 		
-		// Para cada shape de elemtex que tengamos, que son los portales,
-		// metemos su coordenada en una lista
-		for (Shape shapeTex : shapes)
+		
+		// Buscamos la parcela mas cercana
+		for (Shape shapeTex : shapes){
 			if (shapeTex instanceof ShapeElemtex && shapeTex.getTtggss().equals("189401")){
+				
+				// Guarderemos 3 parcelas
+				ShapeParcela nearestParcela = null; // Parcela mas cercana
+				ShapeParcela nearestPairParcela = null; // Parcela par o impar dependiendo del rotulo mas cercana
+				ShapeParcela nearestSameNumberParcela = null; // Parcela con el mismo addr:housenumber mas cerana
 
-				Coordinate insideCoor = new Coordinate();
+				// Y 3 coordenadas
+				Coordinate nearestInsideCoor = null; // Coordenada "espejo" del elemtex con respecto a la parcela mas cercana
+				Coordinate nearestPairInsideCoor = null; // Igual pero para la parcela con par/impar
+				Coordinate nearestSameNumberInsideCoor = null; // Igual pero para la parcela con el mismo addr:housenumber
+				
+				// Variables
+				Coordinate tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
+				Coordinate tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
 				com.vividsolutions.jts.geom.Point point = gf.createPoint(shapeTex.getCoor());
 
+				
+				// Buscamos la parcela mas cercana
+				
+				
 				double minDist = 0.00008; // Distancia minima ~ 80 metros
 
 				// Creamos el punto de busqueda con la coordenada del punto y la expandimos
@@ -146,53 +162,235 @@ public class Cat2Osm {
 				// geometria de la parcela
 				for (LocationIndexedLine line : lines) {
 					LinearLocation here = line.project(point.getCoordinate());
-					Coordinate tempCoor = line.extractPoint(here);
-					double dist = tempCoor.distance(point.getCoordinate());
+					tempSnappedCoor = line.extractPoint(here);
+					double dist = tempSnappedCoor.distance(point.getCoordinate());
 
 					if (dist < minDist) {
-						// Acualizamos la variable minDist y la coordenada que tomara al final
-						minDist = dist;
-						
 						// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
 						//((ShapeElemtex) shapeTex).getCoor();
 						// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
-						//tempCoor
-						
+						//snappedCoor
 						//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
-						insideCoor = new Coordinate(tempCoor.x+(tempCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
-								tempCoor.y+(tempCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
-								0);
+						tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
+								tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
+								0);}
+
+					List<Coordinate> l= new ArrayList<Coordinate>();
+					l.add(tempInsideCoor);
+					l.add(shapeTex.getCoor());
+					ShapeParcela temp = (ShapeParcela) getParcela(shapes, l);
+
+					// Si hemos encontrado una parcela que cumple, actualizamos
+					if (temp != null){
+						// Acualizamos la variable minDist y la parcela
+						minDist = dist;
+
+						nearestParcela = temp;
+						nearestInsideCoor = tempInsideCoor;
 					}
 				}
 
-				// Una vez que ya tenemos la coordenada
+
+				// Buscamos la parcela par/impar mas cercana
 
 				
-				List<Shape> matches = getParcela(shapes, insideCoor);
-				
-				System.out.println(matches.size());
-				
-				// Llamamos al metodo de crear nuevo nodo con la coordenada nueva (creamos nuevo por si se pudiese reutilizar uno antiguo)
-				// y eliminamos el antiguo
-				if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
+				tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
+				tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
+				point = gf.createPoint(shapeTex.getCoor());
 
-					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
+				minDist = 0.00008; // Distancia minima ~ 80 metros
 
-					if (nodeTex != null){
-						//utils.getNodeId(insideCoor, nodeTex.getTags(), nodeTex.getShapes());
-						nodeTex.setCoor(insideCoor);
-						//utils.getTotalNodes().remove(nodeTex);
+				// Creamos el punto de busqueda con la coordenada del punto y la expandimos
+				// en la distancia minima para obtener
+				// una linea de desplazamiento para tocar la parcela
+				search = new Envelope(point.getCoordinate());
+				search.expandBy(minDist);
+
+				// Hacemos la query
+				lines = index.query(search);
+
+				// Cada linea que nos devuelve representa el desplazamiento
+				// que hay que darle a la coordenada para que se situe sobre la linea de la
+				// geometria de la parcela
+				for (LocationIndexedLine line : lines) {
+					LinearLocation here = line.project(point.getCoordinate());
+					tempSnappedCoor = line.extractPoint(here);
+					double dist = tempSnappedCoor.distance(point.getCoordinate());
+
+					if (dist < minDist) {
+
+						// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
+						//((ShapeElemtex) shapeTex).getCoor();
+						// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
+						//snappedCoor
+
+						//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
+						tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
+								tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
+								0);}
+
+					List<Coordinate> l= new ArrayList<Coordinate>();
+					l.add(tempInsideCoor);
+					l.add(shapeTex.getCoor());
+					ShapeParcela temp = (ShapeParcela) getParcela(shapes, l);
+					
+					// Si hemos encontrado una parcela que cumple miramos su addr:housenumber
+					if (temp != null){
+
+						// Comparamos si su addr:housenumber es igual que el rotulo del elemtex
+						RelationOsm r = (RelationOsm) utils.getKeyFromValue( (Map<Object, Long>) ((Object)utils.getTotalRelations()), temp.getRelationId());
+
+						for (String [] tag : r.getTags()){			
+							
+							if (tag[0].equals("addr:housenumber") && esNumero(tag[1]) && esNumero(((ShapeElemtex)shapeTex).getRotulo().trim()) && Integer.parseInt(tag[1])%2 == Integer.parseInt(((ShapeElemtex) shapeTex).getRotulo())%2 ){
+								// Acualizamos la variable minDist y la parcela
+								minDist = dist;
+
+								nearestPairParcela = temp;
+								nearestPairInsideCoor = tempInsideCoor;
+							}
+						}
 					}
 				}
+
+
+				// Buscamos la parcela con el mismo addr:housenumber mas cercana
+
 				
-				// Actualizamos la coordenada en el shape
-				((ShapeElemtex) shapeTex).setCoor(insideCoor);
+				tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
+				tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
+				point = gf.createPoint(shapeTex.getCoor());
+
+				minDist = 0.00008; // Distancia minima ~ 80 metros
+
+				// Creamos el punto de busqueda con la coordenada del punto y la expandimos
+				// en la distancia minima para obtener
+				// una linea de desplazamiento para tocar la parcela
+				search = new Envelope(point.getCoordinate());
+				search.expandBy(minDist);
+
+				// Hacemos la query
+				lines = index.query(search);
+
+				// Cada linea que nos devuelve representa el desplazamiento
+				// que hay que darle a la coordenada para que se situe sobre la linea de la
+				// geometria de la parcela
+				for (LocationIndexedLine line : lines) {
+					LinearLocation here = line.project(point.getCoordinate());
+					tempSnappedCoor = line.extractPoint(here);
+					double dist = tempSnappedCoor.distance(point.getCoordinate());
+
+					if (dist < minDist) {
+
+						// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
+						//((ShapeElemtex) shapeTex).getCoor();
+						// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
+						//snappedCoor
+
+						//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
+						tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
+								tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
+								0);}
+
+					List<Coordinate> l= new ArrayList<Coordinate>();
+					l.add(tempInsideCoor);
+					l.add(shapeTex.getCoor());
+					ShapeParcela temp = (ShapeParcela) getParcela(shapes, l);
+
+					// Si hemos encontrado una parcela que cumple miramos su addr:housenumber
+					if (temp != null){
+
+						// Comparamos si su addr:housenumber es igual que el rotulo del elemtex
+						RelationOsm r = (RelationOsm) utils.getKeyFromValue( (Map<Object, Long>) ((Object)utils.getTotalRelations()), temp.getRelationId());
+
+						for (String [] tag : r.getTags())
+							if (tag[0].trim().equals("addr:housenumber") && tag[1].trim().equals(((ShapeElemtex) shapeTex).getRotulo().trim())){
+
+								// Acualizamos la variable minDist y la parcela
+								minDist = dist;
+
+								nearestSameNumberParcela = temp;
+								nearestSameNumberInsideCoor = tempInsideCoor;
+							}
+					}
+				}
+
+//				if ((((ShapeElemtex) shapeTex).getRotulo()).equals("3"))
+//				System.out.println(nearestParcela +" "+ nearestPairParcela +" "+ nearestSameNumberParcela);
+				
+
+				// Una vez que ya tenemos las 3 parcelas
+				if (nearestParcela != null){
+					
+					if (nearestPairParcela != null){
+						
+						if (nearestSameNumberParcela != null){
+							
+							// Si se han encontrado las 3 pero son la misma
+							if (nearestPairParcela.equals(nearestParcela) && nearestPairParcela.equals(nearestSameNumberParcela)){
+								anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
+							}
+							// Si se han encontrado las 3 pero la par/impar y mismo numero son iguales y la mas cercana es distinta
+							// Coger la mismo numero ya que sera que esta mas cerca del otro lado de la calle
+							else { 
+								if (nearestPairParcela.equals(nearestSameNumberParcela) && !nearestPairParcela.equals(nearestParcela)){
+									anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
+
+								} else {
+									// Si se han encontrado las 3 pero la del numero igual es distinta (se deduce que estara algo mas lejos)
+									// Coger la par/impar ya que sera que no hay parcela con ese numero
+									if (nearestPairParcela.equals(nearestParcela) && !nearestPairParcela.equals(nearestSameNumberParcela)){
+										anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
+									}
+									// Si se han encontrado las 3 y las 3 son distintas
+									// Comparamos la distancia a la que esta la del mismo numero y si esta a mas de 20metros cogemos la par/impar
+									else{
+										if (shapeTex.getCoor().distance(nearestSameNumberInsideCoor) <= 0.00002){
+											anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
+										}
+										else {
+											anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
+										}
+									}
+								}
+							}
+						}
+						// No existe sameNumberParcela
+						else{
+							
+							// Si se han encontrado solo estas dos pero son la misma
+							if (nearestPairParcela.equals(nearestParcela)){
+								anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
+							}
+							// Si se han encontrado las dos pero son distintas (se deduce que la par/impar estara algo mas lejos)
+							// Coger la par/impar ya que la mas cercana sera la de enfrente en la calle
+							else{
+								anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
+							}
+						}
+
+					}
+
+					// Solo se ha encontrado la mas cercana
+					else{
+							anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
+						}
+				}
+				// No se han encontrado parcelas para ese portal
+				else{
+
+					if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
+						NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
+						if (nodeTex != null) nodeTex.addTag(new String[] {"FIXME","FIXME"});
+					}
+				}
 			}
+		}
 		
-			
 		return shapes;
 	}
 
+	
 	/** Recorre todos los shapes despues de haber leido todos los usos del .CAT
 	 * En las shapes de parcela se han almacenado los usos/destinos y sus areas y se cogera
 	 * el que mas area tenga
@@ -247,19 +445,19 @@ public class Cat2Osm {
 		return shapes;
 	}
 
-	
-	  /** Devuelve el shape de parcela sobre el que se encuentra el punto indicado
-	   * @param shapes Lista de shapes original
-	   * @return lista de shapes con los tags modificados
-	   */
-	@SuppressWarnings("unchecked")
-	public List<Shape> getParcela(List<Shape> shapes, Coordinate coor){
+
+	/** Devuelve el shape de parcela sobre el que se encuentra el punto indicado
+	 * @param shapes Lista de shapes original
+	 * @param coor Coordenada que hay que comprobar sobre que shapeParcela esta
+	 * @return Shape que coincide
+	 */
+	public Shape getParcela(List<Shape> shapes, List<Coordinate> coors){
 
 		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
 		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
-
 		List<Shape> matches = new ArrayList<Shape>();
-		
+
+
 		for (Shape s: shapes)
 
 			if (s instanceof ShapeParcela && s.getPoligons() != null){
@@ -267,18 +465,20 @@ public class Cat2Osm {
 				// Cogemos el outer de la parcela que esta en la posicion[0]
 				LinearRing l = gf.createLinearRing(s.getPoligons().get(0).getCoordinates());
 				Polygon parcela = gf.createPolygon(l, null);
-				Point point = gf.createPoint(coor);
 
-				// Si cumple lo anadimos
-				if (point.intersects(parcela)){
-					matches.add(s);
+				for(Coordinate coor : coors){
+					Point point = gf.createPoint(coor);
+					// Si cumple lo anadimos
+					if (point.intersects(parcela) && !matches.contains(s)){
+						return s;
+					}
 				}
 			}
 
-		return matches;
+		return null;
 	} 
-	
-	
+
+
 
 	/** Los ways inicialmente estan divididos lo maximo posible, es decir un way por cada
 	 * dos nodes. Este metodo compara los tags de los ways para saber que ways se pueden
@@ -634,7 +834,7 @@ public class Cat2Osm {
 						// El registro 13 es para bienes inmuebles e incluye la fecha de construccion. Como no
 						// hay forma de asociarlo con cada bien inmueble, se la asociamos a toda su referencia
 						// catastral, cogiendo la menor de todas, es decir la mas antigua.
-						
+
 						// El registro 14 es para bienes inmuebles pero como no hay forma de relacionarlo
 						// se ha hecho que la parcela acumule todos los destinos y al final elija el que mas
 						// area tiene. Ese dato solo se almacena en el shape, luego habra que llamar al metodo
@@ -2847,4 +3047,64 @@ public class Cat2Osm {
 		return ret.trim();
 	}
 
+	/** Teniendo ya decidida la parcela mas adecuada para anadir esta entrada.
+	 * En el calculo se ha calculado la coordenada "espejo" del elemtex con respecto a la geometria de
+	 * la parcela para juntando esas dos coordenadas, crear un segmento que cortara uno de los ways de 
+	 * la parcela y asi saber a que way hay que anadirle la entrada.
+	 * @param parcela Parcela a la que anadir la entrada
+	 * @param elemtex Coordenada en la que esta el elemtex
+	 * @param espejo Coordenada espejo que se ha calculado para saber que way corta la linea creada por las
+	 * dos coordenadas
+	 */
+	public void anadirEntradaParcela(ShapeParcela parcela, ShapeElemtex elemtex, Coordinate espejo){
+
+		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
+		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
+		
+		// Creamos la geometria que representa la linea que hemos hecho de desplazar
+		// el Elemtex de la coordenada 1 a la 3
+		Coordinate[] coors = new Coordinate[2];
+		coors[0] = elemtex.getCoor();
+		coors[1] = espejo;
+
+		LineString entrance = gf.createLineString(coors);
+
+		// Cogemos los ways de la geometria exterior [0]
+		List<WayOsm> ways = utils.getWays(parcela.getWaysIds(0));
+
+		for (WayOsm way : ways){
+
+			// Cogemos sus nodos y de ellos sus coordenadas
+			List<NodeOsm> nodes = utils.getNodes(way.getNodes());
+			coors = new Coordinate[nodes.size()];
+
+			for (int x = 0 ; x < nodes.size(); x++)
+				coors[x] = nodes.get(x).getCoor();
+
+			// Creamos la geometria de ese way para comparar
+			LineString wayGeo = gf.createLineString(coors);
+
+			//if(wayGeo.crosses(entrance)){
+			if(wayGeo.intersects(entrance)){
+
+				// Llamamos al metodo de crear nuevo nodo con la coordenada nueva (creamos nuevo por si se pudiese reutilizar uno antiguo)
+				// y eliminamos el antiguo
+				if (elemtex.getNodesIds(0) != null && !elemtex.getNodesIds(0).isEmpty()){
+
+					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), elemtex.getNodesIds(0).get(0)));
+
+					if (nodeTex != null){
+						
+						utils.getNodeId(wayGeo.intersection(entrance).getCoordinate(), nodeTex.getTags(), nodeTex.getShapes());
+						//nodeTex.setCoor(wayGeo.intersection(entrance).getCoordinate());
+						//utils.getTotalNodes().remove(nodeTex);
+					}
+				}
+
+				// Actualizamos la coordenada en el shape
+				((ShapeElemtex) elemtex).setCoor(wayGeo.intersection(entrance).getCoordinate());
+			}
+		}			
+	}
+	
 }

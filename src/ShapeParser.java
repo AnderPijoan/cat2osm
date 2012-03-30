@@ -166,7 +166,6 @@ public class ShapeParser extends Thread{
 	private Shape mPolygonShapeParser(Shape shape){
 
 
-
 		// Obtenemos las coordenadas de cada punto del shape
 		for (int x = 0; x < shape.getPoligons().size(); x++){
 			Coordinate[] coor = shape.getCoordenadas(x);
