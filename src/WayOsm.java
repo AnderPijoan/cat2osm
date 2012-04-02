@@ -28,7 +28,7 @@ public class WayOsm {
 		nodos.add(l);
 	}
 	
-	/** Anade un nodo machacando el valor que habia en esa posicion
+	/** Anade un nodo desplazando los existentes hacia la derecha
 	 * @param pos
 	 * @param l
 	 */
