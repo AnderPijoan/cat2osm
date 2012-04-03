@@ -214,7 +214,7 @@ public class RelationOsm {
 	 * @param id Id de la relation
 	 * @return Devuelve en un String la relation lista para imprimir
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public String printRelation(Long id, Cat2OsmUtils utils){
 		String s = "";
 
@@ -342,7 +342,10 @@ public class RelationOsm {
 		// En caso de que tenga varios ways, si que se imprime como una relacion de ways.
 		else {
 
-			boolean with_data=false;
+			// Variable para comprobar si una relacion tiene datos relevantes
+			// 	Ya se ha hecho este proceso en un punto anterior de la ejecucion pero ahora se comprueban
+			// algunos tags mas que no son relevantes a no ser que sean en parcelas
+			boolean with_data = false;
 
 			s = ("<relation id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" visible=\"true\"  version=\"6\">\n");
 

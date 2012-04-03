@@ -33,7 +33,7 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
 public class Cat2Osm {
 
-	public static final String VERSION = "2012-03-27";
+	public static final String VERSION = "2012-04-03";
 	public static Cat2OsmUtils utils;
 
 
@@ -100,6 +100,14 @@ public class Cat2Osm {
 	@SuppressWarnings("unchecked")
 	public List<Shape> calcularEntradas(List<Shape> shapes){
 
+		// Variabbles para el calculo del tiempo estimado
+		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
+		int bar = 0;
+		long timeElapsed = 0;
+		float size = shapes.size();
+		long time = System.currentTimeMillis();
+		
+		
 		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
 		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
 
@@ -107,6 +115,7 @@ public class Cat2Osm {
 		final SpatialIndex index = new STRtree();
 
 		for (Shape shapePar : shapes){
+			
 			
 			// Si es un shape de parcela y tiene geometria
 			if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
@@ -128,6 +137,20 @@ public class Cat2Osm {
 		// Buscamos la parcela mas cercana
 		for (Shape shapeTex : shapes){
 			if (shapeTex instanceof ShapeElemtex && shapeTex.getTtggss().equals("189401")){
+				
+				// Codigo para el calculo del tiempo estimado
+				int progress = (int) ((shapes.indexOf(shapeTex)/size)*100);
+				if (bar != progress){
+					timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
+					long hor = Math.round((timeElapsed/3600));
+					long min = Math.round((timeElapsed-3600*hor)/60);
+					long seg = Math.round((timeElapsed-3600*hor-60*min));
+
+					System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = "+progress+"%. Tiempo restante estimado = "+hor+" horas, "+min+" minutos, "+seg+" segundos.\r");
+					bar = progress;
+					time = System.currentTimeMillis();
+				}
+				
 				
 				// Guarderemos 3 parcelas
 				ShapeParcela nearestParcela = null; // Parcela mas cercana
@@ -396,6 +419,7 @@ public class Cat2Osm {
 			}
 		}
 		
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado");
 		return shapes;
 	}
 
@@ -485,8 +509,7 @@ public class Cat2Osm {
 			}
 
 		return null;
-	} 
-
+	}
 
 
 	/** Los ways inicialmente estan divididos lo maximo posible, es decir un way por cada
@@ -504,11 +527,13 @@ public class Cat2Osm {
 	@SuppressWarnings("unchecked")
 	public List<Shape> simplificarWays(List<Shape> shapes) throws InterruptedException{
 
+		// Variables para el calculo del tiempo estimado
 		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
 		int bar = 0;
 		long timeElapsed = 0;
 		float size = shapes.size();
 		long time = System.currentTimeMillis();
+		
 		WayOsm way1 = null;
 		WayOsm way2 = null;
 		WayOsm removeWay = null;
@@ -516,6 +541,7 @@ public class Cat2Osm {
 
 		for (Shape shape : shapes){
 
+			// Codigo para el calculo del tiempo estimado
 			int progress = (int) ((shapes.indexOf(shape)/size)*100);
 			if (bar != progress){
 				timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
@@ -536,10 +562,7 @@ public class Cat2Osm {
 						removeWay = null;
 						y = -1;
 					}
-
-					try{
-
-						// Formula para que compruebe tambien el way(0) con el ultimo way o way(size()) 
+						// Formula para que compruebe tambien el way(0) con el ultimo way = way(size()) 
 						way1 = ((WayOsm) 
 								utils.getKeyFromValue(
 										(Map<Object, Long>) (
@@ -550,11 +573,12 @@ public class Cat2Osm {
 										(Map<Object, Long>) (
 												(Object)ways), 
 												shape.getWaysIds(x).get((y+1+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
-
+						
+						
 						if (way1 != null && way2 != null && !way1.getNodes().equals(way2.getNodes()) && way1.sameShapes(way2.getShapes()) ){
-
+							
 							// Juntamos los ways y borra el way que no se va a usar de las relations
-							removeWay = utils.unirWays(way1, way2);
+							removeWay = utils.joinWays(way1, way2);
 
 							if (removeWay != null){
 
@@ -574,8 +598,6 @@ public class Cat2Osm {
 								}
 							}
 						}
-
-					}catch(Exception e) {System.out.println("["+new Timestamp(new Date().getTime())+"] Error simplificando vía. " + e.getMessage());}
 				}
 		}
 
@@ -583,6 +605,83 @@ public class Cat2Osm {
 		return shapes;
 	}
 
+	
+	/** Comprueba si una relacion no tiene datos relevantes y la elimina.
+	 * Antes se hacia solo a la hora de imprimir las relaciones pero para entonces las vias ya
+	 * estaban simplificadas pensando que estas relaciones tenian tags
+	 * @param utils Clase Utils de Cat2Osm
+	 */
+	@SuppressWarnings("rawtypes")
+	public void simplificarRelationsSinTags(Cat2OsmUtils utils){
+		
+		// Variables para el calculo del tiempo estimado
+		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
+		int bar = 0;
+		int pos = 0;
+		long timeElapsed = 0;
+		float size = utils.getTotalRelations().size();
+		long time = System.currentTimeMillis();
+		
+		Iterator<Entry<RelationOsm, Long>> it = utils.getTotalRelations().entrySet().iterator();
+
+		// Para todas las relaciones que hay
+		while(it.hasNext()){
+			Map.Entry e = (Map.Entry) it.next();
+			pos++;
+			
+			// Codigo para el calculo del tiempo estimado
+			int progress = (int) ((pos/size)*100);
+			if (bar != progress){
+				timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
+				long hor = Math.round((timeElapsed/3600));
+				long min = Math.round((timeElapsed-3600*hor)/60);
+				long seg = Math.round((timeElapsed-3600*hor-60*min));
+
+				System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = "+progress+"%. Tiempo restante estimado = "+hor+" horas, "+min+" minutos, "+seg+" segundos.\r");
+				bar = progress;
+				time = System.currentTimeMillis();
+			}
+			
+			boolean with_data = false;
+
+			// Si tiene solo 1 id, no sera una relacion y a la hora de imprimir se quedara como un way
+			if (((RelationOsm) e.getKey()).getIds().size() > 1){
+
+				List<String[]> tags = ((RelationOsm) e.getKey()).getTags();
+
+				for (int x = 0; x < tags.size() && !with_data; x++)
+					if (!tags.get(x)[0].equals("addr:postcode") && 
+							!tags.get(x)[0].equals("addr:country") && 
+							!tags.get(x)[0].equals("CAT2OSMSHAPEID") && 
+							!tags.get(x)[0].equals("source") && 
+							!tags.get(x)[0].equals("source:date") && 
+							!tags.get(x)[0].equals("type") && 
+							!tags.get(x)[0].equals("catastro:ref"))
+						with_data = true;
+
+			}
+
+			if (!with_data){
+
+				List<WayOsm> ways = utils.getWays(((RelationOsm) e.getKey()).getIds());
+
+				for (WayOsm way : ways)
+					if (way != null)
+						for (String sId : ((RelationOsm) e.getKey()).getShapes()){
+							List<NodeOsm> nodes = utils.getNodes(way.getNodes());
+
+							for (NodeOsm node : nodes)
+								if (node != null)
+									node.deleteShape(sId);
+
+							way.deleteShape(sId);
+						}
+				it.remove();
+			}
+		}
+		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado");
+	}
+	
 
 	/** Escribe el osm con todos los nodos (Del archivo totalNodes, sin orden)
 	 * @param tF Ruta donde escribir este archivo, sera temporal
@@ -955,7 +1054,7 @@ public class Cat2Osm {
 
 								List<String> l = new ArrayList<String>();
 								l.add(shape.getShapeId());
-								utils.getNodeId(new Coordinate(geom.getCentroid().getX()+r,geom.getCentroid().getY()), tags, l);
+								utils.generateNodeId(new Coordinate(geom.getCentroid().getX()+r,geom.getCentroid().getY()), tags, l);
 							}
 				}
 			}
@@ -3065,6 +3164,7 @@ public class Cat2Osm {
 	 * @param espejo Coordenada espejo que se ha calculado para saber que way corta la linea creada por las
 	 * dos coordenadas
 	 */
+	@SuppressWarnings("unchecked")
 	public void anadirEntradaParcela(ShapeParcela parcela, ShapeElemtex elemtex, Coordinate espejo){
 
 		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
@@ -3105,7 +3205,7 @@ public class Cat2Osm {
 					if (nodeTex != null){
 						
 						// Creamos el nuevo nodo que sera la entrada de la casa
-						Long IdnodoEntrada = utils.getNodeId(wayGeo.intersection(segmento).getCoordinate(), nodeTex.getTags(), nodeTex.getShapes());
+						Long IdnodoEntrada = utils.generateNodeId(wayGeo.intersection(segmento).getCoordinate(), nodeTex.getTags(), nodeTex.getShapes());
 						
 						// Eliminamos el nodo que era el elemtex
 						utils.getTotalNodes().remove(nodeTex);
@@ -3130,10 +3230,17 @@ public class Cat2Osm {
 								// Si esta entre esas dos coordenadas
 								if(gf.createLineString(coorAB).intersects(segmento)){
 
-									// Insertamos el nodo desplazando los siguientes a la derecha
+									// Guardamos su id
+									Long wayId = utils.getTotalWays().get(way);
+									
+									// Borramos el way de la lista general de ways
+									utils.getTotalWays().remove(way);
+									
+									// Insertamos el nodo en el way desplazando los siguientes nodos a la derecha
 									way.addNode(x+1, IdnodoEntrada);
 									
-									
+									// Metemos en la lista general el nuevo way con el mismo id que el que hemos borrado
+									utils.getTotalWays().put(way, wayId);
 								}
 							}
 

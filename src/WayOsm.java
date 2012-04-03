@@ -22,11 +22,17 @@ public class WayOsm {
 		shapes = new ArrayList<String>();
 	}
 
-
+	/** Anade un nodo al final de la lista, comprueba que no este repetido salvo si es igual que el primero
+	 * @param l Nodo a anadir
+	 */
 	public void addNode(Long l){
 		if (!nodos.contains(l))
-		nodos.add(l);
+			nodos.add(l);
+		else if (l == nodos.get(0)){
+			nodos.add(l);
+			}
 	}
+	
 	
 	/** Anade un nodo desplazando los existentes hacia la derecha
 	 * @param pos
@@ -34,10 +40,14 @@ public class WayOsm {
 	 */
 	public void addNode(int pos, Long l){
 		if (!nodos.contains(l))
-		nodos.add(pos, l);
+			nodos.add(pos, l);
 	}
 	
 	
+	/** Anade nodos a la lista de nodos del way comprobando que no puedan estar repetidos salvo el ultimo
+	 * que puede ser igual al primero
+	 * @param l Lista de nodos a anadir
+	 */
 	public void addNodes(List<Long> l){
 		for (int x = 0; x < l.size(); x++)
 			if (x != l.size()-1){
@@ -53,8 +63,23 @@ public class WayOsm {
 	}
 	
 	
+	/** Anade una lista de nodos en esa posicion desplazando a la derecha. No comprueba que puedan estar repetidos
+	 * @param l Lista de nodos
+	 * @param pos Posicion a anadir
+	 */
+	public void addNodes(List<Long> l, int pos){
+		
+		nodos.addAll(pos, l);
+	}
+	
+	
 	public List<Long> getNodes() {
 		return nodos;
+	}
+	
+	
+	public void reverseNodes(){
+		Collections.reverse(nodos);
 	}
 	
 	

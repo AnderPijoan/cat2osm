@@ -175,7 +175,7 @@ public class ShapeParser extends Thread{
 				// Insertamos en la lista de nodos del shape, los ids de sus nodos
 				List<String> l = new ArrayList<String>();
 				l.add(shape.getShapeId());
-				shape.addNode(x,utils.getNodeId(coor[y], null, l));
+				shape.addNode(x,utils.generateNodeId(coor[y], null, l));
 			}
 		}
 
@@ -190,7 +190,7 @@ public class ShapeParser extends Thread{
 				if (!(nodeList.get(y) == (nodeList.get(y+1)))){
 					List<String> shapeIds = new ArrayList<String>();
 					shapeIds.add(shape.getShapeId());
-					shape.addWay(x,utils.getWayId(way, shapeIds));
+					shape.addWay(x,utils.generateWayId(way, shapeIds));
 				}
 			}
 		}
@@ -211,7 +211,7 @@ public class ShapeParser extends Thread{
 		}
 		List<String> shapeIds = new ArrayList<String>();
 		shapeIds.add(shape.getShapeId());
-		shape.setRelation(utils.getRelationId(ids, types, roles, shape.getAttributes(),shapeIds));
+		shape.setRelation(utils.generateRelationId(ids, types, roles, shape.getAttributes(),shapeIds));
 
 		return shape;
 	}
@@ -230,7 +230,7 @@ public class ShapeParser extends Thread{
 		// Anadimos solo un nodo
 		List<String> l = new ArrayList<String>();
 		l.add(shape.getShapeId());
-		shape.addNode(0,utils.getNodeId(coor, shape.getAttributes(), l));
+		shape.addNode(0,utils.generateNodeId(coor, shape.getAttributes(), l));
 
 		return shape;
 	}
@@ -250,7 +250,7 @@ public class ShapeParser extends Thread{
 		for (int x = 0; x < coor.length; x++){
 			List<String> l = new ArrayList<String>();
 			l.add(shape.getShapeId());
-			shape.addNode(0,utils.getNodeId(coor[x], null, l));
+			shape.addNode(0,utils.generateNodeId(coor[x], null, l));
 			}
 
 		// Con los nodos creamos ways
@@ -261,7 +261,7 @@ public class ShapeParser extends Thread{
 			way.add(nodeList.get(y+1));
 			List<String> id = new ArrayList<String>();
 			id.add(shape.getShapeId());
-			shape.addWay(0,utils.getWayId(way, id));
+			shape.addWay(0,utils.generateWayId(way, id));
 		}
 
 		// Con los ways creamos una relacion
@@ -275,7 +275,7 @@ public class ShapeParser extends Thread{
 		}
 		List<String> shapeIds = new ArrayList<String>();
 		shapeIds.add(shape.getShapeId());
-		shape.setRelation(utils.getRelationId(ids, types, roles, shape.getAttributes(), shapeIds));
+		shape.setRelation(utils.generateRelationId(ids, types, roles, shape.getAttributes(), shapeIds));
 
 		return shape;
 	}

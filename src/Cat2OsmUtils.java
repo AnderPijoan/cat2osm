@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -85,12 +86,12 @@ public class Cat2OsmUtils {
 	 * @param w2 Way2
 	 * @return long Id de way que hay que eliminar de los shapes, porque se ha juntado al otro
 	 */
-	public synchronized WayOsm unirWays(WayOsm w1, WayOsm w2){
+	public synchronized WayOsm joinWays(WayOsm w1, WayOsm w2){
 		
 		if ( !w1.getNodes().isEmpty() && !w2.getNodes().isEmpty()){
 			
 			// Caso1: w1.final = w2.primero
-			if (w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(0)) && totalWays.get(w1) != null && totalWays.get(w2) != null){
+			if (totalWays.get(w1) != null && totalWays.get(w2) != null && w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(0))){
 				
 				// Clonamos el way al que le anadiremos los nodos, w1
 				long l1 = totalWays.get(w1);
@@ -110,8 +111,11 @@ public class Cat2OsmUtils {
 				// Concatenamos al final del way3 (copia del way1) los nodos del way2
 				w3.addNodes(nodes);
 				
-				// Borramos el way de las relaciones
+				// Borramos el w1 del mapa de ways porque se va a meter el w3 (que es el w1 con los nuevos
+				// nodos concatenados)
 				totalWays.remove(w1);
+				
+				// Borramos el w2 de las relaciones pero no del mapa porque hace falta para el return
 				deleteWayFromRelations(w2);
 				
 				// Guardamos way3 en la lista de ways, manteniendo el id del way1
@@ -124,8 +128,73 @@ public class Cat2OsmUtils {
 			else if (totalWays.get(w1) != null  && totalWays.get(w2) != null && w1.getNodes().get(0).equals(w2.getNodes().get(w2.getNodes().size()-1))){
 				
 				// Es igual que el Caso1 pero cambiados de orden.
-				return unirWays(w2, w1);
+				return joinWays(w2, w1);
 			}
+			// Caso3: w1.primero = w2.primero
+			else if (totalWays.get(w1) != null  && totalWays.get(w2) != null && w1.getNodes().get(0).equals(w2.getNodes().get(0))){
+				
+				// Clonamos el way al que le anadiremos los nodos, w1
+				long l1 = totalWays.get(w1);
+				WayOsm w3 = new WayOsm(null);
+				for (Long lo : w1.getNodes())
+					w3.addNode(lo);
+				w3.setShapes(w1.getShapes());
+				
+				// Copiamos la lista de nodos del way que eliminaremos, w2
+				List<Long> nodes = new ArrayList<Long>();
+				for (Long lo : w2.getNodes())
+					nodes.add(lo);
+				
+				// Eliminamos el nodo que comparten de la lista de nodos
+				nodes.remove(w2.getNodes().get(0));
+				
+				
+				// Damos la vuelta a la lista de nodos que hay que concatenar en la posicion 0 del
+				// way que vamos a conservar
+				Collections.reverse(nodes);
+				
+				// Concatenamos al principio del way3 (copia del way1) los nodos del way2
+				w3.addNodes(nodes, 0);
+				
+				// Borramos el w1 del mapa de ways porque se va a meter el w3 (que es el w1 con los nuevos
+				// nodos concatenados)
+				totalWays.remove(w1);
+				
+				// Borramos el w2 de las relaciones pero no del mapa porque hace falta para el return
+				deleteWayFromRelations(w2);
+				
+				// Guardamos way3 en la lista de ways, manteniendo el id del way1
+				totalWays.put(w3, l1);
+				
+				return w2;
+				
+				}
+			// Caso4: w1.final = w2.final
+			else if (totalWays.get(w1) != null && totalWays.get(w2) != null && w1.getNodes().get(w1.getNodes().size()-1).equals(w2.getNodes().get(w2.getNodes().size()-1))){
+				
+				// Es igual que el Caso3 pero invirtiendo las dos vias
+				w1.reverseNodes();
+				w2.reverseNodes();
+				
+				return joinWays(w1, w2);
+				
+			}
+			// Si el id de alguna via ya no esta en el mapa de vias
+			else if (totalWays.get(w1) == null){
+				
+				// Borramos el way de las relaciones
+				deleteWayFromRelations(w1);
+				
+				return null;
+			}
+			else if (totalWays.get(w2) == null){
+				
+				// Borramos el way de las relaciones
+				deleteWayFromRelations(w2);
+				
+				return null;
+			}
+			
 		}
 		return null;
 	}
@@ -146,7 +215,7 @@ public class Cat2OsmUtils {
 	 * @return Devuelve el id del nodo ya sea creado o el que existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long getNodeId(Coordinate coor, List<String[]> tags, List<String> shapes){
+	public synchronized long generateNodeId(Coordinate coor, List<String[]> tags, List<String> shapes){
 
 		Long id = null;
 		if (!totalNodes.isEmpty())
@@ -177,7 +246,7 @@ public class Cat2OsmUtils {
 	 * @return devuelve el id del way creado o el del que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long getWayId(List<Long> nodes, List<String> shapes ){
+	public synchronized long generateWayId(List<Long> nodes, List<String> shapes ){
 
 		Long id = null;
 		if (!totalWays.isEmpty())
@@ -209,7 +278,7 @@ public class Cat2OsmUtils {
 	 * @return devuelve el id de la relacion creada o el de la que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long getRelationId(List<Long> ids, List<String> types, List<String> roles, List<String[]> tags, List<String> shapesId){
+	public synchronized long generateRelationId(List<Long> ids, List<String> types, List<String> roles, List<String[]> tags, List<String> shapesId){
 		
 		Long id = null;
 		if (!totalRelations.isEmpty())
