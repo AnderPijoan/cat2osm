@@ -33,7 +33,7 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
 public class Cat2Osm {
 
-	public static final String VERSION = "2012-04-03";
+	public static final String VERSION = "2012-04-04";
 	public static Cat2OsmUtils utils;
 
 
@@ -268,7 +268,7 @@ public class Cat2Osm {
 	
 							for (String [] tag : r.getTags()){			
 								
-								if (tag[0].equals("addr:housenumber") && esNumero(tag[1]) && esNumero(((ShapeElemtex)shapeTex).getRotulo().trim()) && Integer.parseInt(tag[1])%2 == Integer.parseInt(((ShapeElemtex) shapeTex).getRotulo())%2 ){
+								if (tag[0] != null && tag[0].equals("addr:housenumber") && tag[1] != null && esNumero(tag[1]) && esNumero(((ShapeElemtex)shapeTex).getRotulo().trim()) && Integer.parseInt(tag[1])%2 == Integer.parseInt(((ShapeElemtex) shapeTex).getRotulo())%2 ){
 									// Acualizamos la variable minDist y la parcela
 									minDist = dist;
 	
@@ -331,7 +331,7 @@ public class Cat2Osm {
 							RelationOsm r = (RelationOsm) utils.getKeyFromValue( (Map<Object, Long>) ((Object)utils.getTotalRelations()), temp.getRelationId());
 	
 							for (String [] tag : r.getTags())
-								if (tag[0].trim().equals("addr:housenumber") && tag[1].trim().equals(((ShapeElemtex) shapeTex).getRotulo().trim())){
+								if (tag[0] != null && !tag[0].isEmpty() && tag[0].trim().equals("addr:housenumber") && tag[1] != null && !tag[1].isEmpty() && tag[1].trim().equals(((ShapeElemtex) shapeTex).getRotulo().trim())){
 	
 									// Acualizamos la variable minDist y la parcela
 									minDist = dist;
@@ -1452,6 +1452,9 @@ public class Cat2Osm {
 	 */
 	public static boolean esNumero(String s)
 	{
+		if (s.isEmpty() || s == null)
+			return false;
+		
 		for (int x = 0; x < s.length(); x++) {
 			if (!Character.isDigit(s.charAt(x)))
 				return false;

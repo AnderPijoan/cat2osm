@@ -216,10 +216,14 @@ public class Main {
 						shapes = catastro.calcularEntradas(shapes);
 			}
 			
-			// Operacion de simplifiacion de vias
-			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("EJES") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
+			// Operacion de simplificacion de relaciones sin tags relevantes
+			if (archivo.equals("*")){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Simplificando Relaciones sin tags relevantes.");
 				catastro.simplificarRelationsSinTags(utils);
+			}
+			
+			// Operacion de simplifiacion de vias
+			if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("EJES") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Simplificando vias.");
 				shapes = catastro.simplificarWays(shapes);
 			}
