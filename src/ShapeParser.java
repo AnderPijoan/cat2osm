@@ -342,8 +342,8 @@ public class ShapeParser extends Thread{
 					proyeccion = "-s_srs \"+init=epsg:" + pro + " +wktext\"";
 
 				String command = "ogr2ogr " + proyeccion + " -t_srs EPSG:4326 " + 
-						Config.get("ResultPath") + "/" + tipo + f.getName() + " " +  // archivo fin
-						f.getPath();                                                 // archivo origen
+						Config.get("ResultPath") + "/" + tipo + f.getName() + " \"" +  // archivo fin
+						f.getPath() + "\"";                                                 // archivo origen
 
 				FileWriter fstreamScript = new FileWriter(Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
 				BufferedWriter outScript = new BufferedWriter(fstreamScript);
