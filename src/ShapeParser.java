@@ -342,8 +342,8 @@ public class ShapeParser extends Thread{
 					proyeccion = "-s_srs \"+init=epsg:" + pro + " +wktext\"";
 
 				String command = "ogr2ogr " + proyeccion + " -t_srs EPSG:4326 " + 
-						Config.get("ResultPath") + "/" + tipo + f.getName() + " \"" +  // archivo fin
-						f.getPath() + "\"";                                                 // archivo origen
+						"\"" + Config.get("ResultPath") + "/" + tipo + f.getName() + "\" " +  // archivo fin
+						"\"" + f.toPath() + "\"";                                                 // archivo origen
 
 				FileWriter fstreamScript = new FileWriter(Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
 				BufferedWriter outScript = new BufferedWriter(fstreamScript);
@@ -351,13 +351,13 @@ public class ShapeParser extends Thread{
 				outScript.write("#!/bin/bash\n");
 				outScript.write(command);
 				outScript.close();
-				Process pr = Runtime.getRuntime().exec("chmod +x "+Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
+				Process pr = Runtime.getRuntime().exec( new String[] { "chmod", "+x", Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh" } );
 				pr.waitFor();
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Ejecutando proyeccion de los shapefiles " +
 						tipo+f.getName() +": " + command);
 
 				Runtime run = Runtime.getRuntime();
-				pr  = run.exec(Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
+				pr  = run.exec( new String[] { Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh" } );
 				pr.waitFor();
 				bf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
 				while ((line = bf.readLine()) != null)
