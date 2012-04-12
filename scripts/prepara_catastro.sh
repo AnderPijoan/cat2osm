@@ -1,18 +1,19 @@
-#!/bin/sh
+#!/bin/bash
 ###################################################
 #                                                 #
 # Programa para preparar datos del Catastro       #
 #     (para ser procesados por cat2osm)           #
 #                                                 #
-declare -r version="0.90"                         #
 ###################################################
 
 # Necesitamos Bash 4 para crear arrays asociativos (diccionarios)
-if [[ ${BASH_VERSINFO[0]} -lt 4 ]]; then
+if [ -z "${BASH_VERSINFO}" ] || [ "${BASH_VERSINFO[0]}" -lt 4 ]
+then
   echo "Se necesita Bash 4 o superior." 1>&2
   exit 1
 fi
 
+declare -r version="0.90"   # Versión del programa (se escribirá en los archivos config)
 
 # Programas externos
 declare -r wget="wget -q"   # '-q' es para no mostrar info de descarga (progreso, etc). De todas formas es muy rápido y no da tiempo a leer.
