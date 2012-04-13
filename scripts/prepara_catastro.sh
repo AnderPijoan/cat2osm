@@ -239,6 +239,10 @@ muestra_provincias() {
 # Ver la declaración de las variables 'provincias', 'provincias_MHAP', 'codprovincias' y 'municipios'
 # para ver el resultado de esto.
 #
+#
+# NOTA: Los archivos txt generados no se utilizan en el programa. Puede borrarlos.
+#       Pueden ser útiles para importar en una hoja de cálculo, etc.
+#
 
 # Lista de provincias
 if [ ! -f "provincias.xml" ]; then
@@ -251,6 +255,7 @@ fi
 
 let nprovincias=-1
 let np=0
+unset error
 while read_dom; do
     if [[ $ENTITY = "cpine" ]]; then
         let codpro="10#$CONTENT"
@@ -263,11 +268,19 @@ while read_dom; do
         provincias[$codpro]="$nompro"
     elif [[ $ENTITY = "cuprov" ]]; then
         nprovincias=$CONTENT
+    # Si se produce algún error desde el Catastro (parada por mantenimiento, etc) tenemos la explicación aquí
+    elif [[ $ENTITY = "des" ]]; then
+        error=$CONTENT
     fi
 done < provincias.xml > provincias-INE.txt
 
 if [[ $nprovincias -ne $np ]]; then
   echo "Error leyendo provincias." 1>&2
+  if [[ ! -z "$error" ]]; then
+    echo "Mensaje del Catastro: $error"  1>&2
+  fi
+  $rm ./provincias.xml || { echo -e "Error borrando \"provincias.xml\". Bórrelo manualmente."  1>&2 ; }
+  echo "Vuelva a ejecutar este programa para reintentar."  1>&2
   exit 1
 else
   echo "Leídas $np provincias"
@@ -292,6 +305,7 @@ do
 
     let i=0
     let nmunicipios=-1
+    unset error
     while read_dom; do
       # Nombre del municipio
       if [[ $ENTITY = "nm" ]]; then
@@ -334,6 +348,9 @@ do
           echo "$cmc $nm"
           nummun=$((nummun + 1))
           i=$((i + 1))
+      # Si se produce algún error desde el Catastro (parada por mantenimiento, etc) tenemos la explicación aquí
+      elif [[ $ENTITY = "des" ]]; then
+          error=$CONTENT
       fi
     done < "${provincias[$k]}.xml" > "${provincias[$k]}-municipios.txt"
     codprovincias[$[${#codprovincias[@]}+1]]=$cd
@@ -344,6 +361,10 @@ do
       else
         echo -n "............Error (deberían ser $nmunicipios)." 1>&2
       fi
+      if [[ ! -z "$error" ]]; then
+        echo "Mensaje del Catastro: $error"  1>&2
+      fi
+      $rm "${provincias[$k]}.xml" || { echo -e "Error borrando \"${provincias[$k]}.xml\". Bórrelo manualmente."  1>&2 ; }
     fi
     echo ""
     
@@ -351,6 +372,7 @@ done  #| $sort -n -k1
 
 if [[ $nmuntotal -ne $nummun ]]; then
   echo "El número de municipios leídos no coincide." 1>&2
+  echo "Vuelva a ejecutar este programa para reintentar."  1>&2
   exit 1
 else
   echo "Leídos $nummun municipios."
@@ -948,55 +970,4 @@ do
 done
 
 
-
-
-
-# formato de los ficheros de los municipios
-
-#<consulta_municipiero>
-#<control>
-#<cumun>NÚMERO DE ÍTEMS DEVUELTOS EN LA LISTA MUNICIPIERO</cumun>
-#</control>
-#<municipiero> LISTA QUE CONTIENE DATOS DE TODOS LOS MUNICIPIOS SEGÚN CONSULTA
-#<muni>
-#<nm>DENOMINACIÓN DEL MUNICIPIO SEGÚN M. DE HACIENDA Y ADMINISTRACIONES PÚBLICAS</nm>
-#<carto>CARTOGRAFÍA DIGITALIZADA QUE EXISTE ASOCIADA AL MUNICIPIO (URBANA, RUSTICA,URBANA RUSTICA) </carto>
-#<locat>CÓDIGOS DEL MUNICIPIO SEGÚN MHAP
-#<cd>CÓDIGO DE LA DELEGACIÓN MHAP</cd>
-#<cmc>CÓDIGO DEL MUNICIPIO</cmc>
-#</locat>
-#<loine>CÓDIGOS DEL MUNICIPIO SEGÚN INE
-#<cp>CÓDIGO DE LA PROVINCIA</cp>
-#<cm>CÓDIGO DEL MUNICIPIO</cm>
-#</loine>
-#</muni>
-#...
-#</municipiero>
-#</consulta_municipiero>
-
-
-
-
-#https://www.sedecatastro.gob.es/OVCFrames.aspx?TIPO=TIT&a=masiv
-
-#cat
-#https://www.sedecatastro.gob.es/CYCTitular/OVCAccTit.aspx?Dest=20
-#https://www.sedecatastro.gob.es/CYCTitular/OVCDescargaCAT.aspx
-#https://www.sedecatastro.gob.es/CYCTitular/OVCLicenciaDescargas.aspx?=&__ASYNCPOST=true&__EVENTARGUMENT=&__EVENTTARGET=ctl00%24body%24chkAcepto&__EVENTVALIDATION=%2FwEWGgLVprvfCQLo1NahBAKLgrbPAwKZgq6FBQKZgp7yBwKWgtKUDAL%2BkLjKDQLD07DMDwLepbfHDwLPu%2FirDALE4O%2FaBwKymtbqDwL02NfnCgLK4I%2B1DwLKrfeiBgKY%2FZbyDwL06a3vCwK2iN6DBQLhy5mwCwL9tYT7BwLkvunWAQKQ7%2BjaDQKit4mdBwLSmIjHAgKpsqzjAQLR7qnGCqW6LeKjnJ6NuoXNpmDXFPpqgGF1&__LASTFOCUS=&__VIEWSTATE=%2FwEPDwUKLTU2NjU5Nzg1Nw9kFgJmD2QWAgIDD2QWBAIDD2QWCAIBDw8WCB4JRm9udF9Cb2xkZx4HRW5hYmxlZGgeDU9uQ2xpZW50Q2xpY2sFFVJlY3VwZXJhcklkaW9tYSgnZXMnKR4EXyFTQgKAEBYCHgVzdHlsZQUPY3Vyc29yOmRlZmF1bHQ7ZAIDDw8WBh8AaB8CBRVSZWN1cGVyYXJJZGlvbWEoJ2dsJykfAwKAEBYCHwQFCGN1cnNvcjo7ZAIFDw8WBh8AaB8CBRVSZWN1cGVyYXJJZGlvbWEoJ2NhJykfAwKAEBYCHwQFCGN1cnNvcjo7ZAIHDw8WBh8AaB8CBRVSZWN1cGVyYXJJZGlvbWEoJ2VuJykfAwKAEBYCHwQFCGN1cnNvcjo7ZAIFD2QWCAITDw8WAh4EVGV4dAU0RGVzY2FyZ2EgZGUgaW5mb3JtYWNpw7NuIGFsZmFudW3DqXJpY2EgKGZvcm1hdG8gQ0FUKWRkAhcPFgIfBQVCQUNFUFRBQ0nDk04gREUgTEFTIENMw4FVU1VMQVMgR0VORVJBTEVTIFkgVMOJQ05JQ0FTIERFIExBIExJQ0VOQ0lBZAIYDxYCHgNhbHQFDENhcmdhbmRvIC4uLmQCGg9kFgJmD2QWAgIHD2QWAmYPZBYEAgEPFgIfBWVkAgMPFgIfBWVkGAEFHl9fQ29udHJvbHNSZXF1aXJlUG9zdEJhY2tLZXlfXxYBBRRjdGwwMCRib2R5JGNoa0FjZXB0b19ZpHOFnx5mypTCSE3SJ1oBBlzJ&ctl00%24body%24ScriptManager1=ctl00%24body%24upaAceptar%7Cctl00%24body%24chkAcepto&ctl00%24body%24chkAcepto=on&ctl00%24body%24hdCapas=&ctl00%24body%24hdDelegacion=&ctl00%24body%24hdFecha=&ctl00%24body%24hdInfo=&ctl00%24body%24hdMunicipio=&ctl00%24body%24hdOrigen=&ctl00%24body%24hdTipologia=&ctl00%24body%24hdUrlDescarga=&ctl00%24body%24hdUrlRetorno=&ctl00%24body%24hdnCapas=&ctl00%24body%24hdnCodDele=12&ctl00%24body%24hdnCodMuni=900&ctl00%24body%24hdnDescarga=OVCZIPCAT.aspx&ctl00%24body%24hdnFecha=20120123&ctl00%24body%24hdnInfo=&ctl00%24body%24hdnOrigen=CAT&ctl00%24body%24hdnRetorno=%2FCYCTitular%2FOVCDescargaCAT.aspx&ctl00%24body%24hdnTipologia=U&ctl00%24hdIdioma=es
-#https://www.sedecatastro.gob.es/CYCTitular/OVCLicenciaDescargas.aspx?=&__ASYNCPOST=true&__EVENTARGUMENT=&__EVENTTARGET=ctl00%24body%24lkbLicencia&__EVENTVALIDATION=%2FwEWGwLgo52UBAKpsqzjAQLR7qnGCgLk36KeAgLo1NahBAKLgrbPAwKZgq6FBQKZgp7yBwKWgtKUDAL%2BkLjKDQLD07DMDwLepbfHDwLPu%2FirDALE4O%2FaBwKymtbqDwL02NfnCgLK4I%2B1DwLKrfeiBgKY%2FZbyDwL06a3vCwK2iN6DBQLhy5mwCwL9tYT7BwLkvunWAQKQ7%2BjaDQKit4mdBwLSmIjHAkRN2IdWATzW4Usb1z%2FifFY1OVoJ&__LASTFOCUS=&__VIEWSTATE=%2FwEPDwUKLTU2NjU5Nzg1Nw9kFgJmD2QWAgIDD2QWBAIDD2QWCAIBDw8WCB4JRm9udF9Cb2xkZx4HRW5hYmxlZGgeDU9uQ2xpZW50Q2xpY2sFFVJlY3VwZXJhcklkaW9tYSgnZXMnKR4EXyFTQgKAEBYCHgVzdHlsZQUPY3Vyc29yOmRlZmF1bHQ7ZAIDDw8WBh8AaB8CBRVSZWN1cGVyYXJJZGlvbWEoJ2dsJykfAwKAEBYCHwQFCGN1cnNvcjo7ZAIFDw8WBh8AaB8CBRVSZWN1cGVyYXJJZGlvbWEoJ2NhJykfAwKAEBYCHwQFCGN1cnNvcjo7ZAIHDw8WBh8AaB8CBRVSZWN1cGVyYXJJZGlvbWEoJ2VuJykfAwKAEBYCHwQFCGN1cnNvcjo7ZAIFD2QWCAITDw8WAh4EVGV4dAU0RGVzY2FyZ2EgZGUgaW5mb3JtYWNpw7NuIGFsZmFudW3DqXJpY2EgKGZvcm1hdG8gQ0FUKWRkAhcPFgIfBQVCQUNFUFRBQ0nDk04gREUgTEFTIENMw4FVU1VMQVMgR0VORVJBTEVTIFkgVMOJQ05JQ0FTIERFIExBIExJQ0VOQ0lBZAIYDxYCHgNhbHQFDENhcmdhbmRvIC4uLmQCGg9kFgJmD2QWBAIFDw8WAh8BZ2RkAgcPZBYCZg9kFgQCAQ8WAh8FZWQCAw8WAh8FZWQYAQUeX19Db250cm9sc1JlcXVpcmVQb3N0QmFja0tleV9fFgEFFGN0bDAwJGJvZHkkY2hrQWNlcHRvCNvgn5AWEVWlkxybv%2FOP%2BCMtle0%3D&ctl00%24body%24ScriptManager1=ctl00%24body%24upaAceptar%7Cctl00%24body%24lkbLicencia&ctl00%24body%24chkAcepto=on&ctl00%24body%24hdCapas=&ctl00%24body%24hdDelegacion=&ctl00%24body%24hdFecha=&ctl00%24body%24hdInfo=&ctl00%24body%24hdMunicipio=&ctl00%24body%24hdOrigen=&ctl00%24body%24hdTipologia=&ctl00%24body%24hdUrlDescarga=&ctl00%24body%24hdUrlRetorno=&ctl00%24body%24hdnCapas=&ctl00%24body%24hdnCodDele=12&ctl00%24body%24hdnCodMuni=900&ctl00%24body%24hdnDescarga=OVCZIPCAT.aspx&ctl00%24body%24hdnFecha=20120123&ctl00%24body%24hdnInfo=&ctl00%24body%24hdnOrigen=CAT&ctl00%24body%24hdnRetorno=%2FCYCTitular%2FOVCDescargaCAT.aspx&ctl00%24body%24hdnTipologia=U&ctl00%24hdIdioma=es
-#https://www.sedecatastro.gob.es/CYCTitular/OVCZIPCAT.aspx?idpet=486817&codDele=12&codMuni=900&codTipo=U&fecha=20120123
-#shapefile
-#https://www.sedecatastro.gob.es/CYCTitular/OVCAccTit.aspx?Dest=19
-
-
-
-
-
-
-
-
-
-
-
-
-
+# FIN del programa
