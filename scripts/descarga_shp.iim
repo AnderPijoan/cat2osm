@@ -1,0 +1,47 @@
+﻿VERSION BUILD=7401110 RECORDER=FX
+SET !TIMEOUT_PAGE 60
+TAB T=1
+URL GOTO=https://www.sedecatastro.gob.es/
+TAG POS=1 TYPE=A ATTR=ID:aConsultaMasiva
+FRAME F=4
+TAG POS=1 TYPE=A ATTR=ID:ctl00_body_aDesCartoSF
+CMDLINE !DATASOURCE catastro.csv
+SET !DATASOURCE_COLUMNS 2
+SET !LOOP 1
+SET !DATASOURCE_LINE {{!LOOP}}
+' ********************** URBANO
+TAG POS=1 TYPE=SELECT FORM=NAME:aspnetForm ATTR=ID:ctl00_body_DropDownList1 CONTENT=%{{!COL1}}
+TAG POS=1 TYPE=INPUT:TEXT FORM=NAME:aspnetForm ATTR=ID:ctl00_body_cbMunicipio_tbMunicipio CONTENT={{!COL2}}
+TAG POS=1 TYPE=INPUT:RADIO FORM=ID:aspnetForm ATTR=ID:ctl00_body_RadioButtonList1_0
+TAG POS=1 TYPE=INPUT:SUBMIT FORM=ID:aspnetForm ATTR=ID:ctl00_body_Button1
+TAG POS=1 TYPE=INPUT:SUBMIT FORM=ID:aspnetForm ATTR=ID:ctl00_body_btnTodas
+TAG POS=1 TYPE=INPUT:SUBMIT FORM=ID:aspnetForm ATTR=ID:ctl00_body_Button2
+TAG POS=1 TYPE=INPUT:CHECKBOX FORM=NAME:aspnetForm ATTR=ID:ctl00_body_chkAcepto CONTENT=YES
+WAIT SECONDS=1
+TAG POS=1 TYPE=A ATTR=ID:ctl00_body_lkbLicencia
+WAIT SECONDS=2
+' ONDOWNLOAD FOLDER=* FILE=* WAIT=YES
+TAG POS=1 TYPE=A ATTR=ID:ctl00_body_lkbLicencia
+' Tenemos que esperar un poco a que se genere la descarga
+WAIT SECONDS=8
+TAB T=1
+' ********************** RUSTICO
+URL GOTO=https://www.sedecatastro.gob.es/
+TAG POS=1 TYPE=A ATTR=ID:aConsultaMasiva
+FRAME F=4
+TAG POS=1 TYPE=A ATTR=ID:ctl00_body_aDesCartoSF
+TAG POS=1 TYPE=SELECT FORM=NAME:aspnetForm ATTR=ID:ctl00_body_DropDownList1 CONTENT=%{{!COL1}}
+TAG POS=1 TYPE=INPUT:TEXT FORM=NAME:aspnetForm ATTR=ID:ctl00_body_cbMunicipio_tbMunicipio CONTENT={{!COL2}}
+TAG POS=1 TYPE=INPUT:RADIO FORM=ID:aspnetForm ATTR=ID:ctl00_body_RadioButtonList1_2
+TAG POS=1 TYPE=INPUT:SUBMIT FORM=ID:aspnetForm ATTR=ID:ctl00_body_Button1
+TAG POS=1 TYPE=INPUT:SUBMIT FORM=ID:aspnetForm ATTR=ID:ctl00_body_btnTodas
+TAG POS=1 TYPE=INPUT:SUBMIT FORM=ID:aspnetForm ATTR=ID:ctl00_body_Button2
+TAG POS=1 TYPE=INPUT:CHECKBOX FORM=NAME:aspnetForm ATTR=ID:ctl00_body_chkAcepto CONTENT=YES
+WAIT SECONDS=1
+TAG POS=1 TYPE=A ATTR=ID:ctl00_body_lkbLicencia
+WAIT SECONDS=2
+' ONDOWNLOAD FOLDER=* FILE=* WAIT=YES
+TAG POS=1 TYPE=A ATTR=ID:ctl00_body_lkbLicencia
+' Tenemos que esperar un poco a que se genere la descarga
+WAIT SECONDS=8
+TAB T=1
