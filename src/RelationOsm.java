@@ -321,13 +321,13 @@ public class RelationOsm {
 				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 
-				// El tag addr:housenumber, addr:street, addr:postcode, addr:country y name 
-				// solo se puede asignar a parcelas. Por eso habra
-				// que hacer otra iteracion para comprobar si es una relation de un
+				// El tag addr:housenumber, addr:street, addr:postcode y addr:country
+				// solo se puede asignar a parcelas y en ejes
+				// Por eso habra que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela
 				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country")|| tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("name")){
 					for (String[] tag : tags)
-						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA"))
+						if (tag[0].equals("CAT2OSMSHAPEID") && (tag[1].startsWith("PARCELA") || tag[1].startsWith("EJES") ))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				}
 
@@ -364,13 +364,13 @@ public class RelationOsm {
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				}
 
-				// El tag addr:housenumber, addr:street,  addr:full, addr:postcode y addr:country 
-				// solo se puede asignar a parcelas. Por eso habra
+				// El tag addr:housenumber, addr:street,  addr:full, addr:postcode, addr:country y name 
+				// solo se puede asignar a parcelas y ejes. Por eso habra
 				// que hacer otra iteracion para comprobar si es una relation de un
 				// shapeParcela	
 				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("name")){
 					for (String[] tag : tags)
-						if (tag[0].equals("CAT2OSMSHAPEID") && tag[1].startsWith("PARCELA")) {
+						if (tag[0].equals("CAT2OSMSHAPEID") && (tag[1].startsWith("PARCELA") || tag[1].startsWith("EJES") )) {
 							with_data = true;
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 						}

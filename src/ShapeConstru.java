@@ -323,6 +323,10 @@ public class ShapeConstru extends Shape {
 
 		case "DARSENA":
 			return true;
+			
+		case "LV":
+			return false;
+			
 		}
 		
 		return true;
@@ -591,6 +595,9 @@ public class ShapeConstru extends Shape {
 			s = new String[2];
 			s[0] = "building"; s[1] = "yes";
 			l.add(s);
+			return l;
+			
+		case "LV":
 			return l;
 
 		default: if (!elem.isEmpty()) 
