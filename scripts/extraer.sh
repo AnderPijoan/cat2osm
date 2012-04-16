@@ -40,13 +40,13 @@ if [ "$caturb" == "*_U_*.CAT" ]; then
   echo "Aviso: No existe el fichero CAT de Urbana."
   caturb=""
 fi
-shfrus=$( basename "files/$municipio/"*_UA_*_SHF.zip )
+shfrus=$( basename "files/$municipio/"*_RA_*_SHF.zip )
 shfrus=${shfrus%\.zip}
 if [ "$shfrus" == "*_UA_*_SHF" ]; then
   echo "Aviso: No existe el fichero Shapefile de Urbana."
   shfrus=""
 fi
-shfurb=$( basename "files/$municipio/"*_RA_*_SHF.zip )
+shfurb=$( basename "files/$municipio/"*_UA_*_SHF.zip )
 shfurb=${shfurb%\.zip}
 if [ "$shfurb" == "*_RA_*_SHF" ]; then
   echo "Aviso: No existe el fichero Shapefile de Rústica."
