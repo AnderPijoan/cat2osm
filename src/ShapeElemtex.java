@@ -90,16 +90,11 @@ public class ShapeElemtex extends Shape {
 	 * @return Lista de atributos
 	 */
 	public List<String[]> getAttributes(){
+		
 		String[] s = new String[2];
-
-		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
+		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		tags.add(s);
-
-		s = new String[2];
-		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
-		tags.add(s);
-
+		
 		return tags;
 	}
 

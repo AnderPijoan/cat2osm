@@ -33,9 +33,15 @@ public class RelationOsm {
 			ids.add(id);
 			types.add(type);
 			roles.add(role);}
+		
+		// Borramos si existiese algun nulo
+		ids.remove(null);
+		types.remove(null);
+		roles.remove(null);
 	}
 
-	/** Inserta un nuevo member machacando el que haya en la posicion
+	
+	/** Inserta un nuevo member y desplaza los existentes a la derecha
 	 * @param pos
 	 * @param id
 	 * @param type
@@ -46,6 +52,11 @@ public class RelationOsm {
 			ids.add(pos,id);
 			types.add(pos,type);
 			roles.add(pos,role);}
+		
+		// Borramos si existiese algun nulo
+		ids.remove(null);
+		types.remove(null);
+		roles.remove(null);
 	}
 
 
@@ -131,8 +142,7 @@ public class RelationOsm {
 			// Nos interesa conservar todos los Ids de los shapes a los que
 			// pertenece esa relacion. Los demas tags comprueba si empieza por '*'
 			// si es asi, conserva si ya existiese uno con esa clave, si no empieza
-			// por '*' lo machaca si existiese uno igual.
-			// con el nuevo valor.
+			// por '*' lo machaca si existiese uno igual con el nuevo valor.
 			boolean encontrado = (tags.get(x)[0].equals("CAT2OSMSHAPEID"));
 			String[] s = {tags.get(x)[0].replace("*", ""), tags.get(x)[1].replaceAll("\"", "")};
 
@@ -230,9 +240,9 @@ public class RelationOsm {
 
 						for (NodeOsm node : nodes)
 							if (node != null)
-								node.deleteShape(sId);
+								node.deleteShapeId(sId);
 
-						way.deleteShape(sId);
+						way.deleteShapeId(sId);
 					}
 			
 			return "";
@@ -250,9 +260,9 @@ public class RelationOsm {
 
 						for (NodeOsm node : nodes)
 							if (node != null)
-								node.deleteShape(sId);
+								node.deleteShapeId(sId);
 
-						way.deleteShape(sId);
+						way.deleteShapeId(sId);
 					}
 			
 			return "";
@@ -318,7 +328,7 @@ public class RelationOsm {
 			for (int x = 0; x < tags.size(); x++) {
 
 				// Filtramos para que no salgan todos los tags, siguiente bucle se explica el porque
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].equals("CAT2OSMSHAPEID"))
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].startsWith("CAT2OSMSHAPEID"))
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 
 				// El tag addr:housenumber, addr:street, addr:postcode y addr:country
@@ -327,15 +337,18 @@ public class RelationOsm {
 				// shapeParcela
 				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country")|| tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("name")){
 					for (String[] tag : tags)
-						if (tag[0].equals("CAT2OSMSHAPEID") && (tag[1].startsWith("PARCELA") || tag[1].startsWith("EJES") ))
+						if (tag[0].startsWith("CAT2OSMSHAPEID") && (tag[1].startsWith("PARCELA") || tag[1].startsWith("EJES") ))
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				}
 
 				// Mostrar los shapes que utilizan esta relacion, para debugging
-				else if (tags.get(x)[0].equals("CAT2OSMSHAPEID") && Config.get("PrintShapeIds").equals("1"))
+				else if (tags.get(x)[0].startsWith("CAT2OSMSHAPEID") && Config.get("PrintShapeIds").equals("1"))
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 			}
 
+			s += "<tag k=\"source\" v=\"catastro\"/>\n";
+			s += "<tag k=\"source:date\" v=\""+Cat2OsmUtils.getFechaActual()+"\"/>\n";
+			
 			s += ("</way>\n");
 		}
 
@@ -356,7 +369,7 @@ public class RelationOsm {
 			for (int x = 0; x < tags.size(); x++){
 
 				// Filtramos para que no salgan todos los tags, abajo se explica el porque
-				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].equals("CAT2OSMSHAPEID")) {
+				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].startsWith("CAT2OSMSHAPEID")) {
 
 					if (!with_data && !tags.get(x)[0].equals("source") && !tags.get(x)[0].equals("source:date") && !tags.get(x)[0].equals("type") && !tags.get(x)[0].equals("catastro:ref"))
 						with_data = true;
@@ -370,14 +383,14 @@ public class RelationOsm {
 				// shapeParcela	
 				else if (tags.get(x)[0].equals("addr:housenumber") || tags.get(x)[0].equals("addr:postcode") || tags.get(x)[0].equals("addr:country") || tags.get(x)[0].equals("addr:street") || tags.get(x)[0].equals("name")){
 					for (String[] tag : tags)
-						if (tag[0].equals("CAT2OSMSHAPEID") && (tag[1].startsWith("PARCELA") || tag[1].startsWith("EJES") )) {
+						if (tag[0].startsWith("CAT2OSMSHAPEID") && (tag[1].startsWith("PARCELA") || tag[1].startsWith("EJES") )) {
 							with_data = true;
 							s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 						}
 				}
 
 				// Mostrar los shapes que utilizan esta relacion, para debugging
-				else if (tags.get(x)[0].contains("CAT2OSMSHAPEID") && Config.get("PrintShapeIds").equals("1"))
+				else if (tags.get(x)[0].startsWith("CAT2OSMSHAPEID") && Config.get("PrintShapeIds").equals("1"))
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 			}
 
@@ -385,6 +398,9 @@ public class RelationOsm {
 			//sera un multipolygono
 			if (AreaCerrada(utils))
 				s += "<tag k=\"type\" v=\"multipolygon\"/>\n";
+			
+			s += "<tag k=\"source\" v=\"catastro\"/>\n";
+			s += "<tag k=\"source:date\" v=\""+Cat2OsmUtils.getFechaActual()+"\"/>\n";
 
 			s += ("</relation>\n");
 
@@ -399,9 +415,9 @@ public class RelationOsm {
 
 							for (NodeOsm node : nodes)
 								if (node != null)
-									node.deleteShape(sId);
+									node.deleteShapeId(sId);
 
-							way.deleteShape(sId);
+							way.deleteShapeId(sId);
 						}
 				return "";
 			}

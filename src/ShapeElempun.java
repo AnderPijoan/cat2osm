@@ -67,17 +67,13 @@ public class ShapeElempun extends Shape {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
+		s = new String[2];
+		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
+		l.add(s);
+		
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
 		}
-
-		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
-
-		s = new String[2];
-		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
-		l.add(s);
 
 		return l;
 	}

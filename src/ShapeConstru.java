@@ -173,14 +173,6 @@ public class ShapeConstru extends Shape {
 		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		l.add(s);
 
-		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
-
-		s = new String[2];
-		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
-		l.add(s);
-
 		return l;
 	}
 
@@ -211,6 +203,9 @@ public class ShapeConstru extends Shape {
 
 
 	public boolean shapeValido (){
+		
+		if (Cat2OsmUtils.getOnlyConstru())
+			return true;
 		
 		switch(constru){
 
@@ -410,6 +405,7 @@ public class ShapeConstru extends Shape {
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 		
+
 		switch(elem){
 
 		case "B":

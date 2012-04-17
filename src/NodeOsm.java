@@ -61,13 +61,13 @@ public class NodeOsm {
 	}
 	
 	
-	public synchronized void deleteShape(String shape){
+	public synchronized void deleteShapeId(String shape){
 		shapes.remove(shape);
 	}
 	
 	
 	public synchronized void addShapes(List<String> shapes){
-		if (this.shapes == null && !shapes.isEmpty())
+		if (this.shapes == null)
 			this.shapes = new ArrayList<String>();
 		for (String s : shapes)
 			if (!this.shapes.contains(s))
@@ -99,6 +99,17 @@ public class NodeOsm {
 
 	
 	public List<String[]> getTags() {
+		
+		if (tags != null && !tags.isEmpty()){
+			String[] s = new String[2];
+			
+			s[0] = "source"; s[1] = "catastro";
+			tags.add(s);
+			
+			s = new String[2];
+			s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+""; 
+		}
+		
 		return tags;
 	}
 	

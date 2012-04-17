@@ -32,8 +32,9 @@ public class Cat2OsmUtils {
 	
 	// Booleanos para el modo de calcular las entradas o ver todos los Elemtex y sacar los Usos de los
 	// inmuebles que no se pueden asociar
-	private static boolean onlyEntrances = true;
-	private static boolean onlyUsos = false;
+	private static boolean onlyEntrances = true; // Solo utilizara los portales de elemtex, en la ejecucion normal solo se usan esos.
+	private static boolean onlyUsos = false; // Para la ejecucion de mostrar usos, se pone a true
+	private static boolean onlyConstru = false; // Para la ejecucion de mostrar construs, se pone a true
 	
 	public synchronized ConcurrentHashMap<NodeOsm, Long> getTotalNodes() {
 		return totalNodes;
@@ -215,8 +216,10 @@ public class Cat2OsmUtils {
 	 * @return Devuelve el id del nodo ya sea creado o el que existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long generateNodeId(Coordinate coor, List<String[]> tags, List<String> shapes){
+	public synchronized long generateNodeId(Coordinate c, List<String[]> tags, List<String> shapes){
 
+		Coordinate coor = new Coordinate(round(c.x,7), round(c.y,7));
+		
 		Long id = null;
 		if (!totalNodes.isEmpty())
 			id = totalNodes.get(new NodeOsm(coor));
@@ -347,7 +350,7 @@ public class Cat2OsmUtils {
         return nodes;
     }
     
-	/** Dada una lista de identificadores de nodes, borra esos nodes
+	/** Dada una lista de identificadores de nodes, borra esos nodes de la lista de nodos y de ways
      * @param ids Lista de nodos
      */
     @SuppressWarnings("unchecked")
@@ -359,7 +362,20 @@ public class Cat2OsmUtils {
     		if (node != null)
     		totalNodes.remove(node);
     		
+    		Iterator<Entry<WayOsm, Long>> it = totalWays.entrySet().iterator();
+
+    		// Por si algun way tenia este nodo
+    		while(it.hasNext()){
+    			Map.Entry e = (Map.Entry) it.next();	
+    			WayOsm w = (WayOsm) e.getKey();
+    			w.getNodes().remove(id);
+  
+    			}
+    		
     	}
+    	
+    	
+    	
     }
 
 	public static boolean getOnlyEntrances() {
@@ -376,6 +392,14 @@ public class Cat2OsmUtils {
 
 	public void setOnlyUsos(boolean usos) {
 		Cat2OsmUtils.onlyUsos = usos;
+	}
+	
+	public static boolean getOnlyConstru() {
+		return onlyConstru;
+	}
+
+	public void setOnlyConstru(boolean constru) {
+		Cat2OsmUtils.onlyConstru = constru;
 	}
 	
 	 public static boolean nodeOnWay(Coordinate node, Coordinate[] wayCoors) {
