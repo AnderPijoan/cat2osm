@@ -65,7 +65,7 @@ public class Config {
 	public static String get(String option){
 		
 		if (map.get(option) == null)
-			System.out.println("["+new Timestamp(new Date().getTime())+"] No se ha encontrado el campo "+option+" en el archivo de configuración. Compruebe que existe o sino ejecute cat2osm con el parámetro -ui para crear un nuevo archivo de configuración.");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] No se ha encontrado el campo "+option+" en el archivo de configuración. Compruebe que existe o si no ejecute cat2osm con el parámetro -ui para crear un nuevo archivo de configuración.");
 		
 		return (map.get(option) == null) ? "" : map.get(option);
 	}
