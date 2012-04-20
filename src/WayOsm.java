@@ -31,6 +31,9 @@ public class WayOsm {
 		else if (l == nodos.get(0)){
 			nodos.add(l);
 			}
+		
+		// Borramos si existiese algun nulo
+		nodos.remove(null);
 	}
 	
 	
@@ -41,6 +44,9 @@ public class WayOsm {
 	public void addNode(int pos, Long l){
 		if (!nodos.contains(l))
 			nodos.add(pos, l);
+		
+		// Borramos si existiese algun nulo
+		nodos.remove(null);
 	}
 	
 	
@@ -49,21 +55,17 @@ public class WayOsm {
 	 * @param l Lista de nodos a anadir
 	 */
 	public void addNodes(List<Long> l){
-		for (int x = 0; x < l.size(); x++)
-			if (x != l.size()-1){
-				if(!nodos.contains(l.get(x))) 
-					nodos.add(l.get(x));
-			}
-			else
-				if (!nodos.contains(l.get(x)))
-					nodos.add(l.get(x));
-				else
-					if (l.get(x) == nodos.get(0))
-						nodos.add(l.get(x));
+		for (int x = 0; x < l.size()-1; x++)
+			if (!nodos.contains(l.get(x)))
+				nodos.add(l.get(x));
+		
+		if (!nodos.contains(l.get(l.size()-1)) || l.get(l.size()-1) == nodos.get(0))
+			nodos.add(l.get(l.size()-1));
 	}
 	
 	
-	/** Anade una lista de nodos en esa posicion desplazando a la derecha. No comprueba que puedan estar repetidos
+	/** Anade una lista de nodos en esa posicion desplazando a la derecha. 
+	 *  No comprueba que puedan estar repetidos
 	 * @param l Lista de nodos
 	 * @param pos Posicion a anadir
 	 */
@@ -99,7 +101,7 @@ public class WayOsm {
 				this.shapes.add(s);
 	}
 	
-	public synchronized void deleteShape(String shape){
+	public synchronized void deleteShapeId(String shape){
 		shapes.remove(shape);
 	}
 	

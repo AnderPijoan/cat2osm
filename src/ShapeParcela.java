@@ -26,8 +26,15 @@ public class ShapeParcela extends Shape {
 	private List<ShapeAttribute> atributos;
 	private int numSymbol;
 	
-	private HashMap<String,Double> usos; // Para definir cual de todos los usos y destinos asignar,
+	// Para definir cual de todos los usos y destinos asignar,
 	// se ha llegado a la conclusion de asignar el que mas area tenga
+	// Aun y asi, los registros tipo 14 del catastro traen los destinos (especifios, de 3 caracteres) 
+	// de cada bien inmueble y los tipo 15 los usos, que son mas generales (solo el primer caracter) y que al
+	// pertenecer a la parcela tienen mayor area que los de los bienes inmuebles. Es por eso que sucedia que 
+	// al final se cogia el que menos detalle tenia por ser el uso de la parcela. Para eso vamos a separalos
+	// y a coger el uso en caso de que no haya destino.
+	private HashMap<String,Double> usos;
+	private HashMap<String,Double> destinos; 
 
 
 	/** Constructor
@@ -183,14 +190,6 @@ public class ShapeParcela extends Shape {
 		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		l.add(s);
 		
-		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
-		
-		s = new String[2];
-		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
-		l.add(s);
-		
 		return l;
 	}
 
@@ -242,24 +241,62 @@ public class ShapeParcela extends Shape {
 		}
 	}
 	
-	public String getUsoMasArea(){
+	public String getUsoDestinoMasArea(){
 		
-		if (usos == null)
-			return "";
-		
-		String uso = "";
-		double area = 0;
-		Iterator<Entry<String, Double>> it = usos.entrySet().iterator();
+		// Si hay destinos cogemos el de mayor area
+		if (destinos != null && !destinos.isEmpty()){		
+			
+			String destino = "";
+			double area = 0;
+			Iterator<Entry<String, Double>> it = destinos.entrySet().iterator();
 
-		// Escribimos todos los nodos
-		while(it.hasNext()){
-			Map.Entry e = (Map.Entry)it.next();
-			if ((Double)e.getValue() > area){
-				area = (Double)e.getValue();
-				uso = (String)e.getKey();
+			// Comparamos las areas de los destinos (son mas especificos)
+			while(it.hasNext()){
+				Map.Entry e = (Map.Entry)it.next();
+				if ((Double)e.getValue() > area){
+					area = (Double)e.getValue();
+					destino = (String)e.getKey();
+				}
 			}
+			return destino;
 		}
-		return uso;
+		// Si no lo hay, pasamos a usos que son mas generales y con menos nivel de detalle
+		else if (usos != null && !usos.isEmpty()){		
+
+			String uso = "";
+			double area = 0;
+			Iterator<Entry<String, Double>> it = usos.entrySet().iterator();
+
+			// Comparamos las areas de los destinos (son mas especificos)
+			while(it.hasNext()){
+				Map.Entry e = (Map.Entry)it.next();
+				if ((Double)e.getValue() > area){
+					area = (Double)e.getValue();
+					uso = (String)e.getKey();
+				}
+			}
+			return uso;
+		}
+
+		return "";
+	}
+
+	public void setDestinos(HashMap<String,Double> destinos) {
+		this.destinos = destinos;
+	}
+	
+	
+	public void addDestino(String cod, double area){
+		if (destinos == null)
+			destinos = new HashMap <String, Double>();
+		
+		if (destinos.get(cod) == null)
+			destinos.put(cod, area);
+		else{
+			double a = destinos.get(cod);
+			a += area;
+			destinos.put(cod, a);
+		}
 	}
 	
 }
