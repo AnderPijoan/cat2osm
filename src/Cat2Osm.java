@@ -3272,8 +3272,7 @@ public class Cat2Osm {
 																				
 										// Metemos en la lista general el nuevo way con el mismo id que el que hemos borrado
 										utils.getTotalWays().put(wayTemp, wayId);
-										
-										System.out.println("PREMIO");
+				
 										break;
 										
 									}
