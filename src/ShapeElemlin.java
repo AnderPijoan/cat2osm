@@ -76,15 +76,7 @@ public class ShapeElemlin extends Shape {
 		if (ttggss != null){
 			l.addAll(ttggssParser(ttggss));
 		}
-
-		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
 		
-		s = new String[2];
-		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
-		l.add(s);
-
 		return l;
 	}
 

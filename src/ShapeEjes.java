@@ -115,14 +115,6 @@ public class ShapeEjes extends Shape {
 			l.add(s);
 		}
 		
-		s = new String[2];
-		s[0] = "source"; s[1] = "catastro";
-		l.add(s);
-		
-		s = new String[2];
-		s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+"";
-		l.add(s);
-		
 		return l;
 	}
 

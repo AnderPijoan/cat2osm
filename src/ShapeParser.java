@@ -4,23 +4,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.activation.FileDataSource;
-
-import jj2000.j2k.codestream.HeaderInfo.SOT;
-
 import org.geotools.data.FeatureReader;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.shapefile.ShapefileDataStore;
-import org.geotools.util.CharsetConverterFactory;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -342,8 +333,8 @@ public class ShapeParser extends Thread{
 					proyeccion = "-s_srs \"+init=epsg:" + pro + " +wktext\"";
 
 				String command = "ogr2ogr " + proyeccion + " -t_srs EPSG:4326 " + 
-						Config.get("ResultPath") + "/" + tipo + f.getName() + " " +  // archivo fin
-						f.getPath();                                                 // archivo origen
+						"\"" + Config.get("ResultPath") + "/" + tipo + f.getName() + "\" " +  // archivo fin
+						"\"" + f.toPath() + "\"";                                                 // archivo origen
 
 				FileWriter fstreamScript = new FileWriter(Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
 				BufferedWriter outScript = new BufferedWriter(fstreamScript);
@@ -351,13 +342,13 @@ public class ShapeParser extends Thread{
 				outScript.write("#!/bin/bash\n");
 				outScript.write(command);
 				outScript.close();
-				Process pr = Runtime.getRuntime().exec("chmod +x "+Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
+				Process pr = Runtime.getRuntime().exec( new String[] { "chmod", "+x", Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh" } );
 				pr.waitFor();
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Ejecutando proyeccion de los shapefiles " +
 						tipo+f.getName() +": " + command);
 
 				Runtime run = Runtime.getRuntime();
-				pr  = run.exec(Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
+				pr  = run.exec( new String[] { Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh" } );
 				pr.waitFor();
 				bf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
 				while ((line = bf.readLine()) != null)

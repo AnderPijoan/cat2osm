@@ -110,6 +110,7 @@ public class Cat {
 
 
 	public void setArea(Double area) {
+		
 		this.area = area;
 	}
 }
