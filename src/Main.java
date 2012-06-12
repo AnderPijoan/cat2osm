@@ -133,6 +133,14 @@ public class Main {
 			System.out.println("["+new Timestamp(new Date().getTime())+"] El archivo Cat Urbano debe tener el formato de nombre que viene por defecto en Catastro (XX_XX_U_aaaa-mm-dd.CAT) para leer de él la fecha de creación.");
 			System.exit(-1);
 		}
+		
+		// Si va a leer ELEMTEX comprueba si existe fichero de reglas
+		if (archivo.equals("*") || archivo.equals("ELEMTEX")) {
+			if (!Config.get("ElemtexRules").equals("") && new File(Config.get("ElemtexRules")).exists()) {
+				System.out.println(Config.get("ElemtexRules"));
+				new Rules(Config.get("ElemtexRules"));
+			}
+		}
 
 		if (new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm").exists()
 				&& new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm").exists()
