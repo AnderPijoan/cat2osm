@@ -12,6 +12,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
 
+import org.apache.commons.lang3.text.WordUtils;
 
 public class ShapeElemtex extends Shape {
 
@@ -52,7 +53,14 @@ public class ShapeElemtex extends Shape {
 //		} catch (UnsupportedEncodingException e) {e.printStackTrace();}
 		
 		rotulo = eliminarComillas(f.getAttribute("ROTULO").toString());
+		if (rotulo.equals(rotulo.toUpperCase())) {
+			char[] delim = {' ','.'};
+			rotulo = WordUtils.capitalizeFully(rotulo, delim);
+		}
  
+		// Se agregan tags dependientes del rotulo
+		tags.addAll(Rules.getTags(rotulo));
+		
 		// Dependiendo del ttggss se usa o no
 		if (ttggss != null){
 			tags.addAll(ttggssParser(ttggss));
@@ -237,11 +245,11 @@ public class ShapeElemtex extends Shape {
 			// Modo todos los elemtex de Parajes y Comarcas, Informacion urbana 
 			// y rustica y Vegetacion y Accidentes demograficos
 			if (ttggss.equals("189203"))
-				return true;
+				return Rules.isValid(rotulo);
 			else if (ttggss.equals("189300"))
-				return true;
+				return Rules.isValid(rotulo);
 			else if (ttggss.equals("189700"))
-				return true;
+				return Rules.isValid(rotulo);
 			else
 				return false;
 		}
