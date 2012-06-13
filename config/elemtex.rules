@@ -1,4 +1,10 @@
-# Reglas de etiquetado
+# Fichero de reglas de etiquetado y validacion para la opcion -elemtex
+
+# Reglas de etiquetado. 
+# Se asignaran las etiquetas si el campo ROTULO cumple la regla.
+# Indica las reglas en forma de expresiones regulares.
+# A continuacion pon las etiquetas en formato key=value separadas
+# por tabuladores.
 ^hotel.*		tourism=hotel
 ^escuela.*		amenity=school
 ^colegio p.blico.*	amenity=school
@@ -15,7 +21,9 @@
 ^ayuntamiento.*		amenity=townhall
 ^centro cultural.*	amenity=community_centre
 
-# Reglas de validacion
+# Reglas de validacion.
+# Se consideraran no validos los elementos cuyo campo ROTULO
+# cumpla una de estas reglas
 ^[A-Z]{1,3}(\+[A-Z]{1,3})+$
 ^AAL$
 ^[IVX]+$
