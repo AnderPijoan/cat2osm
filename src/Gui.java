@@ -48,7 +48,7 @@ public class Gui extends JFrame {
 				"Ruta a la CARPETA (con nombre generalmente XX_XXX_RA_XXXX-XX-XX_SHF) que contiene dentro las SUBCARPETAS EXTRAIDAS de los shapefiles RUSTICOS.\n", 
 				"Ruta al ARCHIVO EXTRAIDO .CAT URBANO.",
 				"Ruta al ARCHIVO EXTRAIDO .CAT RÚSTICO.", 
-				"Ruta al directorio principal de FWTools.\n(De momento no es necesario)", 
+				//"Ruta al directorio principal de FWTools.\n(De momento no es necesario)", 
 				"Ruta al ARCHIVO de la rejilla de la península (PENR2009.gsb o peninsula.gsb).\n(Necesario para reproyectar, se puede descargar en http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM)",
 				"Proyección en la que se encuentran los archivos shapefile." +
 						"\n32628 para WGS84/ Zona UTM 29N"+
@@ -64,13 +64,14 @@ public class Gui extends JFrame {
 				"Si se quiere delimitar una fecha de construcción desde la cual coger los datos (Formato AAAAMMDD).\nÚnicamente imprimirá las relations que cumplan estar entre las fechas de construcción.\nEjemeplo: 20060127 (27 de Enero del 2006)",
 				"Si se quiere delimitar una fecha de construcción hasta la cual coger los datos (Formato AAAAMMDD).\nÚnicamente imprimirá las relations que cumplan estar entre las fechas de construcción.\nEjemeplo: 20060127 (27 de Enero del 2006)", 
 				"Tipo de Registro de catastro a usar (0 = todos).\nLos registros de catastro tienen la mayoría de la información necesaria para los shapefiles.",
-				"Imprimir tanto en las vías como en las relaciones la lista de shapes que las componen o las utilizan.\nEs para casos de debugging si se quiere tener los detalles."};
+				"Imprimir tanto en las vías como en las relaciones la lista de shapes que las componen o las utilizan.\nEs para casos de debugging si se quiere tener los detalles.",
+				"Utilizar de forma adicional un archivo de reglas para ASIGNAR TAGS a los elementos de ELEMTEX (consultar wiki para el funcionamiento). Si no se selecciona ningún archivo ELEMTEX será exportado sin asignación de tags."};
 
 		JPanel buttons = new JPanel();
 		buttons.setLayout(new GridLayout(15,1));
 
 
-		JButton resultPath, urbanoShpPath, rusticoShpPath, urbanoCatFile, rusticoCatFile, rejillaFile = null;
+		JButton resultPath, urbanoShpPath, rusticoShpPath, urbanoCatFile, rusticoCatFile, rejillaFile, rulesFile = null;
 
 		final JFileChooser fcResult = new JFileChooser();
 		fcResult.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -99,6 +100,9 @@ public class Gui extends JFrame {
 
 		final JComboBox<String> tipoReg = new JComboBox<String>();
 		final JComboBox<String> shapesId = new JComboBox<String>();
+		
+		final JFileChooser fcRules = new JFileChooser();
+		fcRules.setFileFilter(new ExtensionFileFilter("Archivos .rules", ".rules"));
 
 		for (int x = 0; x < labelsText.length; x++){
 
@@ -158,13 +162,13 @@ public class Gui extends JFrame {
 				buttons.add(rusticoCatFile);
 				break;
 			}
+//			case 6:{
+//				JTextArea l = new JTextArea("");
+//				l.setBackground(new Color(220,220,220));
+//				buttons.add(l);
+//				break;
+//			}
 			case 6:{
-				JTextArea l = new JTextArea("");
-				l.setBackground(new Color(220,220,220));
-				buttons.add(l);
-				break;
-			}
-			case 7:{
 				rejillaFile = new JButton("Seleccionar rejilla (peninsula.gsb)");   
 				rejillaFile.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
@@ -173,7 +177,7 @@ public class Gui extends JFrame {
 				buttons.add(rejillaFile);
 				break;
 			}
-			case 8:{
+			case 7:{
 
 				proj.addItem("32628");
 				proj.addItem("23029");
@@ -186,25 +190,25 @@ public class Gui extends JFrame {
 				buttons.add(proj);
 				break;        		
 			}
-			case 9:{
+			case 8:{
 				buttons.add(fdesde);
 				break;
 			}
-			case 10:{
+			case 9:{
 				new JTextField("99999999");
 				buttons.add(fhasta);
 				break;
 			}
-			case 11:{
+			case 10:{
 				buttons.add(fconstrudesde);
 				break;
 			}
-			case 12:{
+			case 11:{
 				new JTextField("99999999");
 				buttons.add(fconstruhasta);
 				break;
 			}
-			case 13:{
+			case 12:{
 				tipoReg.addItem("0");
 				tipoReg.addItem("11");
 				tipoReg.addItem("13");
@@ -216,11 +220,20 @@ public class Gui extends JFrame {
 				buttons.add(tipoReg);
 				break;
 			}
-			case 14:{
+			case 13:{
 				shapesId.addItem("NO");
 				shapesId.addItem("SI");
 				shapesId.setBackground(new Color(255,255,255));
 				buttons.add(shapesId);
+				break;
+			}
+			case 14:{
+				rulesFile = new JButton("Seleccionar archivo de reglas .rules (opcional)");
+				rulesFile.addActionListener(new ActionListener()  
+				{  public void actionPerformed(ActionEvent e)  
+				{ fcRules.showOpenDialog(new JFrame()); }  
+				});  
+				buttons.add(rulesFile);
 				break;
 			}
 
@@ -330,6 +343,7 @@ public class Gui extends JFrame {
 					out.write("\nFechaConstruHasta="+fconstruhasta.getText());
 					out.write("\nTipoRegistro="+tipoReg.getSelectedItem());
 					out.write("\nShapeIds="+shapesId.getSelectedIndex());
+					if (fcRules.getSelectedFile() != null)out.write("\nElemtexRules="+fcRules.getSelectedFile());
 
 					out.close();
 

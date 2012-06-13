@@ -1,0 +1,22 @@
+# Reglas de etiquetado
+^hotel.*		tourism=hotel
+^escuela.*		amenity=school
+^colegio p.blico.*	amenity=school
+^polideportivo.*	leisure=sports_centre
+^iglesia.*		amenity=place_of_worship	building=church
+^ermita.*		amenity=place_of_worship	religion=christian	denomination=roman_catholic	building=church
+^cementerio.*		landuse=cemetery
+^instituto de bachillerato.*	amenity=college
+^I\.E\.S\..*		amenity=college
+^IES\s.*		amenity=college
+^consultorio.*		amenity=doctors
+^correos.*		amenity=post_office	operator=Correos
+^biblioteca.*		amenity=library
+^ayuntamiento.*		amenity=townhall
+^centro cultural.*	amenity=community_centre
+
+# Reglas de validacion
+^[A-Z]{1,3}(\+[A-Z]{1,3})+$
+^AAL$
+^[IVX]+$
+^BL\s[0-9IVX\.\-\+]+$
