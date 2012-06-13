@@ -329,7 +329,7 @@ public class Gui extends JFrame {
 					out.write("\nFechaConstruDesde="+fconstrudesde.getText());
 					out.write("\nFechaConstruHasta="+fconstruhasta.getText());
 					out.write("\nTipoRegistro="+tipoReg.getSelectedItem());
-					out.write("\nShapesIds="+shapesId.getSelectedIndex());
+					out.write("\nShapeIds="+shapesId.getSelectedIndex());
 
 					out.close();
 
