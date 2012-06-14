@@ -61,13 +61,18 @@ public class Config {
 
 	/** Obtiene la opcion del hashMap de configuracion. Si no existe devuelve "".
 	 *  @param option Opcion de configuracion a buscar.
+	 *  @param required Indica si la opción es obligatoria (true) u opcional (false).
 	 *  @return Valor que tiene en el hashMap o "". */
-	public static String get(String option){
+	public static String get(String option, boolean required){
 		
-		if (map.get(option) == null)
+		if (map.get(option) == null && required)
 			System.out.println("["+new Timestamp(new Date().getTime())+"] No se ha encontrado el campo "+option+" en el archivo de configuración. Compruebe que existe o si no ejecute cat2osm con el parámetro -ui para crear un nuevo archivo de configuración.");
 		
 		return (map.get(option) == null) ? "" : map.get(option);
+	}
+	
+	public static String get(String option) {
+		return get(option, true);
 	}
 
 
