@@ -74,3 +74,7 @@ TipoRegistro=0
 # utilizan. Es para casos de debugging si se quiere tener los detalles.
 # No=0 / Si=1
 PrintShapeIds=0
+
+# Usar un fichero de reglas de etiquetado y validacion para la opcion -elemtex.
+# Elimina el comentario de la siguiente linea para usarlo
+#ElemtexRules=config/elemtex.rules
