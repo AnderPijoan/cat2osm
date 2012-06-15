@@ -74,3 +74,6 @@ TipoRegistro=0
 # utilizan. Es para casos de debugging si se quiere tener los detalles.
 # No=0 / Si=1
 PrintShapeIds=0
+
+# Archivo de reglas para taggear los elementos textuales de ELEMTEX
+ElemtexRules=config/elemtex.rules
