@@ -135,10 +135,10 @@ public class Main {
 		}
 		
 		// Si va a leer ELEMTEX comprueba si existe fichero de reglas
-		if (archivo.equals("*") || archivo.equals("ELEMTEX")) {
-			if (!Config.get("ElemtexRules").equals("") && new File(Config.get("ElemtexRules")).exists()) {
-				System.out.println(Config.get("ElemtexRules"));
-				new Rules(Config.get("ElemtexRules"));
+		if (archivo.equals("ELEMTEX")) {
+			if (!Config.get("ElemtexRules", false).equals("") && new File(Config.get("ElemtexRules", false)).exists()) {
+				System.out.println("["+new Timestamp(new Date().getTime())+"] Leyendo archivo de reglas " + Config.get("ElemtexRules", false));
+				new Rules(Config.get("ElemtexRules", false));
 			}
 		}
 
