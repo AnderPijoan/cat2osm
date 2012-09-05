@@ -13,8 +13,7 @@ public abstract class Shape {
 	private List<ShapeAttribute> atributos;
 	protected long fechaAlta; // Fecha de Alta en catastro Formato AAAAMMDD
 	protected long fechaBaja; // Fecha de Baja en catastro Formato AAAAMMDD
-	protected volatile static Long Id = (long) 0; // Id que tomaran los shapes
-	// para la simplificacion de ways
+	protected volatile static Long Id = (long) 0; // Variable autoincremental que se concatena al shapeId
 
 
 	/**Constructor
@@ -60,7 +59,6 @@ public abstract class Shape {
 
 	}
 
-
 	/** Comprueba la fechaAlta y fechaBaja del shape para ver si se ha creado entre AnyoDesde y AnyoHasta
 	 * Deben seguir dados de alta despues de fechaHasta para que los devuelva. Es decir, shapes que se hayan
 	 * creado y dado de baja en ese intervalo no las devolvera.
@@ -98,6 +96,8 @@ public abstract class Shape {
 
 
 	public abstract String getShapeId();
+	
+	public abstract String getCodigoMasa();
 
 	public abstract List<String[]> getAttributes();
 

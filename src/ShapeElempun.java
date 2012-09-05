@@ -19,12 +19,20 @@ public class ShapeElempun extends Shape {
 	private Long nodo;
 	private String ttggss; // Campo TTGGSS en Elempun.shp
 	private List<ShapeAttribute> atributos;
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
 
 	public ShapeElempun(SimpleFeature f, String tipo) {
 
 		super(f, tipo);
 
 		shapeId = "ELEMPUN" + super.newShapeId();
+		
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		codigoMasa = "ELEMPUN";
 
 		// Elempun trae la geometria en formato Point
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.Point")){
@@ -52,6 +60,10 @@ public class ShapeElempun extends Shape {
 
 	public String getShapeId(){
 		return shapeId;
+	}
+	
+	public String getCodigoMasa() {
+		return codigoMasa;
 	}
 
 

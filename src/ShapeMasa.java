@@ -22,6 +22,10 @@ public class ShapeMasa extends Shape {
 	private Long relation; // Relacion de sus ways
 	private String masa; // Codigo de masa, solo en Masa.shp
 	private List<ShapeAttribute> atributos;
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
 
 
 	/** Constructor
@@ -32,6 +36,9 @@ public class ShapeMasa extends Shape {
 		super(f, tipo);
 		
 		shapeId = "MASA" + super.newShapeId();
+		
+		// Para agrupar geometrias segun su codigo de masa
+		codigoMasa = (String) f.getAttribute("MASA");
 
 		this.poligons = new ArrayList<LineString>();
 
@@ -82,6 +89,11 @@ public class ShapeMasa extends Shape {
 
 	public String getShapeId(){
 		return shapeId;
+	}
+	
+	
+	public String getCodigoMasa() {
+		return codigoMasa;
 	}
 	
 	

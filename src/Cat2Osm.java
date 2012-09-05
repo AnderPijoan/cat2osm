@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.geotools.geometry.jts.JTSFactoryFinder;
 
@@ -47,14 +48,19 @@ public class Cat2Osm {
 
 
 	/** Busca en la lista de shapes los que coincidan con la ref catastral
+	 * @param codigo Codigo de masa
 	 * @param ref referencia catastral a buscar
 	 * @returns List<Shape> lista de shapes que coinciden                    
 	 */
 	private static List<Shape> buscarRefCat(List<Shape> shapes, String ref){
-		List<Shape> shapeList = new ArrayList<Shape>();
+		List<Shape> shapeList = null;
 
 		for(Shape shape : shapes) 
-			if (shape != null && shape.getRefCat() != null && shape.getRefCat().equals(ref)) shapeList.add(shape);
+			if (shape != null && shape.getRefCat() != null && shape.getRefCat().equals(ref)){
+				if (shapeList == null)
+					shapeList = new ArrayList<Shape>();
+				shapeList.add(shape);
+			}
 
 		return shapeList;
 	}
@@ -91,336 +97,340 @@ public class Cat2Osm {
 	}
 
 
-	/** Los elementos textuales traen informacion con los numeros de portal pero sin datos de la parcela ni unidos a ellas
-	 * Con esto, sabiendo el numero de portal buscamos la parcela mas cercana con ese numero y le pasamos los tags al elemento
-	 * textual que es un punto
-	 * @param shapes Lista de shapes original
-	 * @return lista de shapes con los tags modificados
-	 */
-	@SuppressWarnings("unchecked")
-	public List<Shape> calcularEntradas(List<Shape> shapes){
-
-		// Variabbles para el calculo del tiempo estimado
-		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
-		int bar = 0;
-		long timeElapsed = 0;
-		float size = shapes.size();
-		long time = System.currentTimeMillis();
-
-
-		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
-		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
-
-		// Creamos una cache para meter las geometrias de las parcelas y una lista con los numeros de policia de esas parcelas
-		final SpatialIndex index = new STRtree();
-
-		for (Shape shapePar : shapes){
-
-			// Si es un shape de parcela y tiene geometria
-			if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
-
-				// Cogemos la geometria exterior de la parcela
-				Geometry geom = (LineString) shapePar.getPoligons().get(0);
-
-				// Para hacer la query es necesario en Envelope
-				Envelope env = geom.getEnvelopeInternal();
-
-				// Si existe
-				if (!env.isNull()){
-					index.insert(env, new LocationIndexedLine(geom));
-				}
-			}
-		}
-
-
-		// Buscamos la parcela mas cercana
-		for (Shape shapeTex : shapes){
-			if (shapeTex instanceof ShapeElemtex && shapeTex.getTtggss().equals("189401")){
-
-				// Codigo para el calculo del tiempo estimado
-				int progress = (int) ((shapes.indexOf(shapeTex)/size)*100);
-				if (bar != progress){
-					timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
-					long hor = Math.round((timeElapsed/3600));
-					long min = Math.round((timeElapsed-3600*hor)/60);
-					long seg = Math.round((timeElapsed-3600*hor-60*min));
-
-					System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = "+progress+"%. Tiempo restante estimado = "+hor+" horas, "+min+" minutos, "+seg+" segundos.\r");
-					bar = progress;
-					time = System.currentTimeMillis();
-				}
-
-
-				// Guarderemos 3 parcelas
-				ShapeParcela nearestParcela = null; // Parcela mas cercana
-				ShapeParcela nearestPairParcela = null; // Parcela par o impar dependiendo del rotulo mas cercana
-				ShapeParcela nearestSameNumberParcela = null; // Parcela con el mismo addr:housenumber mas cerana
-
-				// Y 3 coordenadas
-				Coordinate nearestInsideCoor = null; // Coordenada "espejo" del elemtex con respecto a la parcela mas cercana
-				Coordinate nearestPairInsideCoor = null; // Igual pero para la parcela con par/impar
-				Coordinate nearestSameNumberInsideCoor = null; // Igual pero parSin título 1a la parcela con el mismo addr:housenumber
-
-				// Variables
-				Coordinate tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
-				Coordinate tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
-				com.vividsolutions.jts.geom.Point point = gf.createPoint(shapeTex.getCoor());
-
-
-				// Buscamos la parcela mas cercana
-
-				double minDist = 0.00008; // Distancia minima ~ 80 metros
-
-				// Creamos el punto de busqueda con la coordenada del punto y la expandimos
-				// en la distancia minima para obtener
-				// una linea de desplazamiento para tocar la parcela
-				Envelope search = new Envelope(point.getCoordinate());
-				search.expandBy(minDist);
-
-				// Hacemos la query
-				List<LocationIndexedLine> lines = index.query(search);
-
-				// Cada linea que nos devuelve representa el desplazamiento
-				// que hay que darle a la coordenada para que se situe sobre la linea de la
-				// geometria de la parcela
-				for (LocationIndexedLine line : lines) {
-					LinearLocation here = line.project(point.getCoordinate());
-					tempSnappedCoor = line.extractPoint(here);
-					double dist = tempSnappedCoor.distance(point.getCoordinate());
-
-					if (dist < minDist) {
-						// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
-						//((ShapeElemtex) shapeTex).getCoor();
-						// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
-						//snappedCoor
-						//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
-						tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
-								tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
-								0);
-
-						List<Coordinate> l= new ArrayList<Coordinate>();
-						l.add(tempInsideCoor);
-						l.add(shapeTex.getCoor());
-						ShapeParcela temp = (ShapeParcela) getParcela(shapes, l);
-
-						// Si hemos encontrado una parcela que cumple, actualizamos
-						if (temp != null){
-
-							// Acualizamos la variable minDist y la parcela
-							minDist = dist;
-
-							nearestParcela = temp;
-							nearestInsideCoor = tempInsideCoor;
-						}
-					}
-				}
-
-
-				// Buscamos la parcela par/impar mas cercana
-
-
-				tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
-				tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
-				point = gf.createPoint(shapeTex.getCoor());
-
-				minDist = 0.00008; // Distancia minima ~ 80 metros
-
-				// Creamos el punto de busqueda con la coordenada del punto y la expandimos
-				// en la distancia minima para obtener
-				// una linea de desplazamiento para tocar la parcela
-				search = new Envelope(point.getCoordinate());
-				search.expandBy(minDist);
-
-				// Hacemos la query
-				lines = index.query(search);
-
-				// Cada linea que nos devuelve representa el desplazamiento
-				// que hay que darle a la coordenada para que se situe sobre la linea de la
-				// geometria de la parcela
-				for (LocationIndexedLine line : lines) {
-					LinearLocation here = line.project(point.getCoordinate());
-					tempSnappedCoor = line.extractPoint(here);
-					double dist = tempSnappedCoor.distance(point.getCoordinate());
-
-					if (dist < minDist) {
-
-						// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
-						//((ShapeElemtex) shapeTex).getCoor();
-						// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
-						//snappedCoor
-
-						//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
-						tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
-								tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
-								0);
-
-						List<Coordinate> l= new ArrayList<Coordinate>();
-						l.add(tempInsideCoor);
-						l.add(shapeTex.getCoor());
-						ShapeParcela temp = (ShapeParcela) getParcela(shapes, l);
-
-						// Si hemos encontrado una parcela que cumple miramos su addr:housenumber
-						if (temp != null){
-
-							// Comparamos si su addr:housenumber es igual que el rotulo del elemtex
-							RelationOsm r = (RelationOsm) utils.getKeyFromValue( (Map<Object, Long>) ((Object)utils.getTotalRelations()), temp.getRelationId());
-
-							for (String [] tag : r.getTags()){			
-
-								if (tag[0] != null && tag[0].equals("addr:housenumber") && tag[1] != null && esNumero(tag[1]) && esNumero(((ShapeElemtex)shapeTex).getRotulo().trim()) && Integer.parseInt(tag[1])%2 == Integer.parseInt(((ShapeElemtex) shapeTex).getRotulo())%2 ){
-									// Acualizamos la variable minDist y la parcela
-									minDist = dist;
-
-									nearestPairParcela = temp;
-									nearestPairInsideCoor = tempInsideCoor;
-								}
-							}
-						}
-					}
-				}
-
-
-				// Buscamos la parcela con el mismo addr:housenumber mas cercana
-
-
-				tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
-				tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
-				point = gf.createPoint(shapeTex.getCoor());
-
-				minDist = 0.00008; // Distancia minima ~ 80 metros
-
-				// Creamos el punto de busqueda con la coordenada del punto y la expandimos
-				// en la distancia minima para obtener
-				// una linea de desplazamiento para tocar la parcela
-				search = new Envelope(point.getCoordinate());
-				search.expandBy(minDist);
-
-				// Hacemos la query
-				lines = index.query(search);
-
-				// Cada linea que nos devuelve representa el desplazamiento
-				// que hay que darle a la coordenada para que se situe sobre la linea de la
-				// geometria de la parcela
-				for (LocationIndexedLine line : lines) {
-					LinearLocation here = line.project(point.getCoordinate());
-					tempSnappedCoor = line.extractPoint(here);
-					double dist = tempSnappedCoor.distance(point.getCoordinate());
-
-					if (dist < minDist) {
-
-						// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
-						//((ShapeElemtex) shapeTex).getCoor();
-						// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
-						//snappedCoor
-
-						//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
-						tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
-								tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
-								0);
-
-						List<Coordinate> l= new ArrayList<Coordinate>();
-						l.add(tempInsideCoor);
-						l.add(shapeTex.getCoor());
-						ShapeParcela temp = (ShapeParcela) getParcela(shapes, l);
-
-						// Si hemos encontrado una parcela que cumple miramos su addr:housenumber
-						if (temp != null){
-
-							// Comparamos si su addr:housenumber es igual que el rotulo del elemtex
-							RelationOsm r = (RelationOsm) utils.getKeyFromValue( (Map<Object, Long>) ((Object)utils.getTotalRelations()), temp.getRelationId());
-
-							for (String [] tag : r.getTags())
-								if (tag[0] != null && !tag[0].isEmpty() && tag[0].trim().equals("addr:housenumber") && tag[1] != null && !tag[1].isEmpty() && tag[1].trim().equals(((ShapeElemtex) shapeTex).getRotulo().trim())){
-
-									// Acualizamos la variable minDist y la parcela
-									minDist = dist;
-
-									nearestSameNumberParcela = temp;
-									nearestSameNumberInsideCoor = tempInsideCoor;
-								}
-						}
-					}
-				}
-
-				// Una vez que ya tenemos las 3 parcelas
-				if (nearestParcela != null){
-
-					if (nearestPairParcela != null){
-
-						if (nearestSameNumberParcela != null){
-
-							// Si se han encontrado las 3 pero son la misma
-							if (nearestPairParcela.equals(nearestParcela) && nearestPairParcela.equals(nearestSameNumberParcela)){
-								anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
-							}
-							// Si se han encontrado las 3 pero la par/impar y mismo numero son iguales y la mas cercana es distinta
-							// Coger la mismo numero ya que sera que esta mas cerca del otro lado de la calle
-							else { 
-								if (nearestPairParcela.equals(nearestSameNumberParcela) && !nearestPairParcela.equals(nearestParcela)){
-									anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
-
-								} else {
-									// Si se han encontrado las 3 pero la del numero igual es distinta 
-									// Se comprueba si la del numero igual esta muy lejos para que no sea una con un mismo numero de otra calle
-									if (nearestPairParcela.equals(nearestParcela) && !nearestPairParcela.equals(nearestSameNumberParcela)){
-										// Si esta a menos de 20metros supondremos que es a la que deberia ir
-										if (shapeTex.getCoor().distance(nearestSameNumberInsideCoor) <= 0.00002){
-											anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
-										}
-										// Si esta mas lejos quiere decir que no es de esa calle
-										// Coger la par/impar ya que sera que no hay parcela con ese numero
-										else{
-											anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
-										}
-									}
-									// Si se han encontrado las 3 y las 3 son distintas
-									// Comparamos la distancia a la que esta la del mismo numero y si esta a mas de 20metros cogemos la par/impar
-									else{
-										if (shapeTex.getCoor().distance(nearestSameNumberInsideCoor) <= 0.00002){
-											anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
-										}
-										else {
-											anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
-										}
-									}
-								}
-							}
-						}
-						// No existe sameNumberParcela
-						else{
-
-							// Si se han encontrado solo estas dos pero son la misma
-							if (nearestPairParcela.equals(nearestParcela)){
-								anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
-							}
-							// Si se han encontrado las dos pero son distintas (se deduce que la par/impar estara algo mas lejos)
-							// Coger la par/impar ya que la mas cercana sera la de enfrente en la calle
-							else{
-								anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
-							}
-						}
-
-					}
-
-					// Solo se ha encontrado la mas cercana
-					else{
-						anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
-					}
-				}
-				// No se han encontrado parcelas para ese portal
-				else{
-
-					if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
-						NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), shapeTex.getNodesIds(0).get(0)));
-						if (nodeTex != null) nodeTex.addTag(new String[] {"FIXME","FIXME"});
-					}
-				}
-			}
-		}
-
-		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado.");
-		return shapes;
-	}
+	//	/** Los elementos textuales traen informacion con los numeros de portal pero sin datos de la parcela ni unidos a ellas
+	//	 * Con esto, sabiendo el numero de portal buscamos la parcela mas cercana con ese numero y le pasamos los tags al elemento
+	//	 * textual que es un punto
+	//	 * @param shapes Lista de shapes original
+	//	 * @return lista de shapes con los tags modificados
+	//	 */
+	//	@SuppressWarnings("unchecked")
+	//	public ConcurrentHashMap <String, List<Shape>> calcularEntradas(ConcurrentHashMap <String, List<Shape>> shapesTotales){
+	//
+	//		// Variabbles para el calculo del tiempo estimado
+	//		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
+	//		int bar = 0;
+	//		int pos = 0;
+	//		long timeElapsed = 0;
+	//		float size = shapesTotales.size();
+	//		long time = System.currentTimeMillis();
+	//
+	//
+	//		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
+	//		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
+	//
+	//		// Creamos una cache para meter las geometrias de las parcelas y una lista con los numeros de policia de esas parcelas
+	//		final SpatialIndex index = new STRtree();
+	//
+	//		for (String key : shapesTotales.keySet())
+	//			for (Shape shapePar : shapesTotales.get(key)){
+	//
+	//				// Si es un shape de parcela y tiene geometria
+	//				if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
+	//
+	//					// Cogemos la geometria exterior de la parcela
+	//					Geometry geom = (LineString) shapePar.getPoligons().get(0);
+	//
+	//					// Para hacer la query es necesario en Envelope
+	//					Envelope env = geom.getEnvelopeInternal();
+	//
+	//					// Si existe
+	//					if (!env.isNull()){
+	//						index.insert(env, new LocationIndexedLine(geom));
+	//					}
+	//				}
+	//			}
+	//
+	//
+	//		// Buscamos la parcela mas cercana
+	//		for (String key : shapesTotales.keySet()){
+	//
+	//			// Codigo para el calculo del tiempo estimado
+	//			int progress = (int) ((pos++/size)*100);
+	//			if (bar != progress){
+	//				timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
+	//				long hor = Math.round((timeElapsed/3600));
+	//				long min = Math.round((timeElapsed-3600*hor)/60);
+	//				long seg = Math.round((timeElapsed-3600*hor-60*min));
+	//
+	//				System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = "+progress+"%. Tiempo restante estimado = "+hor+" horas, "+min+" minutos, "+seg+" segundos.\r");
+	//				bar = progress;
+	//				time = System.currentTimeMillis();
+	//			}
+	//
+	//			for (Shape shapeTex : shapesTotales.get(key)){
+	//				if (shapeTex instanceof ShapeElemtex && shapeTex.getTtggss().equals("189401")){
+	//
+	//					// Guarderemos 3 parcelas
+	//					ShapeParcela nearestParcela = null; // Parcela mas cercana
+	//					ShapeParcela nearestPairParcela = null; // Parcela par o impar dependiendo del rotulo mas cercana
+	//					ShapeParcela nearestSameNumberParcela = null; // Parcela con el mismo addr:housenumber mas cerana
+	//
+	//					// Y 3 coordenadas
+	//					Coordinate nearestInsideCoor = null; // Coordenada "espejo" del elemtex con respecto a la parcela mas cercana
+	//					Coordinate nearestPairInsideCoor = null; // Igual pero para la parcela con par/impar
+	//					Coordinate nearestSameNumberInsideCoor = null; // Igual pero parSin título 1a la parcela con el mismo addr:housenumber
+	//
+	//					// Variables
+	//					Coordinate tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
+	//					Coordinate tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
+	//					com.vividsolutions.jts.geom.Point point = gf.createPoint(shapeTex.getCoor());
+	//
+	//
+	//					// Buscamos la parcela mas cercana
+	//
+	//					double minDist = 0.00008; // Distancia minima ~ 80 metros
+	//
+	//					// Creamos el punto de busqueda con la coordenada del punto y la expandimos
+	//					// en la distancia minima para obtener
+	//					// una linea de desplazamiento para tocar la parcela
+	//					Envelope search = new Envelope(point.getCoordinate());
+	//					search.expandBy(minDist);
+	//
+	//					// Hacemos la query
+	//					List<LocationIndexedLine> lines = index.query(search);
+	//
+	//					// Cada linea que nos devuelve representa el desplazamiento
+	//					// que hay que darle a la coordenada para que se situe sobre la linea de la
+	//					// geometria de la parcela
+	//					for (LocationIndexedLine line : lines) {
+	//						LinearLocation here = line.project(point.getCoordinate());
+	//						tempSnappedCoor = line.extractPoint(here);
+	//						double dist = tempSnappedCoor.distance(point.getCoordinate());
+	//
+	//						if (dist < minDist) {
+	//							// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
+	//							//((ShapeElemtex) shapeTex).getCoor();
+	//							// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
+	//							//snappedCoor
+	//							//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
+	//							tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
+	//									tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
+	//									0);
+	//
+	//							List<Coordinate> l= new ArrayList<Coordinate>();
+	//							l.add(tempInsideCoor);
+	//							l.add(shapeTex.getCoor());
+	//							ShapeParcela temp = (ShapeParcela) getParcela(shapesTotales, l);
+	//
+	//							// Si hemos encontrado una parcela que cumple, actualizamos
+	//							if (temp != null){
+	//
+	//								// Acualizamos la variable minDist y la parcela
+	//								minDist = dist;
+	//
+	//								nearestParcela = temp;
+	//								nearestInsideCoor = tempInsideCoor;
+	//							}
+	//						}
+	//					}
+	//
+	//
+	//					// Buscamos la parcela par/impar mas cercana
+	//
+	//
+	//					tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
+	//					tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
+	//					point = gf.createPoint(shapeTex.getCoor());
+	//
+	//					minDist = 0.00008; // Distancia minima ~ 80 metros
+	//
+	//					// Creamos el punto de busqueda con la coordenada del punto y la expandimos
+	//					// en la distancia minima para obtener
+	//					// una linea de desplazamiento para tocar la parcela
+	//					search = new Envelope(point.getCoordinate());
+	//					search.expandBy(minDist);
+	//
+	//					// Hacemos la query
+	//					lines = index.query(search);
+	//
+	//					// Cada linea que nos devuelve representa el desplazamiento
+	//					// que hay que darle a la coordenada para que se situe sobre la linea de la
+	//					// geometria de la parcela
+	//					for (LocationIndexedLine line : lines) {
+	//						LinearLocation here = line.project(point.getCoordinate());
+	//						tempSnappedCoor = line.extractPoint(here);
+	//						double dist = tempSnappedCoor.distance(point.getCoordinate());
+	//
+	//						if (dist < minDist) {
+	//
+	//							// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
+	//							//((ShapeElemtex) shapeTex).getCoor();
+	//							// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
+	//							//snappedCoor
+	//
+	//							//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
+	//							tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
+	//									tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
+	//									0);
+	//
+	//							List<Coordinate> l= new ArrayList<Coordinate>();
+	//							l.add(tempInsideCoor);
+	//							l.add(shapeTex.getCoor());
+	//							ShapeParcela temp = (ShapeParcela) getParcela(shapesTotales, l);
+	//
+	//							// Si hemos encontrado una parcela que cumple miramos su addr:housenumber
+	//							if (temp != null){
+	//
+	//								// Comparamos si su addr:housenumber es igual que el rotulo del elemtex
+	//								RelationOsm r = (RelationOsm) utils.getKeyFromValue( (Map< String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, temp.getRelationId());
+	//
+	//								for (String [] tag : r.getTags()){			
+	//
+	//									if (tag[0] != null && tag[0].equals("addr:housenumber") && tag[1] != null && esNumero(tag[1]) && esNumero(((ShapeElemtex)shapeTex).getRotulo().trim()) && Integer.parseInt(tag[1])%2 == Integer.parseInt(((ShapeElemtex) shapeTex).getRotulo())%2 ){
+	//										// Acualizamos la variable minDist y la parcela
+	//										minDist = dist;
+	//
+	//										nearestPairParcela = temp;
+	//										nearestPairInsideCoor = tempInsideCoor;
+	//									}
+	//								}
+	//							}
+	//						}
+	//					}
+	//
+	//
+	//					// Buscamos la parcela con el mismo addr:housenumber mas cercana
+	//
+	//
+	//					tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
+	//					tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
+	//					point = gf.createPoint(shapeTex.getCoor());
+	//
+	//					minDist = 0.00008; // Distancia minima ~ 80 metros
+	//
+	//					// Creamos el punto de busqueda con la coordenada del punto y la expandimos
+	//					// en la distancia minima para obtener
+	//					// una linea de desplazamiento para tocar la parcela
+	//					search = new Envelope(point.getCoordinate());
+	//					search.expandBy(minDist);
+	//
+	//					// Hacemos la query
+	//					lines = index.query(search);
+	//
+	//					// Cada linea que nos devuelve representa el desplazamiento
+	//					// que hay que darle a la coordenada para que se situe sobre la linea de la
+	//					// geometria de la parcela
+	//					for (LocationIndexedLine line : lines) {
+	//						LinearLocation here = line.project(point.getCoordinate());
+	//						tempSnappedCoor = line.extractPoint(here);
+	//						double dist = tempSnappedCoor.distance(point.getCoordinate());
+	//
+	//						if (dist < minDist) {
+	//
+	//							// Coordenada 1 de la recta que esta donde viene originalmente el Elemtex
+	//							//((ShapeElemtex) shapeTex).getCoor();
+	//							// Coordenada 2 de la recta que esta sobre la linea en la que empieza la parcela
+	//							//snappedCoor
+	//
+	//							//Coordenada 3 de la recta que estara encima de la parecela a la que pertenece
+	//							tempInsideCoor = new Coordinate(tempSnappedCoor.x+(tempSnappedCoor.x-((ShapeElemtex) shapeTex).getCoor().x),
+	//									tempSnappedCoor.y+(tempSnappedCoor.y-((ShapeElemtex) shapeTex).getCoor().y),
+	//									0);
+	//
+	//							List<Coordinate> l= new ArrayList<Coordinate>();
+	//							l.add(tempInsideCoor);
+	//							l.add(shapeTex.getCoor());
+	//							ShapeParcela temp = (ShapeParcela) getParcela(shapesTotales, l);
+	//
+	//							// Si hemos encontrado una parcela que cumple miramos su addr:housenumber
+	//							if (temp != null){
+	//
+	//								// Comparamos si su addr:housenumber es igual que el rotulo del elemtex
+	//								RelationOsm r = (RelationOsm) utils.getKeyFromValue( (Map< String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, temp.getRelationId());
+	//
+	//								for (String [] tag : r.getTags())
+	//									if (tag[0] != null && !tag[0].isEmpty() && tag[0].trim().equals("addr:housenumber") && tag[1] != null && !tag[1].isEmpty() && tag[1].trim().equals(((ShapeElemtex) shapeTex).getRotulo().trim())){
+	//
+	//										// Acualizamos la variable minDist y la parcela
+	//										minDist = dist;
+	//
+	//										nearestSameNumberParcela = temp;
+	//										nearestSameNumberInsideCoor = tempInsideCoor;
+	//									}
+	//							}
+	//						}
+	//					}
+	//
+	//					// Una vez que ya tenemos las 3 parcelas
+	//					if (nearestParcela != null){
+	//
+	//						if (nearestPairParcela != null){
+	//
+	//							if (nearestSameNumberParcela != null){
+	//
+	//								// Si se han encontrado las 3 pero son la misma
+	//								if (nearestPairParcela.equals(nearestParcela) && nearestPairParcela.equals(nearestSameNumberParcela)){
+	//									anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
+	//								}
+	//								// Si se han encontrado las 3 pero la par/impar y mismo numero son iguales y la mas cercana es distinta
+	//								// Coger la mismo numero ya que sera que esta mas cerca del otro lado de la calle
+	//								else { 
+	//									if (nearestPairParcela.equals(nearestSameNumberParcela) && !nearestPairParcela.equals(nearestParcela)){
+	//										anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
+	//
+	//									} else {
+	//										// Si se han encontrado las 3 pero la del numero igual es distinta 
+	//										// Se comprueba si la del numero igual esta muy lejos para que no sea una con un mismo numero de otra calle
+	//										if (nearestPairParcela.equals(nearestParcela) && !nearestPairParcela.equals(nearestSameNumberParcela)){
+	//											// Si esta a menos de 20metros supondremos que es a la que deberia ir
+	//											if (shapeTex.getCoor().distance(nearestSameNumberInsideCoor) <= 0.00002){
+	//												anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
+	//											}
+	//											// Si esta mas lejos quiere decir que no es de esa calle
+	//											// Coger la par/impar ya que sera que no hay parcela con ese numero
+	//											else{
+	//												anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
+	//											}
+	//										}
+	//										// Si se han encontrado las 3 y las 3 son distintas
+	//										// Comparamos la distancia a la que esta la del mismo numero y si esta a mas de 20metros cogemos la par/impar
+	//										else{
+	//											if (shapeTex.getCoor().distance(nearestSameNumberInsideCoor) <= 0.00002){
+	//												anadirEntradaParcela(nearestSameNumberParcela, (ShapeElemtex)shapeTex, nearestSameNumberInsideCoor);
+	//											}
+	//											else {
+	//												anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
+	//											}
+	//										}
+	//									}
+	//								}
+	//							}
+	//							// No existe sameNumberParcela
+	//							else{
+	//
+	//								// Si se han encontrado solo estas dos pero son la misma
+	//								if (nearestPairParcela.equals(nearestParcela)){
+	//									anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
+	//								}
+	//								// Si se han encontrado las dos pero son distintas (se deduce que la par/impar estara algo mas lejos)
+	//								// Coger la par/impar ya que la mas cercana sera la de enfrente en la calle
+	//								else{
+	//									anadirEntradaParcela(nearestPairParcela, (ShapeElemtex)shapeTex, nearestPairInsideCoor);
+	//								}
+	//							}
+	//
+	//						}
+	//
+	//						// Solo se ha encontrado la mas cercana
+	//						else{
+	//							anadirEntradaParcela(nearestParcela, (ShapeElemtex)shapeTex, nearestInsideCoor);
+	//						}
+	//					}
+	//					// No se han encontrado parcelas para ese portal
+	//					else{
+	//
+	//						if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
+	//							NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, shapeTex.getNodesIds(0).get(0)));
+	//							if (nodeTex != null) nodeTex.addTag(new String[] {"FIXME","FIXME"});
+	//						}
+	//					}
+	//				}
+	//			}
+	//		}
+	//
+	//		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado.");
+	//		return shapesTotales;
+	//	}
 
 
 	/** Recorre todos los shapes despues de haber leido todos los usos del .CAT
@@ -430,14 +440,14 @@ public class Cat2Osm {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> calcularUsos(List<Shape> shapes){
+	public List<Shape> calcularUsos(String key, List<Shape> shapes){
 
 		// Creamos los tags que se van a aplicar solo a los edificios de la parcela
 		Map<String,List<String[]>> tagsBuildingMap = new HashMap <String,List<String[]>>();								
 
 		for (Shape shape : shapes)
 			if (shape != null && shape instanceof ShapeParcela){
-				RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape.getRelationId()));
+				RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object) utils.getTotalRelations()), key, shape.getRelationId()));
 				if (r != null) {
 					List<String[]> tags = destinoParser(((ShapeParcela)shape).getUsoDestinoMasArea());
 
@@ -462,11 +472,11 @@ public class Cat2Osm {
 				}
 			}
 
-		for (Shape shape2: shapes) {
-			if (shape2 != (null) && shape2 instanceof ShapeConstru) {
-				if (tagsBuildingMap.containsKey(shape2.getRefCat())) {
-					RelationOsm r2 = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape2.getRelationId()));	
-					r2.addTags(tagsBuildingMap.get(shape2.getRefCat()));
+		for (Shape shape: shapes) {
+			if (shape != (null) && shape instanceof ShapeConstru) {
+				if (tagsBuildingMap.containsKey(shape.getRefCat())) {
+					RelationOsm r2 = ((RelationOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object) utils.getTotalRelations()), key, shape.getRelationId()));	
+					r2.addTags(tagsBuildingMap.get(shape.getRefCat()));
 				}
 			}
 		}
@@ -476,33 +486,33 @@ public class Cat2Osm {
 
 
 	/** Devuelve el shape de parcela sobre el que se encuentra el punto indicado
-	 * @param shapes Lista de shapes original
+	 * @param shapesTotales Lista de shapes original
 	 * @param coor Coordenada que hay que comprobar sobre que shapeParcela esta
 	 * @return Shape que coincide
 	 */
-	public Shape getParcela(List<Shape> shapes, List<Coordinate> coors){
+	public Shape getParcela(ConcurrentHashMap <String, List<Shape>> shapesTotales, List<Coordinate> coors){
 
 		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
 		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
 		List<Shape> matches = new ArrayList<Shape>();
 
+		for (String key : shapesTotales.keySet())
+			for (Shape s: shapesTotales.get(key))
 
-		for (Shape s: shapes)
+				if (s instanceof ShapeParcela && s.getPoligons() != null){
 
-			if (s instanceof ShapeParcela && s.getPoligons() != null){
+					// Cogemos el outer de la parcela que esta en la posicion[0]
+					LinearRing l = gf.createLinearRing(s.getPoligons().get(0).getCoordinates());
+					Polygon parcela = gf.createPolygon(l, null);
 
-				// Cogemos el outer de la parcela que esta en la posicion[0]
-				LinearRing l = gf.createLinearRing(s.getPoligons().get(0).getCoordinates());
-				Polygon parcela = gf.createPolygon(l, null);
-
-				for(Coordinate coor : coors){
-					Point point = gf.createPoint(coor);
-					// Si cumple lo anadimos
-					if (point.intersects(parcela) && !matches.contains(s)){
-						return s;
+					for(Coordinate coor : coors){
+						Point point = gf.createPoint(coor);
+						// Si cumple lo anadimos
+						if (point.intersects(parcela) && !matches.contains(s)){
+							return s;
+						}
 					}
 				}
-			}
 
 		return null;
 	}
@@ -521,11 +531,12 @@ public class Cat2Osm {
 	 * @throws InterruptedException 
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> simplificarWays(List<Shape> shapes) throws InterruptedException{
+	public List<Shape> simplificarWays(String key, List<Shape> shapes) throws InterruptedException{
 
 		// Variables para el calculo del tiempo estimado
 		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
 		int bar = 0;
+		int pos = 0;
 		long timeElapsed = 0;
 		float size = shapes.size();
 		long time = System.currentTimeMillis();
@@ -533,12 +544,13 @@ public class Cat2Osm {
 		WayOsm way1 = null;
 		WayOsm way2 = null;
 		WayOsm removeWay = null;
-		Map<WayOsm, Long> ways = utils.getTotalWays();
+
+		// Buscamos la parcela mas cercana
 
 		for (Shape shape : shapes){
 
 			// Codigo para el calculo del tiempo estimado
-			int progress = (int) ((shapes.indexOf(shape)/size)*100);
+			int progress = (int) ((pos++/size)*100);
 			if (bar != progress){
 				timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
 				long hor = Math.round((timeElapsed/3600));
@@ -550,53 +562,55 @@ public class Cat2Osm {
 				time = System.currentTimeMillis();
 			}
 
-			for (int x = 0; shape != null && shape.getPoligons() != null && !shape.getPoligons().isEmpty() && x < shape.getPoligons().size(); x++)
+			if (shape != null && shape.getPoligons() != null)
+				for (int x = 0; x < shape.getPoligons().size(); x++)
 
-				for(int y = 0; shape.getWaysIds(x) != null && !shape.getWaysIds(x).isEmpty() && y < shape.getWaysIds(x).size()+1; y++){
-
-					if (removeWay != null){
-						removeWay = null;
-						y = -1;
-					}
-					// Formula para que compruebe tambien el way(0) con el ultimo way = way(size()) 
-					way1 = ((WayOsm) 
-							utils.getKeyFromValue(
-									(Map<Object, Long>) (
-											(Object)ways), 
-											shape.getWaysIds(x).get((y+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
-					way2 = ((WayOsm) 
-							utils.getKeyFromValue(
-									(Map<Object, Long>) (
-											(Object)ways), 
-											shape.getWaysIds(x).get((y+1+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
-
-
-					if (way1 != null && way2 != null && !way1.getNodes().equals(way2.getNodes()) && way1.sameShapes(way2.getShapes()) ){
-
-						// Juntamos los ways y borra el way que no se va a usar de las relations
-						removeWay = utils.joinWays(way1, way2);
+					for(int y = 0; shape.getWaysIds(x) != null && !shape.getWaysIds(x).isEmpty() && y < shape.getWaysIds(x).size()+1; y++){
 
 						if (removeWay != null){
+							removeWay = null;
+							y = -1;
+						}
+						// Formula para que compruebe tambien el way(0) con el ultimo way = way(size()) 
+						way1 = ((WayOsm) 
+								utils.getKeyFromValue(
+										(Map< String, Map <Object, Long>>) (
+												(Object)utils.getTotalWays()), 
+												key,
+												shape.getWaysIds(x).get((y+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
+						way2 = ((WayOsm) 
+								utils.getKeyFromValue(
+										(Map< String, Map <Object, Long>>) (
+												(Object)utils.getTotalWays()),
+												key,
+												shape.getWaysIds(x).get((y+1+shape.getWaysIds(x).size())%shape.getWaysIds(x).size())));
 
-							// Eliminamos de la lista total de ways el way a eliminar
-							long wayId = utils.getTotalWays().get(removeWay);
-							utils.getTotalWays().remove(removeWay);
 
-							// Borramos el way que no se va a usar de los shapes
-							for (int shapeIds = 0; shapeIds < removeWay.getShapes().size(); shapeIds++){
+						if (way1 != null && way2 != null && !way1.getNodes().equals(way2.getNodes()) && way1.sameShapes(way2.getShapes()) ){
 
-								String shapeId = removeWay.getShapes().get(shapeIds);
+							// Juntamos los ways y borra el way que no se va a usar de las relations
+							removeWay = utils.joinWays(key, way1, way2);
 
-								for (Shape s : shapes)
-									if (s != null && s.getShapeId() == shapeId)
-										for (int pos = 0; pos < s.getPoligons().size(); pos++)
-											s.deleteWay(pos,wayId);
+							if (removeWay != null){
+
+								// Eliminamos de la lista total de ways el way a eliminar
+								long wayId = utils.getTotalWays().get(key).get(removeWay);
+								utils.getTotalWays().get(key).remove(removeWay);
+
+								// Borramos el way que no se va a usar de los shapes
+								for (int shapeIds = 0; shapeIds < removeWay.getShapes().size(); shapeIds++){
+
+									String shapeId = removeWay.getShapes().get(shapeIds);
+
+									for (Shape s : shapes)
+										if (s != null && s.getShapeId() == shapeId)
+											for (int p = 0; p < s.getPoligons().size(); p++)
+												s.deleteWay(p, wayId);
+								}
 							}
 						}
 					}
-				}
 		}
-
 		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado.");
 		return shapes;
 	}
@@ -607,26 +621,27 @@ public class Cat2Osm {
 	 * estaban simplificadas pensando que estas relaciones tenian tags
 	 * @param utils Clase Utils de Cat2Osm
 	 */
-	@SuppressWarnings("rawtypes")
-	public void simplificarRelationsSinTags(Cat2OsmUtils utils){
+	@SuppressWarnings("unchecked")
+	public void simplificarRelationsSinTags(String key, List<Shape> shapes){
 
+		if (utils.getTotalRelations().get(key) == null)
+			return;
+		
 		// Variables para el calculo del tiempo estimado
 		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
 		int bar = 0;
 		int pos = 0;
 		long timeElapsed = 0;
-		float size = utils.getTotalRelations().size();
+		float size = shapes.size();
 		long time = System.currentTimeMillis();
 
-		Iterator<Entry<RelationOsm, Long>> it = utils.getTotalRelations().entrySet().iterator();
-
-		// Para todas las relaciones que hay
+		Iterator<Shape> it = shapes.iterator();
 		while(it.hasNext()){
-			Map.Entry e = (Map.Entry) it.next();
-			pos++;
 
+			Shape shape = it.next();
+			
 			// Codigo para el calculo del tiempo estimado
-			int progress = (int) ((pos/size)*100);
+			int progress = (int) ((pos++/size)*100);
 			if (bar != progress){
 				timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
 				long hor = Math.round((timeElapsed/3600));
@@ -638,41 +653,54 @@ public class Cat2Osm {
 				time = System.currentTimeMillis();
 			}
 
-			boolean with_data = false;
+			RelationOsm relation = (RelationOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape.getRelationId());		
 
-			// Si tiene solo 1 id, no sera una relacion y a la hora de imprimir se quedara como un way
-			if (((RelationOsm) e.getKey()).getIds().size() > 1){
+			
+			if (relation != null){
+			
+				boolean with_data = false;
 
-				List<String[]> tags = ((RelationOsm) e.getKey()).getTags();
+				// Si tiene solo 1 id, no sera una relacion y a la hora de imprimir se quedara como un way
+				if (relation.getIds().size() > 1){
 
-				for (int x = 0; x < tags.size() && !with_data; x++)
-					if (!tags.get(x)[0].equals("addr:postcode") && 
-							!tags.get(x)[0].equals("addr:country") && 
-							!tags.get(x)[0].startsWith("CAT2OSMSHAPEID") && 
-							!tags.get(x)[0].equals("source") && 
-							!tags.get(x)[0].equals("source:date") && 
-							!tags.get(x)[0].equals("type") && 
-							!tags.get(x)[0].equals("catastro:ref"))
-						with_data = true;
+					List<String[]> tags = relation.getTags();
 
-			}
+					for (int x = 0; x < tags.size() && !with_data; x++)
+						if (!tags.get(x)[0].equals("addr:postcode") && 
+								!tags.get(x)[0].equals("addr:country") && 
+								!tags.get(x)[0].startsWith("CAT2OSMSHAPEID") && 
+								!tags.get(x)[0].equals("source") && 
+								!tags.get(x)[0].equals("source:date") && 
+								!tags.get(x)[0].equals("type") && 
+								!tags.get(x)[0].equals("catastro:ref"))
+							with_data = true;
 
-			if (!with_data){
+				}
 
-				List<WayOsm> ways = utils.getWays(((RelationOsm) e.getKey()).getIds());
+				// Si no tiene tags importantes borramos esa relacion
+				if (!with_data){
+					
+					// Primero sus ways de la lista
+					List<WayOsm> ways = utils.getWays(key, relation.getIds());
 
-				for (WayOsm way : ways)
-					if (way != null)
-						for (String sId : ((RelationOsm) e.getKey()).getShapes()){
-							List<NodeOsm> nodes = utils.getNodes(way.getNodes());
+					for (WayOsm way : ways)
+						if (way != null)
+							for (String sId : relation.getShapes()){
+								List<NodeOsm> nodes = utils.getNodes(key, way.getNodes());
 
-							for (NodeOsm node : nodes)
-								if (node != null)
-									node.deleteShapeId(sId);
+								for (NodeOsm node : nodes)
+									if (node != null)
+										node.deleteShapeId(sId);
 
-							way.deleteShapeId(sId);
-						}
-				it.remove();
+								way.deleteShapeId(sId);
+							}
+					
+					// Luego la relacion
+					utils.getTotalRelations().get(key).remove(relation);
+					
+					// Por ultimo borramos el shape
+					it.remove();
+				}
 			}
 		}
 		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado.");
@@ -685,91 +713,87 @@ public class Cat2Osm {
 	 * @throws InterruptedException
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> unirCalles(List<Shape> shapes) throws InterruptedException{
+	public List<Shape> unirCalles(String key, List<Shape> shapes) throws InterruptedException{
 
 		// Variables para el calculo del tiempo estimado
 		System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = 0%. Estimando tiempo restante...\r");
 		int bar = 0;
 		int pos = 0;
 		long timeElapsed = 0;
-		float size = utils.getTotalWays().size();
+		float size = shapes.size();
 		long time = System.currentTimeMillis();
 
-		RelationOsm way1rel = null;
-		RelationOsm way2rel = null;
 		WayOsm removeWay = null;
 
-		Iterator<Entry<RelationOsm, Long>> it = utils.getTotalRelations().entrySet().iterator();
+		Iterator<Shape> it1 = shapes.iterator();
+		
+		while(it1.hasNext()){
+				
+				// Codigo para el calculo del tiempo estimado
+				int progress = (int) ((pos++/size)*100);
+				if (bar != progress){
+					timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
+					long hor = Math.round((timeElapsed/3600));
+					long min = Math.round((timeElapsed-3600*hor)/60);
+					long seg = Math.round((timeElapsed-3600*hor-60*min));
 
-		// Para todas las relaciones (que seran de 1 solo miembro por lo que al imprimirlas se convertiran en vias)
-		while(it.hasNext()){
+					System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = "+progress+"%. Tiempo restante estimado = "+hor+" horas, "+min+" minutos, "+seg+" segundos.\r");
+					bar = progress;
+					time = System.currentTimeMillis();
+				}
+				
+		RelationOsm rel1 = (RelationOsm) utils.getKeyFromValue((Map<String, Map <Object, Long>>) (
+												(Object)utils.getTotalRelations()), 
+												key,
+												it1.next().getRelationId());
+		
+		Iterator<Shape> it2 = shapes.iterator();
+		
+		while (it2.hasNext()){
+			
+			RelationOsm rel2 = (RelationOsm) utils.getKeyFromValue((Map<String, Map <Object, Long>>) (
+					(Object)utils.getTotalRelations()), 
+					key,
+					it2.next().getRelationId());
 
-			Map.Entry e = (Map.Entry) it.next();
-			pos++;
+					if ( rel1 != rel2 && rel1.getTags() != null && rel2.getTags() != null)
+						// Si las dos vias tienen tags comprobamos el nombre
+						if (!rel1.getTags().isEmpty() && !rel2.getTags().isEmpty())
+							// Si tienen tags solo unimos las que compartan nombre
+							for (String[] tag : rel1.getTags())
+								if (tag[0].equals("name")){
+									for (String[] tag2 : rel2.getTags())
+										if (tag[0].equals("name") && tag[1].equals(tag2[1]))
 
-			// Codigo para el calculo del tiempo estimado
-			int progress = (int) ((pos/size)*100);
-			if (bar != progress){
-				timeElapsed = (timeElapsed+(100-progress)*(System.currentTimeMillis()-time)/1000)/2;
-				long hor = Math.round((timeElapsed/3600));
-				long min = Math.round((timeElapsed-3600*hor)/60);
-				long seg = Math.round((timeElapsed-3600*hor-60*min));
+											// Tienen el mismo nombre, ahora hay que comprobar si se tocan
+											for (int x = 0; rel1.getIds() != null && x < rel1.getIds().size(); x++){
+												WayOsm way1 = ((WayOsm)utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, rel1.getIds().get(x)));
 
-				System.out.print("["+new Timestamp(new Date().getTime())+"] Progreso = "+progress+"%. Tiempo restante estimado = "+hor+" horas, "+min+" minutos, "+seg+" segundos.\r");
-				bar = progress;
-				time = System.currentTimeMillis();
-			}
+												if (way1 != null)
 
-			way1rel = (RelationOsm) e.getKey();
+													for (Long nodeId : way1.getNodes()){
 
-			Iterator<Entry<RelationOsm, Long>> it2 = utils.getTotalRelations().entrySet().iterator();
+														// Si el way2 contiene alguno de los nodos del way1 es que son juntables
+														for (int y = 0; rel2.getIds() != null && y < rel2.getIds().size(); y++){
+															WayOsm way2 = ((WayOsm)utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, rel2.getIds().get(y)));
 
-			// Comprobamos todas las vias con todas
-			while(it2.hasNext()){
-				Map.Entry e2 = (Map.Entry) it2.next();
+															if (way2 != null && way2.getNodes().contains(nodeId))
 
-				way2rel = (RelationOsm) e2.getKey();
+																// Juntamos los ways y borra el way que no se va a usar de las relations
+																removeWay = utils.joinWays(key, way1, way2);
 
-
-				if (way1rel != null && way2rel != null && way1rel != way2rel && way1rel.getTags() != null && way2rel.getTags() != null)
-					// Si las dos vias tienen tags comprobamos el nombre
-					if (!way1rel.getTags().isEmpty() && !way2rel.getTags().isEmpty())
-						// Si tienen tags solo unimos las que compartan nombre
-						for (String[] tag : way1rel.getTags())
-							if (tag[0].equals("name")){
-								for (String[] tag2 : way2rel.getTags())
-									if (tag[0].equals("name") && tag[1].equals(tag2[1]))
-
-										// Tienen el mismo nombre, ahora hay que comprobar si se tocan
-										for (int x = 0; way1rel.getIds() != null && x < way1rel.getIds().size(); x++){
-											WayOsm way1 = ((WayOsm)utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), way1rel.getIds().get(x)));
-
-											if (way1 != null)
-
-												for (Long nodeId : way1.getNodes()){
-
-													// Si el way2 contiene alguno de los nodos del way1 es que son juntables
-													for (int y = 0; way2rel.getIds() != null && y < way2rel.getIds().size(); y++){
-														WayOsm way2 = ((WayOsm)utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), way2rel.getIds().get(y)));
-
-														if (way2 != null && way2.getNodes().contains(nodeId))
-
-															// Juntamos los ways y borra el way que no se va a usar de las relations
-															removeWay = utils.joinWays(way1, way2);
-
-														if (removeWay != null){
-															// Eliminamos de la lista total de ways el way a eliminar
-															utils.getTotalWays().remove(removeWay);
-															y--;
-															removeWay = null;
+															if (removeWay != null){
+																// Eliminamos de la lista total de ways el way a eliminar
+																utils.getTotalWays().get(key).remove(removeWay);
+																y--;
+																removeWay = null;
+															}
 														}
 													}
-												}
-										}
-							}		
-			}
-		}
-
+											}
+								}	
+				}
+				}
 		return shapes;
 
 	}
@@ -779,8 +803,11 @@ public class Cat2Osm {
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
-	@SuppressWarnings("rawtypes")
-	public void printNodes(Map <NodeOsm, Long> nodes) throws IOException{
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void printNodes(String key, List<Shape> shapes) throws IOException{
+
+		if (utils.getTotalNodes().get(key) == null)
+			return;
 
 		File dir = new File(Config.get("ResultPath"));
 		if (!dir.exists()) 
@@ -790,47 +817,17 @@ public class Cat2Osm {
 		}
 
 		// Archivo temporal para escribir los nodos
-		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm";
+		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + key+ "tempNodes.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
 
-		Iterator<Entry<NodeOsm, Long>> it = nodes.entrySet().iterator();
-
-		// Escribimos todos los nodos
-		while(it.hasNext()){
-			Map.Entry e = (Map.Entry)it.next();
-			outNodes.write(((NodeOsm) e.getKey()).printNode((Long) e.getValue()));
-		}
-		outNodes.close();
-	}
-
-
-	/** Escribe el osm con unicamente los nodos de los shapes que le pasamos (MUY LENTO)
-	 * @param tF Ruta donde escribir este archivo, sera temporal
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unchecked")
-	public void printNodesOrdenShapes(List<Shape> shapes, Map <NodeOsm, Long> nodes) throws IOException{
-
-		File dir = new File(Config.get("ResultPath")); 
-		if (!dir.exists()) 
-		{
-			try                { dir.mkdirs(); }
-			catch (Exception e){ e.printStackTrace(); }
-		}
-
-		// Archivo temporal para escribir los nodos
-		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempNodes.osm";
-		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
-		// Escribimos todos los nodos
-		for(Shape shape : shapes){
-
-			for (int x = 0; x < shape.getPoligons().size(); x++)
-
-				for (int y = 0; y < shape.getNodesIds(x).size(); y++)
-					outNodes.write( ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)nodes), shape.getNodesIds(x).get(y))).printNode((Long) shape.getNodesIds(x).get(y)));
-		}
+		for (Shape shape : shapes)
+			for (int subpoligons = 0; subpoligons < shape.getPoligons().size(); subpoligons++)
+				for (int pos = 0; pos < shape.getNodesIds(subpoligons).size(); pos++)
+					try{
+					outNodes.write(((NodeOsm)utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, shape.getNodesIds(subpoligons).get(pos)))
+							.printNode(shape.getNodesIds(subpoligons).get(pos)));
+					} catch (Exception e){System.out.println("ERROR NODE!!!");}
 		outNodes.close();
 	}
 
@@ -839,8 +836,11 @@ public class Cat2Osm {
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
-	@SuppressWarnings("rawtypes")
-	public void printWays(Map <WayOsm, Long> ways) throws IOException{
+	@SuppressWarnings("unchecked")
+	public void printWays(String key, List<Shape> shapes) throws IOException{
+
+		if (utils.getTotalWays().get(key) == null)
+			return;
 
 		File dir = new File(Config.get("ResultPath"));
 		if (!dir.exists()) 
@@ -850,47 +850,18 @@ public class Cat2Osm {
 		}
 
 		// Archivo temporal para escribir los ways
-		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm";
-		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
-
-		Iterator<Entry<WayOsm, Long>> it = ways.entrySet().iterator();
-
-		// Escribimos todos los ways y sus referencias a los nodos en el archivo
-		while(it.hasNext()){
-			Map.Entry e = (Map.Entry)it.next();
-			outWays.write(((WayOsm) e.getKey()).printWay((Long) e.getValue()));
-		}
-		outWays.close();
-	}
-
-
-	/** Escribe el osm con unicamente los ways de los shapes que le pasamos (MUY LENTO)
-	 * @param tF Ruta donde escribir este archivo, sera temporal
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unchecked")
-	public void printWaysOrdenShapes( List<Shape> shapes, Map <WayOsm, Long> ways) throws IOException{
-
-		File dir = new File(Config.get("ResultPath")); 
-		if (!dir.exists()) 
-		{
-			try                { dir.mkdirs(); }
-			catch (Exception e){ e.printStackTrace(); }
-		}
-
-		// Archivo temporal para escribir los ways
-		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempWays.osm";
+		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + key +"tempWays.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
 
 		// Escribimos todos los ways y sus referencias a los nodos en el archivo
-		for(Shape shape : shapes){
-
-			for (int x = 0; x < shape.getPoligons().size(); x++)
-				for (int y = 0; y < shape.getWaysIds(x).size(); y++)
-					outWays.write( ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)ways), shape.getWaysIds(x).get(y))).printWay((Long) shape.getWaysIds(x).get(y)));
-		}
+		for (Shape shape : shapes)
+			for (int subpoligons = 0; subpoligons < shape.getPoligons().size(); subpoligons++)
+				for (int pos = 0; pos < shape.getWaysIds(subpoligons).size(); pos++)
+					try {
+					outWays.write(((WayOsm)utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, shape.getWaysIds(subpoligons).get(pos)))
+							.printWay(shape.getWaysIds(subpoligons).get(pos)));
+					} catch (Exception e){System.out.println("ERROR WAY!!!");}
 		outWays.close();
 	}
 
@@ -900,8 +871,11 @@ public class Cat2Osm {
 	 * @param tF Ruta donde escribir este archivo, sera temporal
 	 * @throws IOException
 	 */
-	@SuppressWarnings("rawtypes")
-	public void printRelations( Map <RelationOsm, Long> relations) throws IOException{
+	@SuppressWarnings("unchecked")
+	public void printRelations(String key, List<Shape> shapes) throws IOException{
+
+		if ( utils.getTotalRelations().get(key) == null)
+			return;
 
 		File dir = new File(Config.get("ResultPath"));
 		if (!dir.exists()) 
@@ -911,17 +885,16 @@ public class Cat2Osm {
 		}
 
 		// Archivo temporal para escribir los ways
-		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "tempRelations.osm";
+		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + key + "tempRelations.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outRelations = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamRelations), "UTF-8"));
 
-		Iterator<Entry<RelationOsm, Long>> it = relations.entrySet().iterator();
-
 		// Escribimos todos las relaciones y sus referencias a los ways en el archivo
-		while(it.hasNext()){
-			Map.Entry e = (Map.Entry) it.next();
-			outRelations.write(((RelationOsm) e.getKey()).printRelation((Long) e.getValue(), utils));
-		}
+		for (Shape shape : shapes)
+			try {
+			outRelations.write( ((RelationOsm)utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape.getRelationId()))
+					.printRelation(key, shape.getRelationId() ,utils));
+			} catch (Exception e){System.out.println("ERROR RELATION!!!");}
 		outRelations.close();
 	}
 
@@ -931,7 +904,7 @@ public class Cat2Osm {
 	 * @param tF Ruta donde estan los archivos temporadles (nodos, ways y relations)
 	 * @throws IOException
 	 */
-	public void juntarFiles(String filename) throws IOException{
+	public void juntarFiles(String key, String filename) throws IOException{
 
 		String path = Config.get("ResultPath");
 
@@ -951,9 +924,9 @@ public class Cat2Osm {
 		// Concatenamos todos los archivos
 		String str;
 
-		if (new File(path + "/"+ Config.get("ResultFileName") + "tempNodes.osm").exists())
+		if (new File(path + "/"+ Config.get("ResultFileName") + key + "tempNodes.osm").exists())
 		{
-			BufferedReader inNodes = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempNodes.osm"));
+			BufferedReader inNodes = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + key + "tempNodes.osm"));
 			while ((str = inNodes.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
@@ -962,9 +935,9 @@ public class Cat2Osm {
 			inNodes.close();
 		}
 
-		if (new File(path + "/"+ Config.get("ResultFileName") + "tempWays.osm").exists())
+		if (new File(path + "/"+ Config.get("ResultFileName") + key + "tempWays.osm").exists())
 		{
-			BufferedReader inWays = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempWays.osm"));
+			BufferedReader inWays = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + key + "tempWays.osm"));
 			while ((str = inWays.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
@@ -972,9 +945,9 @@ public class Cat2Osm {
 			inWays.close();
 		}
 
-		if (new File(path + "/"+ Config.get("ResultFileName") + "tempRelations.osm").exists())
+		if (new File(path + "/"+ Config.get("ResultFileName") + key + "tempRelations.osm").exists())
 		{
-			BufferedReader inRelations = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + "tempRelations.osm"));
+			BufferedReader inRelations = new BufferedReader(new FileReader(path + "/"+ Config.get("ResultFileName") + key + "tempRelations.osm"));
 			while ((str = inRelations.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
@@ -987,13 +960,13 @@ public class Cat2Osm {
 		outOsm.close();
 
 		boolean borrado = true;
-		borrado = borrado && (new File(path+ "/" + Config.get("ResultFileName") + "tempNodes.osm")).delete();
-		borrado = borrado && (new File(path + "/" + Config.get("ResultFileName") + "tempWays.osm")).delete();
-		borrado = borrado && (new File(path + "/" + Config.get("ResultFileName") + "tempRelations.osm")).delete();
+		borrado = borrado && (new File(path+ "/" + Config.get("ResultFileName") + key + "tempNodes.osm")).delete();
+		borrado = borrado && (new File(path + "/" + Config.get("ResultFileName") + key + "tempWays.osm")).delete();
+		borrado = borrado && (new File(path + "/" + Config.get("ResultFileName") + key + "tempRelations.osm")).delete();
 
 		if (!borrado)
 			System.out.println("["+new Timestamp(new Date().getTime())+"] NO se pudo borrar alguno de los archivos temporales." +
-					" Estos estaran en la carpeta "+ path +".");
+					" Estos estarán en la carpeta "+ path +".");
 
 	}
 
@@ -1004,24 +977,30 @@ public class Cat2Osm {
 	 * @param List<Shape> Lista de los elementos shp parseados ya en memoria
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unchecked")
-	public void catParser(File cat, List<Shape> shapesTotales) throws IOException{
+	public void catParser(String tipo, File cat, HashMap <String, List<Shape>> shapesTotales) throws IOException{
 
 		BufferedReader bufRdr = 
 				new BufferedReader(new InputStreamReader(new FileInputStream(cat), "ISO-8859-15"));
 		String line = null; // Para cada linea leida del archivo .cat
 
-		int tipoRegistro = Integer.parseInt(Config.get("TipoRegistro"));
+		int tipoRegistrosBuscar = Integer.parseInt(Config.get("TipoRegistro"));
 
 		// Lectura del archivo .cat
 		while((line = bufRdr.readLine()) != null)
 		{
+			// Parsear la linea leida
 			Cat c = catLineParser(line);
+			String codigo = "";
 
-			if ( (c.getTipoRegistro() == tipoRegistro || tipoRegistro == 0)){
+			if (tipo.equals("UR") && c.getRefCatastral() != null) // El codigo de masa son los primeros 5 caracteres
+				codigo = c.getRefCatastral().substring(0, 5);
+			if (tipo.equals("RU") && c.getRefCatastral() != null) // El codigo de masa son los caracteres 6, 7 y 8
+				codigo = c.getRefCatastral().substring(6, 9);
+
+			if (!codigo.equals("") && shapesTotales.get(codigo) != null && (c.getTipoRegistro() == tipoRegistrosBuscar || tipoRegistrosBuscar == 0)){
 
 				// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
-				List <Shape> matches = buscarRefCat(shapesTotales, c.getRefCatastral());
+				List <Shape> matches = buscarRefCat(shapesTotales.get(codigo), c.getRefCatastral());
 
 				if (matches != null)
 					switch (c.getTipoRegistro()){
@@ -1063,96 +1042,99 @@ public class Cat2Osm {
 
 					}
 
-				// Puede que no haya shapes para esa refCatastral
+				// Insertamos los atributos leidos en la relacion del shape
 				if (matches != null)
 					for (Shape shape : matches)
 						if (shape != (null)){
-							RelationOsm r = ((RelationOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object) utils.getTotalRelations()), shape.getRelationId()));
-							if (r != null)
-								r.addTags(c.getAttributes());
 
-							// Ponemos a la relacion su fecha de construccion
-							r.setFechaConstru(c.getFechaConstru());
+							for (Entry<RelationOsm, Long> e : utils.getTotalRelations().get(codigo).entrySet())
+								if (e.getValue().equals(shape.getRelationId())){
+									RelationOsm r = e.getKey();
+									r.addTags(c.getAttributes());
+
+									// Ponemos a la relacion su fecha de construccion
+									r.setFechaConstru(c.getFechaConstru());
+								}
 						}
 			}
 		}
 	}
 
 
-	/** Lee linea a linea el archivo cat, coge los registros 14 que son los que tienen uso
-	 * de inmuebles y con el punto X e Y del centroide de la parcela que coincide con su referencia
-	 * catastral crea nodos con los usos
-	 * de los bienes inmuebles
-	 * @param cat Archivo cat del que lee linea a linea
-	 * @param List<Shape> Lista de los elementos shp parseados ya en memoria
-	 * @param t solo sirve para diferenciar del otro metodo
-	 * @throws IOException
-	 */
-	public void catUsosParser(File cat, List<Shape> shapesTotales) throws IOException{
-
-		BufferedReader bufRdr  = new BufferedReader(new FileReader(cat));
-		String line = null; // Para cada linea leida del archivo .cat
-
-		// Lectura del archivo .cat
-		while((line = bufRdr.readLine()) != null)
-		{
-			try {
-
-				// Si es registro 14
-				if (esNumero(line.substring(0,2)) && line.substring(0,2).equals("14")){
-
-					// Cogemos las geometrias con esa referencia catastral.
-					List<Shape> matches = buscarRefCat(shapesTotales, line.substring(30,44));
-
-					// Puede que no haya shapes para esa refCatastral
-					if (matches != null)
-						for (Shape shape : matches)
-							if (shape != (null) &&  shape.getPoligons() != null && !shape.getPoligons().isEmpty()){
-
-								// Cogemos la geometria exterior de la parcela
-								Geometry geom = (LineString) shape.getPoligons().get(0);
-
-								// Creamos los tags que tendra el nodo
-								List<String[]> tags = new ArrayList<String[]>();
-
-								// Metemos los tags de uso de inmuebles con el numero de inmueble por delante
-								tags.addAll(destinoParser(line.substring(70,73).trim()));
-
-								// Determinamos los tags exclusivos de los edificios
-								// y los borramos de los tags, ya que no son aplicables a nodos
-								Iterator<String[]> iter = tags.iterator();
-								while (iter.hasNext()) {
-									String [] tag = iter.next();
-									if (tag[0].startsWith("@")) {
-										iter.remove();
-									}
-								}
-
-								for (String[] tag : tags){
-									tag[0] = tag[0].replace("*", "");
-								}
-
-								// Anadimos la referencia catastral
-								tags.add(new String[] {"catastro:ref", line.substring(30,44) + line.substring(44,48)});
-
-								tags.add(new String[] {"addr:floor", line.substring(64,67).trim() });
-
-
-								// Creamos el nodo en la lista de nodos de utils, pero no se lo anadimos al shape sino luego 
-								// lo borraria ya que eliminamos todos los nodos que sean de geometrias de shape
-								// Ademas a las coordenadas del nodo les sumamos un pequeno valor en funcion del numero de inmueble
-								// para que cree nodos distintos en el mismo punto. De ser la misma coordenada reutilizaria el nodo
-								float r = (float) (Integer.parseInt(line.substring(44,48))*0.0000002);
-
-								List<String> l = new ArrayList<String>();
-								l.add(shape.getShapeId());
-								utils.generateNodeId(new Coordinate(geom.getCentroid().getX()+r,geom.getCentroid().getY()), tags, l);
-							}
-				}
-			}
-			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
-		}
-	}
+	//	/** Lee linea a linea el archivo cat, coge los registros 14 que son los que tienen uso
+	//	 * de inmuebles y con el punto X e Y del centroide de la parcela que coincide con su referencia
+	//	 * catastral crea nodos con los usos
+	//	 * de los bienes inmuebles
+	//	 * @param cat Archivo cat del que lee linea a linea
+	//	 * @param List<Shape> Lista de los elementos shp parseados ya en memoria
+	//	 * @param t solo sirve para diferenciar del otro metodo
+	//	 * @throws IOException
+	//	 */
+	//	public void catUsosParser(File cat, ConcurrentHashMap <String, List<Shape>> shapesTotales) throws IOException{
+	//
+	//		BufferedReader bufRdr  = new BufferedReader(new FileReader(cat));
+	//		String line = null; // Para cada linea leida del archivo .cat
+	//
+	//		// Lectura del archivo .cat
+	//		while((line = bufRdr.readLine()) != null)
+	//		{
+	//			try {
+	//
+	//				// Si es registro 14
+	//				if (esNumero(line.substring(0,2)) && line.substring(0,2).equals("14")){
+	//
+	//					// Cogemos las geometrias con esa referencia catastral.
+	//					List<Shape> matches = buscarRefCat(shapesTotales, line.substring(30,44));
+	//
+	//					// Puede que no haya shapes para esa refCatastral
+	//					if (matches != null)
+	//						for (Shape shape : matches)
+	//							if (shape != (null) &&  shape.getPoligons() != null && !shape.getPoligons().isEmpty()){
+	//
+	//								// Cogemos la geometria exterior de la parcela
+	//								Geometry geom = (LineString) shape.getPoligons().get(0);
+	//
+	//								// Creamos los tags que tendra el nodo
+	//								List<String[]> tags = new ArrayList<String[]>();
+	//
+	//								// Metemos los tags de uso de inmuebles con el numero de inmueble por delante
+	//								tags.addAll(destinoParser(line.substring(70,73).trim()));
+	//
+	//								// Determinamos los tags exclusivos de los edificios
+	//								// y los borramos de los tags, ya que no son aplicables a nodos
+	//								Iterator<String[]> iter = tags.iterator();
+	//								while (iter.hasNext()) {
+	//									String [] tag = iter.next();
+	//									if (tag[0].startsWith("@")) {
+	//										iter.remove();
+	//									}
+	//								}
+	//
+	//								for (String[] tag : tags){
+	//									tag[0] = tag[0].replace("*", "");
+	//								}
+	//
+	//								// Anadimos la referencia catastral
+	//								tags.add(new String[] {"catastro:ref", line.substring(30,44) + line.substring(44,48)});
+	//
+	//								tags.add(new String[] {"addr:floor", line.substring(64,67).trim() });
+	//
+	//
+	//								// Creamos el nodo en la lista de nodos de utils, pero no se lo anadimos al shape sino luego 
+	//								// lo borraria ya que eliminamos todos los nodos que sean de geometrias de shape.
+	//								// Ademas a las coordenadas del nodo les sumamos un pequeno valor en funcion del numero de inmueble
+	//								// para que cree nodos distintos en el mismo punto. De ser la misma coordenada reutilizaria el nodo
+	//								float r = (float) (Integer.parseInt(line.substring(44,48))*0.0000002);
+	//
+	//								List<String> l = new ArrayList<String>();
+	//								l.add(shape.getShapeId());
+	//								utils.generateNodeId(new Coordinate(geom.getCentroid().getX()+r,geom.getCentroid().getY()), tags, l);
+	//							}
+	//				}
+	//			}
+	//			catch(Exception e){System.out.println("["+new Timestamp(new Date().getTime())+"] Error leyendo linea del archivo. " + e.getMessage());}
+	//		}
+	//	}
 
 
 	/** Parsea el archivo .cat y crea los elementos en memoria en un List
@@ -3161,130 +3143,130 @@ public class Cat2Osm {
 		return ret.trim();
 	}
 
-	/** Teniendo ya decidida la parcela mas adecuada para anadir esta entrada.
-	 * En el calculo se ha calculado la coordenada "espejo" del elemtex con respecto a la geometria de
-	 * la parcela para juntando esas dos coordenadas, crear un segmento que cortara uno de los ways de 
-	 * la parcela y asi saber a que way hay que anadirle la entrada.
-	 * @param parcela Parcela a la que anadir la entrada
-	 * @param elemtex Coordenada en la que esta el elemtex
-	 * @param espejo Coordenada espejo que se ha calculado para saber que way corta la linea creada por las
-	 * dos coordenadas
-	 */
-	@SuppressWarnings("unchecked")
-	public void anadirEntradaParcela(ShapeParcela parcela, ShapeElemtex elemtex, Coordinate espejo){
-
-		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
-		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
-
-		// Creamos la geometria que representa la linea que hemos hecho de desplazar
-		// el Elemtex de la coordenada 1 a la 3
-		Coordinate[] coors = new Coordinate[2];
-		coors[0] = elemtex.getCoor();
-		coors[1] = espejo;
-
-		LineString segmentoEntradaEspejo = gf.createLineString(coors);
-
-		// Cogemos los ways de la geometria exterior [0]
-		List<WayOsm> ways = utils.getWays(parcela.getWaysIds(0));
-
-		for (WayOsm way : ways){
-
-			// Cogemos sus nodos y de ellos sus coordenadas
-			List<NodeOsm> nodes = utils.getNodes(way.getNodes());
-			coors = new Coordinate[nodes.size()];
-
-			for (int x = 0 ; x < nodes.size(); x++)
-				coors[x] = nodes.get(x).getCoor();
-
-			// Creamos la geometria de ese way para comparar
-			LineString geomParcela = gf.createLineString(coors);
-
-			//if(wayGeo.crosses(entrance)){
-			if(geomParcela.intersects(segmentoEntradaEspejo)){
-
-				// Llamamos al metodo de crear nuevo nodo con la coordenada nueva (creamos nuevo por si se pudiese reutilizar uno antiguo)
-				// y eliminamos el antiguo
-				if (elemtex.getNodesIds(0) != null && !elemtex.getNodesIds(0).isEmpty()){
-
-					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), elemtex.getNodesIds(0).get(0)));
-
-					if (nodeTex != null){
-
-						// Si el nodo de entrada va crearse justo sobre un nodo ya existente, lo reutilizamos
-						Coordinate coor = new Coordinate(Cat2OsmUtils.round(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate().x,7), Cat2OsmUtils.round(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate().y,7));
-						Long matchId = utils.getTotalNodes().get(new NodeOsm(coor));
-
-						if (matchId != null){
-
-							NodeOsm match = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), matchId));
-
-							match.addShapes(nodeTex.getShapes());
-							match.addTags(nodeTex.getTags());
-
-							// Inseramos el nodo con los cambios
-							utils.getTotalNodes().put(match, matchId);
-
-							// Borramos el nodo original del Elemtex con los datos de la entrada
-							List<Long> l = new ArrayList<Long>();
-							l.add(utils.getTotalNodes().get(nodeTex));
-							utils.deleteNodes(l);
-
-						}
-						// Si no ha habido coincidencia, actualizamos la posicion del nodo inicial del Elemtex y 
-						// se anadira a una via
-						else{
-
-							// Vamos a comparar las vias de la parcela con la geometria segmento (que hemos generado con
-							// la coordenada del elemtex original y una coordenada que es la simetrica con respecto a la via
-							// mas cercana de la parcela) para ver con que via exactamente corta.
-							// La via con la que corte quiere decir que en esa via hay que anadir el nuevo nodo
-							// de la entrada
-							List<Coordinate> wayCoors = new ArrayList<Coordinate>();
-							for (Coordinate c : geomParcela.getCoordinates())
-								wayCoors.add(c);
-
-							if (!wayCoors.contains(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate()))
-
-								// Cogemos las coordenadas del way de 2 en 2 porque, aunque deberian estar ya cortadas
-								// en ways de solamente 2 nodos, puede ser que a un way ya le hayamos anadido una entrada
-								// por lo que ese way tendria 3 nodos
-								for (int x = 0; x < wayCoors.size()-1; x++){
-
-									Coordinate[] coorAB = {wayCoors.get(x),wayCoors.get(x+1)};
-
-									// Si esta entre esas dos coordenadas
-									if(gf.createLineString(coorAB).intersects(segmentoEntradaEspejo)){
-
-										// Guardamos su id y creamos una copia igual
-										Long wayId = utils.getTotalWays().get(way);
-
-										WayOsm wayTemp = new WayOsm(way.getNodes());
-										wayTemp.setShapes(way.getShapes());
-
-										// Borramos el way de la lista general de ways
-										utils.getTotalWays().remove(way);
-
-										// Insertamos el nodo en el way desplazando los siguientes nodos a la derecha
-										wayTemp.addNode(x+1, utils.getTotalNodes().get(nodeTex));
-
-										// Actualizamos la coordenada del nodo Elemtex que tiene los tags del portal
-										nodeTex.setCoor(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate());
-																				
-										// Metemos en la lista general el nuevo way con el mismo id que el que hemos borrado
-										utils.getTotalWays().put(wayTemp, wayId);
-				
-										break;
-										
-									}
-								}
-						}
-					}
-				}
-
-				// Actualizamos la coordenada en el shape
-				((ShapeElemtex) elemtex).setCoor(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate());
-			}
-		}			
-	}
+	//	/** Teniendo ya decidida la parcela mas adecuada para anadir esta entrada.
+	//	 * En el calculo se ha calculado la coordenada "espejo" del elemtex con respecto a la geometria de
+	//	 * la parcela para juntando esas dos coordenadas, crear un segmento que cortara uno de los ways de 
+	//	 * la parcela y asi saber a que way hay que anadirle la entrada.
+	//	 * @param parcela Parcela a la que anadir la entrada
+	//	 * @param elemtex Coordenada en la que esta el elemtex
+	//	 * @param espejo Coordenada espejo que se ha calculado para saber que way corta la linea creada por las
+	//	 * dos coordenadas
+	//	 */
+	//	@SuppressWarnings("unchecked")
+	//	public void anadirEntradaParcela(ShapeParcela parcela, ShapeElemtex elemtex, Coordinate espejo){
+	//
+	//		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
+	//		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
+	//
+	//		// Creamos la geometria que representa la linea que hemos hecho de desplazar
+	//		// el Elemtex de la coordenada 1 a la 3
+	//		Coordinate[] coors = new Coordinate[2];
+	//		coors[0] = elemtex.getCoor();
+	//		coors[1] = espejo;
+	//
+	//		LineString segmentoEntradaEspejo = gf.createLineString(coors);
+	//
+	//		// Cogemos los ways de la geometria exterior [0]
+	//		List<WayOsm> ways = utils.getWays(parcela.getWaysIds(0));
+	//
+	//		for (WayOsm way : ways){
+	//
+	//			// Cogemos sus nodos y de ellos sus coordenadas
+	//			List<NodeOsm> nodes = utils.getNodes(way.getNodes());
+	//			coors = new Coordinate[nodes.size()];
+	//
+	//			for (int x = 0 ; x < nodes.size(); x++)
+	//				coors[x] = nodes.get(x).getCoor();
+	//
+	//			// Creamos la geometria de ese way para comparar
+	//			LineString geomParcela = gf.createLineString(coors);
+	//
+	//			//if(wayGeo.crosses(entrance)){
+	//			if(geomParcela.intersects(segmentoEntradaEspejo)){
+	//
+	//				// Llamamos al metodo de crear nuevo nodo con la coordenada nueva (creamos nuevo por si se pudiese reutilizar uno antiguo)
+	//				// y eliminamos el antiguo
+	//				if (elemtex.getNodesIds(0) != null && !elemtex.getNodesIds(0).isEmpty()){
+	//
+	//					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), elemtex.getNodesIds(0).get(0)));
+	//
+	//					if (nodeTex != null){
+	//
+	//						// Si el nodo de entrada va crearse justo sobre un nodo ya existente, lo reutilizamos
+	//						Coordinate coor = new Coordinate(Cat2OsmUtils.round(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate().x,7), Cat2OsmUtils.round(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate().y,7));
+	//						Long matchId = utils.getTotalNodes().get(new NodeOsm(coor));
+	//
+	//						if (matchId != null){
+	//
+	//							NodeOsm match = ((NodeOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalNodes()), matchId));
+	//
+	//							match.addShapes(nodeTex.getShapes());
+	//							match.addTags(nodeTex.getTags());
+	//
+	//							// Inseramos el nodo con los cambios
+	//							utils.getTotalNodes().put(match, matchId);
+	//
+	//							// Borramos el nodo original del Elemtex con los datos de la entrada
+	//							List<Long> l = new ArrayList<Long>();
+	//							l.add(utils.getTotalNodes().get(nodeTex));
+	//							utils.deleteNodes(l);
+	//
+	//						}
+	//						// Si no ha habido coincidencia, actualizamos la posicion del nodo inicial del Elemtex y 
+	//						// se anadira a una via
+	//						else{
+	//
+	//							// Vamos a comparar las vias de la parcela con la geometria segmento (que hemos generado con
+	//							// la coordenada del elemtex original y una coordenada que es la simetrica con respecto a la via
+	//							// mas cercana de la parcela) para ver con que via exactamente corta.
+	//							// La via con la que corte quiere decir que en esa via hay que anadir el nuevo nodo
+	//							// de la entrada
+	//							List<Coordinate> wayCoors = new ArrayList<Coordinate>();
+	//							for (Coordinate c : geomParcela.getCoordinates())
+	//								wayCoors.add(c);
+	//
+	//							if (!wayCoors.contains(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate()))
+	//
+	//								// Cogemos las coordenadas del way de 2 en 2 porque, aunque deberian estar ya cortadas
+	//								// en ways de solamente 2 nodos, puede ser que a un way ya le hayamos anadido una entrada
+	//								// por lo que ese way tendria 3 nodos
+	//								for (int x = 0; x < wayCoors.size()-1; x++){
+	//
+	//									Coordinate[] coorAB = {wayCoors.get(x),wayCoors.get(x+1)};
+	//
+	//									// Si esta entre esas dos coordenadas
+	//									if(gf.createLineString(coorAB).intersects(segmentoEntradaEspejo)){
+	//
+	//										// Guardamos su id y creamos una copia igual
+	//										Long wayId = utils.getTotalWays().get(way);
+	//
+	//										WayOsm wayTemp = new WayOsm(way.getNodes());
+	//										wayTemp.setShapes(way.getShapes());
+	//
+	//										// Borramos el way de la lista general de ways
+	//										utils.getTotalWays().remove(way);
+	//
+	//										// Insertamos el nodo en el way desplazando los siguientes nodos a la derecha
+	//										wayTemp.addNode(x+1, utils.getTotalNodes().get(nodeTex));
+	//
+	//										// Actualizamos la coordenada del nodo Elemtex que tiene los tags del portal
+	//										nodeTex.setCoor(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate());
+	//
+	//										// Metemos en la lista general el nuevo way con el mismo id que el que hemos borrado
+	//										utils.getTotalWays().put(wayTemp, wayId);
+	//
+	//										break;
+	//
+	//									}
+	//								}
+	//						}
+	//					}
+	//				}
+	//
+	//				// Actualizamos la coordenada en el shape
+	//				((ShapeElemtex) elemtex).setCoor(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate());
+	//			}
+	//		}			
+	//	}
 
 }

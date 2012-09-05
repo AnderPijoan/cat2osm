@@ -30,6 +30,10 @@ public class ShapeSubparce extends Shape {
 	private String subparce; // Clave de Subparcela
 	private String cultivo; // Codigo de cultivo de la subparcela
 	private List<ShapeAttribute> atributos;
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
 	private long area; // Area para saber si poner landuse allotments (<400m2) o el que sea
 	private static final Map<String,Map<String,String>> lSub = new HashMap<String,Map<String,String>>(); // Mapa <RefCat<ClaveSubparce,CodigoCultivo>> (para el Subparce.shp)
 
@@ -43,6 +47,9 @@ public class ShapeSubparce extends Shape {
 		super(f, tipo);
 
 		shapeId = "SUBPARCE" + super.newShapeId();
+		
+		// Para agrupar geometrias segun su codigo de masa
+		codigoMasa = (String) f.getAttribute("MASA");
 
 		if (lSub.isEmpty()){
 			readSubparceDetails(tipo);
@@ -118,6 +125,10 @@ public class ShapeSubparce extends Shape {
 		return shapeId;
 	}
 
+	public String getCodigoMasa() {
+		return codigoMasa;
+	}
+	
 
 	public void addNode(int pos, long nodeId){
 		if (nodes.size()>pos)

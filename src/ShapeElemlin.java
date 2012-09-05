@@ -25,6 +25,10 @@ public class ShapeElemlin extends Shape {
 	private Long relation;
 	private String ttggss; // Campo TTGGSS en Elemlin.shp
 	private List<ShapeAttribute> atributos;
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
 
 
 	public ShapeElemlin(SimpleFeature f, String tipo) {
@@ -32,6 +36,10 @@ public class ShapeElemlin extends Shape {
 		super(f, tipo);
 
 		shapeId = "ELEMLIN" + super.newShapeId();
+		
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		codigoMasa = "ELEMLIN";
 
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
@@ -62,6 +70,10 @@ public class ShapeElemlin extends Shape {
 
 	public String getShapeId(){
 		return shapeId;
+	}
+	
+	public String getCodigoMasa() {
+		return codigoMasa;
 	}
 
 

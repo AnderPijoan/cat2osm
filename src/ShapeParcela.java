@@ -25,6 +25,10 @@ public class ShapeParcela extends Shape {
 	private String refCatastral; // Referencia catastral
 	private List<ShapeAttribute> atributos;
 	private int numSymbol;
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
 	
 	// Para definir cual de todos los usos y destinos asignar,
 	// se ha llegado a la conclusion de asignar el que mas area tenga
@@ -45,6 +49,9 @@ public class ShapeParcela extends Shape {
 		super(f, tipo);
 
 		shapeId = "PARCELA" + super.newShapeId();
+		
+		// Para agrupar geometrias segun su codigo de masa
+		codigoMasa = (String) f.getAttribute("MASA");
 		
 		this.poligons = new ArrayList<LineString>();
 
@@ -87,7 +94,7 @@ public class ShapeParcela extends Shape {
 		
 		
 		// El NUMSYMBOL 4 de las parcelas son las que a pesar de tener datos no se tienen que dibujar
-		// como carreteras, la parcela rustica que cubre toda la zona urbana y alguna mas
+		// como parcelas de carreteras, la parcela rustica que cubre toda la zona urbana y alguna mas
 		if (f.getAttribute("NUMSYMBOL") instanceof Double){
 			numSymbol = (Integer) f.getAttribute("NUMSYMBOL");
 		}
@@ -108,6 +115,10 @@ public class ShapeParcela extends Shape {
 
 	public String getShapeId(){
 		return shapeId;
+	}
+	
+	public String getCodigoMasa() {
+		return codigoMasa;
 	}
 	
 	

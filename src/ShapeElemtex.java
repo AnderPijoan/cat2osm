@@ -24,12 +24,20 @@ public class ShapeElemtex extends Shape {
 	// conocer cuales tienen influencia en las parcelas sobre los que estan colocados (para tags landuse)
 	private List<ShapeAttribute> atributos;
 	private List<String[]> tags = new ArrayList<String[]>();
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
 
 	public ShapeElemtex(SimpleFeature f, String tipo) {
 
 		super(f, tipo);
 
 		shapeId = "ELEMTEX" + super.newShapeId();
+		
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		codigoMasa = "ELEMTEX";
 
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
@@ -79,6 +87,9 @@ public class ShapeElemtex extends Shape {
 		return shapeId;
 	}
 
+	public String getCodigoMasa() {
+		return codigoMasa;
+	}
 
 	public Coordinate getCoor(){
 		return coor;

@@ -21,6 +21,11 @@ public class ShapeConstru extends Shape {
 	private String refCatastral; // Referencia catastral
 	private String constru; // Campo Constru solo en Constru.shp
 	private List<ShapeAttribute> atributos;
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
+
 
 
 	public ShapeConstru(SimpleFeature f, String tipo) {
@@ -28,6 +33,9 @@ public class ShapeConstru extends Shape {
 
 		shapeId = "CONSTRU" + super.newShapeId();
 
+		// Para agrupar geometrias segun su codigo de masa
+		codigoMasa = (String) f.getAttribute("MASA");
+		
 		this.poligons = new ArrayList<LineString>();
 
 		// Constru.shp trae la geometria en formato MultiPolygon
@@ -78,6 +86,10 @@ public class ShapeConstru extends Shape {
 
 	public String getShapeId(){
 		return shapeId;
+	}
+	
+	public String getCodigoMasa() {
+		return codigoMasa;
 	}
 
 	public void addNode(int pos, long nodeId){

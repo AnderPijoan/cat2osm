@@ -7,7 +7,9 @@ import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.geotools.data.FeatureReader;
 import org.geotools.data.FileDataStore;
@@ -23,9 +25,9 @@ public class ShapeParser extends Thread{
 	String tipo; // UR/RU
 	File file;
 	Cat2OsmUtils utils;
-	List<Shape> shapeList;
+	HashMap <String, List<Shape>> shapeList;
 
-	public ShapeParser (String t, File f, Cat2OsmUtils u, List<Shape> s){
+	public ShapeParser (String t, File f, Cat2OsmUtils u, HashMap<String, List<Shape>> s){
 		super (f.getName());
 		this.tipo = t;
 		this.file = reproyectarWGS84(f, t);
@@ -50,13 +52,16 @@ public class ShapeParser extends Thread{
 			if (file.getName().toUpperCase().equals(tipo+"MASA.SHP"))
 
 				// Shapes del archivo MASA.SHP
-				while (reader.hasNext()) {		
+				while (reader.hasNext()) {
 					Shape shape = new ShapeMasa(reader.next(), tipo);
-
+					
 					// Si cumple estar entre las fechas
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(mPolygonShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(mPolygonShapeParser(shape));
+					}
 				}
 			else if (file.getName().toUpperCase().equals(tipo+"PARCELA.SHP"))
 
@@ -65,9 +70,12 @@ public class ShapeParser extends Thread{
 					Shape shape = new ShapeParcela(reader.next(), tipo);
 
 					// Si cumple estar entre las fechas
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(mPolygonShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(mPolygonShapeParser(shape));
+					}
 				}
 			else if (file.getName().toUpperCase().equals(tipo+"SUBPARCE.SHP"))
 
@@ -76,9 +84,12 @@ public class ShapeParser extends Thread{
 					Shape shape = new ShapeSubparce(reader.next(), tipo);
 
 					// Si cumple estar entre las fechas 
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(mPolygonShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(mPolygonShapeParser(shape));
+					}
 				}
 			else if (file.getName().toUpperCase().equals(tipo+"CONSTRU.SHP"))
 
@@ -87,9 +98,12 @@ public class ShapeParser extends Thread{
 					Shape shape = new ShapeConstru(reader.next(), tipo);
 
 					// Si cumple estar entre las fechas
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(mPolygonShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(mPolygonShapeParser(shape));
+					}
 				}
 			else if (file.getName().toUpperCase().equals(tipo+"ELEMTEX.SHP"))
 
@@ -99,9 +113,12 @@ public class ShapeParser extends Thread{
 
 					// Si cumple estar entre las fechas
 					// Si cumple tener un ttggss valido (no interesa mostrar todos)
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(pointShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(pointShapeParser(shape));
+					}
 				}
 			else if (file.getName().toUpperCase().equals(tipo+"ELEMPUN.SHP"))
 
@@ -111,9 +128,12 @@ public class ShapeParser extends Thread{
 
 					// Si cumple estar entre las fechas
 					// Si cumple tener un ttggss valido (no interesa mostrar todos)
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(pointShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(pointShapeParser(shape));
+					}
 				}
 			else if (file.getName().toUpperCase().equals(tipo+"ELEMLIN.SHP"))
 
@@ -123,9 +143,12 @@ public class ShapeParser extends Thread{
 
 					// Si cumple estar entre las fechas
 					// Si cumple tener un ttggss valido (no interesa mostrar todos)
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(mLineStringShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(mLineStringShapeParser(shape));
+					}
 				}
 			else if (file.getName().toUpperCase().equals(tipo+"EJES.SHP"))
 
@@ -134,9 +157,12 @@ public class ShapeParser extends Thread{
 					Shape shape = new ShapeEjes(reader.next(), tipo);
 
 					// Si cumple estar entre las fechas
-					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido())
+					if (shape != null && shape.checkShapeDate(fechaDesde, fechaHasta) && shape.shapeValido()){
 						// Anadimos el shape creado a la lista
-						shapeList.add(mLineStringShapeParser(shape));
+						if (shapeList.get(shape.getCodigoMasa()) == null)
+							shapeList.put(shape.getCodigoMasa(), new ArrayList<Shape>());
+						shapeList.get(shape.getCodigoMasa()).add(mLineStringShapeParser(shape));
+					}
 				}
 
 			reader.close();
@@ -161,12 +187,12 @@ public class ShapeParser extends Thread{
 		for (int x = 0; x < shape.getPoligons().size(); x++){
 			Coordinate[] coor = shape.getCoordenadas(x);
 
-			// Miramos por cada punto si existe un nodo si no, lo creamos
+			// Miramos por cada punto si existe un nodo, si no lo creamos
 			for (int y = 0 ; y < coor.length; y++){
 				// Insertamos en la lista de nodos del shape, los ids de sus nodos
 				List<String> l = new ArrayList<String>();
 				l.add(shape.getShapeId());
-				shape.addNode(x,utils.generateNodeId(coor[y], null, l));
+				shape.addNode(x,utils.generateNodeId(shape.getCodigoMasa(), coor[y], null, l));
 			}
 		}
 
@@ -181,7 +207,7 @@ public class ShapeParser extends Thread{
 				if (!(nodeList.get(y) == (nodeList.get(y+1)))){
 					List<String> shapeIds = new ArrayList<String>();
 					shapeIds.add(shape.getShapeId());
-					shape.addWay(x,utils.generateWayId(way, shapeIds));
+					shape.addWay(x,utils.generateWayId(shape.getCodigoMasa(), way, shapeIds));
 				}
 			}
 		}
@@ -202,7 +228,7 @@ public class ShapeParser extends Thread{
 		}
 		List<String> shapeIds = new ArrayList<String>();
 		shapeIds.add(shape.getShapeId());
-		shape.setRelation(utils.generateRelationId(ids, types, roles, shape.getAttributes(),shapeIds));
+		shape.setRelation(utils.generateRelationId(shape.getCodigoMasa(), ids, types, roles, shape.getAttributes(), shapeIds));
 
 		return shape;
 	}
@@ -221,7 +247,7 @@ public class ShapeParser extends Thread{
 		// Anadimos solo un nodo
 		List<String> l = new ArrayList<String>();
 		l.add(shape.getShapeId());
-		shape.addNode(0,utils.generateNodeId(coor, shape.getAttributes(), l));
+		shape.addNode(0,utils.generateNodeId(shape.getCodigoMasa(), coor, shape.getAttributes(), l));
 
 		return shape;
 	}
@@ -241,7 +267,7 @@ public class ShapeParser extends Thread{
 		for (int x = 0; x < coor.length; x++){
 			List<String> l = new ArrayList<String>();
 			l.add(shape.getShapeId());
-			shape.addNode(0,utils.generateNodeId(coor[x], null, l));
+			shape.addNode(0,utils.generateNodeId(shape.getCodigoMasa(), coor[x], null, l));
 			}
 
 		// Con los nodos creamos ways
@@ -252,7 +278,7 @@ public class ShapeParser extends Thread{
 			way.add(nodeList.get(y+1));
 			List<String> id = new ArrayList<String>();
 			id.add(shape.getShapeId());
-			shape.addWay(0,utils.generateWayId(way, id));
+			shape.addWay(0,utils.generateWayId(shape.getCodigoMasa(), way, id));
 		}
 
 		// Con los ways creamos una relacion
@@ -266,7 +292,7 @@ public class ShapeParser extends Thread{
 		}
 		List<String> shapeIds = new ArrayList<String>();
 		shapeIds.add(shape.getShapeId());
-		shape.setRelation(utils.generateRelationId(ids, types, roles, shape.getAttributes(), shapeIds));
+		shape.setRelation(utils.generateRelationId(shape.getCodigoMasa(), ids, types, roles, shape.getAttributes(), shapeIds));
 
 		return shape;
 	}

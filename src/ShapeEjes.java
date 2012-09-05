@@ -26,6 +26,10 @@ public class ShapeEjes extends Shape {
 	private List<ShapeAttribute> atributos;
 	private String tipo; // Tipo de ejes Rusticos o Urbanos. Todos los urbanos tendran highway=residential
 	private static final Map<Long,String> ejesNames = new HashMap<Long,String>(); // Lista de codigos y nombres de vias (para el Ejes.shp)
+	private String codigoMasa; // Codigo de masa a la que pertenece
+	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
+	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
+	// asignara el nombre de tipo de archivo
 
 
 	public ShapeEjes(SimpleFeature f, String tipo) throws IOException {
@@ -33,6 +37,11 @@ public class ShapeEjes extends Shape {
 		super(f, tipo);
 
 		this.shapeId = "EJES" + super.newShapeId();
+		
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		codigoMasa = "EJES";
+		
 		this.tipo = tipo;
 
 		if (tipo.equals("UR") && ejesNames.isEmpty()){
@@ -83,6 +92,9 @@ public class ShapeEjes extends Shape {
 		return shapeId;
 	}
 	
+	public String getCodigoMasa() {
+		return codigoMasa;
+	}
 	
 	public List<String[]> getAttributes() {
 		List <String[]> l = new ArrayList<String[]>();

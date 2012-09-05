@@ -16,7 +16,7 @@ public class RelationOsm {
 	private String refCatastral; // Referencia catastral para manejar las relaciones de relaciones
 	private List<String[]> tags;
 	private List<String> shapes; // Ids de los shapes a los que pertenece
-	private long fechaConstru = Cat2OsmUtils.getFechaActual(); // Fecha de construccion de la parcela que representa AAAAMMDD
+	private long fechaConstru = Cat2OsmUtils.getFechaArchivos(); // Fecha de construccion de la parcela que representa AAAAMMDD
 
 
 	public RelationOsm(List <Long> ids, List<String> types, List<String> roles){
@@ -225,56 +225,28 @@ public class RelationOsm {
 	 * @return Devuelve en un String la relation lista para imprimir
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public String printRelation(Long id, Cat2OsmUtils utils){
+	public String printRelation(String key, Long id, Cat2OsmUtils utils){
 		String s = "";
-
+		
 		// Si no esta dentro de las fechas de construccion indicadas
 		if ( fechaConstru < Long.parseLong(Config.get("FechaConstruDesde")) || fechaConstru > Long.parseLong(Config.get("FechaConstruHasta"))){
-
-			List<WayOsm> ways = utils.getWays(ids);
-
-			for (WayOsm way : ways)
-				if (way != null)
-					for (String sId : shapes){
-						List<NodeOsm> nodes = utils.getNodes(way.getNodes());
-
-						for (NodeOsm node : nodes)
-							if (node != null)
-								node.deleteShapeId(sId);
-
-						way.deleteShapeId(sId);
-					}
-			
+			noprint(key, id, utils);
 			return "";
 		}
-
+		
 		if (ids.size()<1){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Relation id="+ id +" con menos de un way. No se imprimirá.");
-
-			List<WayOsm> ways = utils.getWays(ids);
-
-			for (WayOsm way : ways)
-				if (way != null)
-					for (String sId : shapes){
-						List<NodeOsm> nodes = utils.getNodes(way.getNodes());
-
-						for (NodeOsm node : nodes)
-							if (node != null)
-								node.deleteShapeId(sId);
-
-						way.deleteShapeId(sId);
-					}
-			
+			noprint(key, id, utils);
 			return "";
 		}
-
+		
 		// Si una relation tiene menos de dos ways, deberia quedarse como way
 		// ya que sino es redundante.
 		else if (ids.size()==1){
 
 			// Un way que va a ser inner en una relation solo tiene que tener los tags distintos
 			// respecto a sus outter
-			Iterator<Entry<RelationOsm, Long>> it = utils.getTotalRelations().entrySet().iterator();
+			Iterator<Entry<RelationOsm, Long>> it = utils.getTotalRelations().get(key).entrySet().iterator();
 
 			// Para todas las relaciones que hay
 			while(it.hasNext()){
@@ -306,14 +278,13 @@ public class RelationOsm {
 				}
 			}
 
-			WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<Object, Long>) ((Object)utils.getTotalWays()), ids.get(0)));
+			WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<String, Map<Object, Long>>) ((Object)utils.getTotalWays()), key, ids.get(0)));
 			
 			if (way == null){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Una vía ha dado un error y no se imprimirá. Esto dejará sus nodos sueltos.");
 				return "";
 				}
 				
-			
 			s = ("<way id=\""+ ids.get(0) +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\">\n");
 
 			// Referencias a los nodos
@@ -347,7 +318,7 @@ public class RelationOsm {
 			}
 
 			s += "<tag k=\"source\" v=\"catastro\"/>\n";
-			s += "<tag k=\"source:date\" v=\""+Cat2OsmUtils.getFechaActual()+"\"/>\n";
+			s += "<tag k=\"source:date\" v=\""+new StringBuffer(Cat2OsmUtils.getFechaArchivos()+"").insert(4, "-").toString().substring(0, 7)+"\"/>\n";
 			
 			s += ("</way>\n");
 		}
@@ -363,7 +334,7 @@ public class RelationOsm {
 			s = ("<relation id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" visible=\"true\"  version=\"6\">\n");
 
 			for (int x = 0; x < ids.size(); x++)
-				if (utils.getTotalWays().containsValue(ids.get(x)))
+				if (utils.getTotalWays().get(key).containsValue(ids.get(x)))
 					s += ("<member type=\""+ types.get(x) +"\" ref=\""+ ids.get(x)+"\" role=\""+ roles.get(x) +"\" />\n");			
 
 			for (int x = 0; x < tags.size(); x++){
@@ -400,25 +371,12 @@ public class RelationOsm {
 				s += "<tag k=\"type\" v=\"multipolygon\"/>\n";
 			
 			s += "<tag k=\"source\" v=\"catastro\"/>\n";
-			s += "<tag k=\"source:date\" v=\""+Cat2OsmUtils.getFechaActual()+"\"/>\n";
+			s += "<tag k=\"source:date\" v=\""+new StringBuffer(Cat2OsmUtils.getFechaArchivos()+"").insert(4, "-").toString().substring(0, 7)+"\"/>\n";
 
 			s += ("</relation>\n");
 
 			if (!with_data){
-
-				List<WayOsm> ways = utils.getWays(ids);
-
-				for (WayOsm way : ways)
-					if (way != null)
-						for (String sId : shapes){
-							List<NodeOsm> nodes = utils.getNodes(way.getNodes());
-
-							for (NodeOsm node : nodes)
-								if (node != null)
-									node.deleteShapeId(sId);
-
-							way.deleteShapeId(sId);
-						}
+				noprint(key, id, utils);
 				return "";
 			}
 
@@ -452,6 +410,24 @@ public class RelationOsm {
 	public void setFechaConstru(long fechaConstru) {
 		if (this.fechaConstru > fechaConstru)
 			this.fechaConstru = fechaConstru;
+	}
+	
+	
+	public void noprint(String key, Long id, Cat2OsmUtils utils){
+		
+		List<WayOsm> ways = utils.getWays(key, ids);
+
+		for (WayOsm way : ways)
+			if (way != null)
+				for (String sId : shapes){
+					List<NodeOsm> nodes = utils.getNodes(key, way.getNodes());
+
+					for (NodeOsm node : nodes)
+						if (node != null)
+							node.deleteShapeId(sId);
+
+					way.deleteShapeId(sId);
+				}		
 	}
 
 }

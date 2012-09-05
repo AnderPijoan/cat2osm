@@ -98,7 +98,7 @@ public class NodeOsm {
 			tags.add(s);
 
 			s = new String[2];
-			s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaActual()+""; 
+			s[0] = "source:date"; s[1] = Cat2OsmUtils.getFechaArchivos()+""; 
 		}
 
 		return tags;
@@ -169,7 +169,7 @@ public class NodeOsm {
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";	
 				
 		s += "<tag k=\"source\" v=\"catastro\"/>\n";
-		s += "<tag k=\"source:date\" v=\""+Cat2OsmUtils.getFechaActual()+"\"/>\n";
+		s += "<tag k=\"source:date\" v=\""+new StringBuffer(Cat2OsmUtils.getFechaArchivos()+"").insert(4, "-").toString().substring(0, 7)+"\"/>\n";
 
 		s += ("</node>\n");
 

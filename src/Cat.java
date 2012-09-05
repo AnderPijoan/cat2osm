@@ -10,7 +10,7 @@ public class Cat {
 	List<String[]> atributos;
 	String usoDestino; // Codigo de uso o destino para los registros 14 y 15
 	Double area; // Area
-	long fechaConstru = Cat2OsmUtils.getFechaActual(); // Fecha de construccion AAAAMMDD
+	long fechaConstru = Cat2OsmUtils.getFechaArchivos(); // Fecha de construccion AAAAMMDD
 	// Empieza en el valor maximo y se reduce a la menor fecha de construccion de los inmuebles
 	// de la parcela
 
