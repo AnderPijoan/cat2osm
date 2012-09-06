@@ -25,7 +25,7 @@ public class ShapeEjes extends Shape {
 	private String via; // Nombre de via, solo en Ejes.shp, lo coge de Carvia.dbf
 	private List<ShapeAttribute> atributos;
 	private String tipo; // Tipo de ejes Rusticos o Urbanos. Todos los urbanos tendran highway=residential
-	private static final Map<Long,String> ejesNames = new HashMap<Long,String>(); // Lista de codigos y nombres de vias (para el Ejes.shp)
+	private static final Map<Long,String> ejesNames = new HashMap<Long, String>(); // Lista de codigos y nombres de vias (para el Ejes.shp)
 	private String codigoMasa; // Codigo de masa a la que pertenece
 	// Esto se usa para la paralelizacion ya que luego solo se simplificaran geometrias que
 	// pertenezcan a las mismas masas. Si alguna geometria no tiene codigo de masa, se le
@@ -36,11 +36,7 @@ public class ShapeEjes extends Shape {
 		
 		super(f, tipo);
 
-		this.shapeId = "EJES" + super.newShapeId();
-		
-		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
-		// asigna el del nombre del fichero shapefile
-		codigoMasa = "EJES";
+		this.shapeId = "EJES" + newShapeId();
 		
 		this.tipo = tipo;
 
@@ -83,6 +79,14 @@ public class ShapeEjes extends Shape {
 		atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
 		}*/
 
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		// En este caso se anade "EJES" por delante para que luego el proceso al encontrar un key
+		// de EJES intente juntar todos los ways con todos los que se toquen
+		// (a diferencia de las otros elementos que solo tiene que unir ways si pertenecen
+		// a los mismos shapes)
+		codigoMasa = (via == null ? "EJES" + " CALLES SIN NOMBRE" : "EJES" + via.trim().replaceAll("[^\\p{L}\\p{N}]", ""));
+		
 		this.nodes = new ArrayList<Long>();
 		this.ways = new ArrayList<Long>();
 	}

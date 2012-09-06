@@ -9,6 +9,7 @@ import org.opengis.feature.simple.SimpleFeature;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
 
 
@@ -29,10 +30,6 @@ public class ShapeElempun extends Shape {
 		super(f, tipo);
 
 		shapeId = "ELEMPUN" + super.newShapeId();
-		
-		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
-		// asigna el del nombre del fichero shapefile
-		codigoMasa = "ELEMPUN";
 
 		// Elempun trae la geometria en formato Point
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.Point")){
@@ -50,6 +47,10 @@ public class ShapeElempun extends Shape {
 
 		ttggss = (String) f.getAttribute("TTGGSS");
 
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		codigoMasa = "ELEMPUN" + ttggss;
+		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
 		for (int x = 1; x < f.getAttributes().size(); x++){
@@ -101,8 +102,12 @@ public class ShapeElempun extends Shape {
 	}
 
 
+	// Lista de poligonos vacia pero con 1 elemento para que al imprimir los datos llame a getNodesIds
+	@SuppressWarnings("deprecation")
 	public List<LineString> getPoligons() {
 		List<LineString> l = new ArrayList<LineString>();
+		LineString line = new LineString(null, null, 0);
+		l.add(line);
 		return l;
 	}
 

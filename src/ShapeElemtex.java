@@ -34,10 +34,6 @@ public class ShapeElemtex extends Shape {
 		super(f, tipo);
 
 		shapeId = "ELEMTEX" + super.newShapeId();
-		
-		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
-		// asigna el del nombre del fichero shapefile
-		codigoMasa = "ELEMTEX";
 
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
@@ -55,30 +51,34 @@ public class ShapeElemtex extends Shape {
 		// Los demas atributos son metadatos y de ellos sacamos 
 		ttggss = (String) f.getAttribute("TTGGSS");
 
-//		try {
-//			rotulo = new String(f.getAttribute("ROTULO").toString().getBytes(), "UTF-8");
-//			rotulo = eliminarComillas(rotulo);			
-//		} catch (UnsupportedEncodingException e) {e.printStackTrace();}
-		
+		//		try {
+		//			rotulo = new String(f.getAttribute("ROTULO").toString().getBytes(), "UTF-8");
+		//			rotulo = eliminarComillas(rotulo);			
+		//		} catch (UnsupportedEncodingException e) {e.printStackTrace();}
+
 		rotulo = eliminarComillas(f.getAttribute("ROTULO").toString());
 		if (rotulo.equals(rotulo.toUpperCase())) {
 			char[] delim = {' ','.'};
 			rotulo = WordUtils.capitalizeFully(rotulo, delim);
 		}
- 
+
 		// Se agregan tags dependientes del rotulo
 		tags.addAll(Rules.getTags(rotulo));
-		
+
 		// Dependiendo del ttggss se usa o no
 		if (ttggss != null){
 			tags.addAll(ttggssParser(ttggss));
 		}
 
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		codigoMasa = "ELEMTEX" + ttggss;
+		
 		// Si queremos coger todos los atributos del .shp
-//		this.atributos = new ArrayList<ShapeAttribute>();
-//		for (int x = 1; x < f.getAttributes().size(); x++){	
-//			atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
-//		}
+		//		this.atributos = new ArrayList<ShapeAttribute>();
+		//		for (int x = 1; x < f.getAttributes().size(); x++){	
+		//			atributos.add(new ShapeAttribute(f.getFeatureType().getDescriptor(x).getType(), f.getAttributes().get(x)));
+		//		}
 
 	}
 
@@ -109,11 +109,11 @@ public class ShapeElemtex extends Shape {
 	 * @return Lista de atributos
 	 */
 	public List<String[]> getAttributes(){
-		
+
 		String[] s = new String[2];
 		s[0] = "CAT2OSMSHAPEID"; s[1] = getShapeId();
 		tags.add(s);
-		
+
 		return tags;
 	}
 
@@ -154,8 +154,12 @@ public class ShapeElemtex extends Shape {
 	}
 
 
+	// Lista de poligonos vacia pero con 1 elemento para que al imprimir los datos llame a getNodesIds
+	@SuppressWarnings("deprecation")
 	public List<LineString> getPoligons(){
 		List<LineString> l = new ArrayList<LineString>();
+		LineString line = new LineString(null, null, 0);
+		l.add(line);
 		return l;
 	}
 
@@ -206,20 +210,20 @@ public class ShapeElemtex extends Shape {
 	public List<String[]> ttggssParser(String ttggss){
 		List<String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
-		
+
 		if (rotulo != null && ttggss.equals("189203") && rotulo.length()>2){ 
 			s[0] = "place"; s[1] ="locality";
 			l.add(s);
 			s = new String[2];
 			s[0] = "name"; s[1] = rotulo;
 			l.add(s);
-			
+
 			return l;}
 
 		else if (rotulo != null && ttggss.equals("189300") && rotulo.length()>2){ 
-				s = new String[2];
-				s[0] = "name"; s[1] = rotulo;
-				l.add(s);
+			s = new String[2];
+			s[0] = "name"; s[1] = rotulo;
+			l.add(s);
 			return l;}
 
 		else if (rotulo != null && ttggss.equals("189700") && rotulo.length()>2){ 
@@ -227,7 +231,7 @@ public class ShapeElemtex extends Shape {
 			s[0] = "name"; s[1] = rotulo;
 			l.add(s);
 			return l;}
-		
+
 		else if (rotulo != null && ttggss.equals("189401")){ 
 			s = new String[2];
 			s[0] = "entrance"; s[1] = "yes";
@@ -235,15 +239,15 @@ public class ShapeElemtex extends Shape {
 			s = new String[2];
 			s[0] = "addr:housenumber"; s[1] = rotulo;
 			l.add(s);
-			
+
 			return l;}
-		
+
 		else {
 			s = new String[2];
 			s[0] = "ttggss"; s[1] = "0";
 			l.add(s);
 			setTtggss("0");
-		return l;
+			return l;
 		}
 	}
 

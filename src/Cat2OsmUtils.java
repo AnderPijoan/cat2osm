@@ -217,26 +217,26 @@ public class Cat2OsmUtils {
 
 	/** Mira si existe un nodo con las mismas coordenadas
 	 * de lo contrario crea el nuevo nodo. Despues devuelve el id
-	 * @param codigo Codigo de masa en la que esta ese nodo
+	 * @param key Codigo de masa en la que esta ese nodo
 	 * @param coor Coordenadas del nodo
 	 * @param tags Tags del nodo
 	 * @param shapes Shapes a los que pertenece el nodo
 	 * @return Devuelve el id del nodo ya sea creado o el que existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long generateNodeId(String codigo, Coordinate c, List<String[]> tags, List<String> shapes){
+	public synchronized long generateNodeId(String key, Coordinate c, List<String[]> tags, List<String> shapes){
 
 		Coordinate coor = new Coordinate(round(c.x,7), round(c.y,7));
 		
 		Long id = null;
 		
-		if (totalNodes.get(codigo) == null)
-			totalNodes.put(codigo, new ConcurrentHashMap<NodeOsm, Long>());
+		if (totalNodes.get(key) == null)
+			totalNodes.put(key, new ConcurrentHashMap<NodeOsm, Long>());
 		
-		if (!totalNodes.get(codigo).isEmpty())
-			id = totalNodes.get(codigo).get(new NodeOsm(coor));
+		if (!totalNodes.get(key).isEmpty())
+			id = totalNodes.get(key).get(new NodeOsm(coor));
 		if (id != null){
-			NodeOsm n = ((NodeOsm) getKeyFromValue((Map< String, Map<Object, Long>>) ((Object) totalNodes), codigo, id));
+			NodeOsm n = ((NodeOsm) getKeyFromValue((Map< String, Map<Object, Long>>) ((Object) totalNodes), key, id));
 			if (tags != null)
 				n.addTags(tags);
 			n.addShapes(shapes);
@@ -248,7 +248,7 @@ public class Cat2OsmUtils {
 			if (tags != null)
 				n.addTags(tags);
 			n.setShapes(shapes);
-			totalNodes.get(codigo).putIfAbsent(n, idnode);
+			totalNodes.get(key).putIfAbsent(n, idnode);
 			return idnode;
 		}
 	}
@@ -256,25 +256,25 @@ public class Cat2OsmUtils {
 	
 	/** Mira si existe un way con los mismos nodos y en ese caso anade
 	 * los tags, de lo contrario crea uno. Despues devuelve el id
-	 * @param codigo Codigo de masa en la que esta el way
+	 * @param key Codigo de masa en la que esta el way
 	 * @param nodes Lista de nodos
 	 * @param shapes Lista de los shapes a los que pertenecera
 	 * @return devuelve el id del way creado o el del que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long generateWayId(String codigo, List<Long> nodes, List<String> shapes ){
+	public synchronized long generateWayId(String key, List<Long> nodes, List<String> shapes ){
 
 		Long id = null;
 		
-		if (totalWays.get(codigo) == null)
-			totalWays.put(codigo, new ConcurrentHashMap<WayOsm, Long>());
+		if (totalWays.get(key) == null)
+			totalWays.put(key, new ConcurrentHashMap<WayOsm, Long>());
 		
 		if (!totalWays.isEmpty())
-			id = totalWays.get(codigo).get(new WayOsm(nodes));
+			id = totalWays.get(key).get(new WayOsm(nodes));
 		
 		if (id != null){
 			if (shapes != null)
-				((WayOsm) getKeyFromValue((Map< String, Map<Object, Long>>) ((Object) totalWays), codigo, id)).addShapes(shapes);
+				((WayOsm) getKeyFromValue((Map< String, Map<Object, Long>>) ((Object) totalWays), key, id)).addShapes(shapes);
 			return id;
 			}
 		else{
@@ -282,7 +282,7 @@ public class Cat2OsmUtils {
 			WayOsm w = new WayOsm(nodes);
 			if (shapes != null)
 				w.addShapes(shapes);
-			totalWays.get(codigo).putIfAbsent(w, idway);
+			totalWays.get(key).putIfAbsent(w, idway);
 			return idway;
 		}
 	}
@@ -290,7 +290,7 @@ public class Cat2OsmUtils {
 	
 	/** Mira si existe una relation con los mismos ways y en ese caso anade 
 	 * los tags, de lo contrario crea una. Despues devuelve el id
-	 * @param codigo Codigo de masa en la cual esta la relation
+	 * @param key Codigo de masa en la cual esta la relation
 	 * @param ids Lista de ids de los members q componen la relacion
 	 * @param types Lista de los tipos de los members de la relacion (por lo general ways)
 	 * @param roles Lista de los roles de los members de la relacion (inner,outer...)
@@ -299,18 +299,18 @@ public class Cat2OsmUtils {
 	 * @return devuelve el id de la relacion creada o el de la que ya existia
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized long generateRelationId(String codigo, List<Long> ids, List<String> types, List<String> roles, List<String[]> tags, List<String> shapesId){
+	public synchronized long generateRelationId(String key, List<Long> ids, List<String> types, List<String> roles, List<String[]> tags, List<String> shapesId){
 		
 		Long id = null;
 		
-		if (totalRelations.get(codigo) == null)
-			totalRelations.put(codigo, new ConcurrentHashMap<RelationOsm, Long>());
+		if (totalRelations.get(key) == null)
+			totalRelations.put(key, new ConcurrentHashMap<RelationOsm, Long>());
 		
 		if (!totalRelations.isEmpty())
-			id = totalRelations.get(codigo).get(new RelationOsm(ids,types,roles));
+			id = totalRelations.get(key).get(new RelationOsm(ids,types,roles));
 		if (id != null){
 			if (tags != null)
-				((RelationOsm) getKeyFromValue((Map< String, Map<Object, Long>>) ((Object)totalRelations), codigo, id)).addTags(tags);
+				((RelationOsm) getKeyFromValue((Map< String, Map<Object, Long>>) ((Object)totalRelations), key, id)).addTags(tags);
 			return id;
 			}
 		else{
@@ -319,7 +319,7 @@ public class Cat2OsmUtils {
 			r.setShapes(shapesId);
 			if (tags != null)
 				r.addTags(tags);
-			totalRelations.get(codigo).putIfAbsent(r, idrelation);
+			totalRelations.get(key).putIfAbsent(r, idrelation);
 			return idrelation;
 		}
 	}

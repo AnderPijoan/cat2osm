@@ -35,11 +35,7 @@ public class ShapeElemlin extends Shape {
 
 		super(f, tipo);
 
-		shapeId = "ELEMLIN" + super.newShapeId();
-		
-		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
-		// asigna el del nombre del fichero shapefile
-		codigoMasa = "ELEMLIN";
+		shapeId = "ELEMLIN" + newShapeId();
 
 		// Elemtex trae la geometria en formato MultiLineString
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
@@ -57,6 +53,14 @@ public class ShapeElemlin extends Shape {
 
 		ttggss = (String) f.getAttribute("TTGGSS");
 
+		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
+		// asigna el del nombre del fichero shapefile
+		// En este caso se anade "ELEMLIN" por delante para que luego el proceso al encontrar un key
+		// de ELEMLIN intente juntar todos los ways con todos los que se toquen
+		// (a diferencia de las otros elementos que solo tiene que unir ways si pertenecen
+		// a los mismos shapes)
+		codigoMasa = "ELEMLIN" + ttggss;
+		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();
 		for (int x = 1; x < f.getAttributes().size(); x++){

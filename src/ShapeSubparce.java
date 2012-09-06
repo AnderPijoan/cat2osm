@@ -49,7 +49,7 @@ public class ShapeSubparce extends Shape {
 		shapeId = "SUBPARCE" + super.newShapeId();
 		
 		// Para agrupar geometrias segun su codigo de masa
-		codigoMasa = (String) f.getAttribute("MASA");
+		codigoMasa = ((String) f.getAttribute("MASA")).replaceAll("[^\\p{L}\\p{N}]", "");
 
 		if (lSub.isEmpty()){
 			readSubparceDetails(tipo);
