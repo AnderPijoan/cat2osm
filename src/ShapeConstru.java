@@ -29,10 +29,11 @@ public class ShapeConstru extends Shape {
 
 
 	public ShapeConstru(SimpleFeature f, String tipo) {
+		
 		super(f, tipo);
-
+		
 		shapeId = "CONSTRU" + super.newShapeId();
-
+		
 		// Para agrupar geometrias segun su codigo de masa
 		codigoMasa = ((String) f.getAttribute("MASA")).replaceAll("[^\\p{L}\\p{N}]", "");
 		

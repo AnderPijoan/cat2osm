@@ -5,9 +5,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.opengis.feature.simple.SimpleFeature;
 
 import com.linuxense.javadbf.DBFReader;
@@ -34,6 +33,9 @@ public class ShapeElemlin extends Shape {
 	public ShapeElemlin(SimpleFeature f, String tipo) {
 
 		super(f, tipo);
+		
+		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
+		com.vividsolutions.jts.geom.GeometryFactory factory = JTSFactoryFinder.getGeometryFactory(null);
 
 		shapeId = "ELEMLIN" + newShapeId();
 
@@ -41,7 +43,7 @@ public class ShapeElemlin extends Shape {
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
 
 			MultiLineString l = (MultiLineString) f.getDefaultGeometry();
-			line = new LineString(l.getCoordinates(),null , 0);
+			line = factory.createLineString(l.getCoordinates());
 
 		}
 		else {
@@ -134,7 +136,7 @@ public class ShapeElemlin extends Shape {
 		//case "030202":
 			//return true; // Margenes de rios que van a tener natural=water
 		//case "030302":
-			//return true; // TODO Emborrona mas que ayudar
+			//return true; // Emborrona mas que ayudar
 		case "037101":
 			return true;
 		case "038101":

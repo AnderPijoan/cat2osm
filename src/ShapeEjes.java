@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.opengis.feature.simple.SimpleFeature;
 
 import com.linuxense.javadbf.DBFReader;
@@ -35,6 +36,9 @@ public class ShapeEjes extends Shape {
 	public ShapeEjes(SimpleFeature f, String tipo) throws IOException {
 		
 		super(f, tipo);
+		
+		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
+		com.vividsolutions.jts.geom.GeometryFactory factory = JTSFactoryFinder.getGeometryFactory(null);
 
 		this.shapeId = "EJES" + newShapeId();
 		
@@ -48,7 +52,7 @@ public class ShapeEjes extends Shape {
 		if ( f.getDefaultGeometry().getClass().getName().equals("com.vividsolutions.jts.geom.MultiLineString")){
 
 			MultiLineString l = (MultiLineString) f.getDefaultGeometry();
-			line = new LineString(l.getCoordinates(),null,0);
+			line = factory.createLineString(l.getCoordinates());
 
 		}
 		else {
@@ -85,7 +89,7 @@ public class ShapeEjes extends Shape {
 		// de EJES intente juntar todos los ways con todos los que se toquen
 		// (a diferencia de las otros elementos que solo tiene que unir ways si pertenecen
 		// a los mismos shapes)
-		codigoMasa = (via == null ? "EJES" + " CALLES SIN NOMBRE" : "EJES" + via.trim().replaceAll("[^\\p{L}\\p{N}]", ""));
+		codigoMasa = (via == null ? "EJESSINNOMBRE" : "EJES" + via.trim().replaceAll("[^\\p{L}\\p{N}]", ""));
 		
 		this.nodes = new ArrayList<Long>();
 		this.ways = new ArrayList<Long>();
@@ -119,7 +123,10 @@ public class ShapeEjes extends Shape {
 			
 			// En funcion del tipo de via, meter tags que la describan
 			tags = atributosViaParser(via.substring(0, 2));
-			
+		}
+		else{
+			tags = new ArrayList<String[]>();
+			tags.add(new String[]{"highway","unclassified"});
 		}
 		
 		if (tags != null && !tags.isEmpty())
@@ -245,6 +252,8 @@ public class ShapeEjes extends Shape {
 		return l;
 		
 		case "CR":
+			s[0] = "highway"; s[1] = "unclassified";
+			l.add(s);
 		return l;
 		
 		case "ES":
@@ -283,9 +292,13 @@ public class ShapeEjes extends Shape {
 		return l;
 		
 		case "PZ":
+			s[0] = "highway"; s[1] = "unclassified";
+			l.add(s);
 		return l;
 		
 		case "RD":
+			s[0] = "highway"; s[1] = "unclassified";
+			l.add(s);
 		return l;
 		
 		case "RU":

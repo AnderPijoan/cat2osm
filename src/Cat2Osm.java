@@ -13,10 +13,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.geotools.geometry.jts.JTSFactoryFinder;
 
@@ -35,7 +33,7 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
 public class Cat2Osm {
 
-	public static final String VERSION = "2012-09-08";
+	public static final String VERSION = "2012-09-07";
 	public static Cat2OsmUtils utils;
 
 
@@ -120,7 +118,7 @@ public class Cat2Osm {
 		HashMap <ShapeParcela, String> cacheKeys = new HashMap<ShapeParcela, String>();
 
 		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
-		com.vividsolutions.jts.geom.GeometryFactory gf = JTSFactoryFinder.getGeometryFactory(null);
+		com.vividsolutions.jts.geom.GeometryFactory factory = JTSFactoryFinder.getGeometryFactory(null);
 
 		// Creamos una cache para meter las geometrias de las parcelas y una lista con los numeros de policia de esas parcelas
 		final SpatialIndex index = new STRtree();
@@ -177,7 +175,7 @@ public class Cat2Osm {
 			// Variables
 			Coordinate tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
 			Coordinate tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
-			com.vividsolutions.jts.geom.Point point = gf.createPoint(shapeTex.getCoor());
+			com.vividsolutions.jts.geom.Point point = factory.createPoint(shapeTex.getCoor());
 
 
 			// Buscamos la parcela mas cercana
@@ -234,7 +232,7 @@ public class Cat2Osm {
 
 			tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
 			tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
-			point = gf.createPoint(shapeTex.getCoor());
+			point = factory.createPoint(shapeTex.getCoor());
 
 			minDist = 0.00008; // Distancia minima ~ 80 metros
 
@@ -298,7 +296,7 @@ public class Cat2Osm {
 
 			tempInsideCoor = new Coordinate(); // Coordenada del elemtex desplazado sobre la parcela
 			tempSnappedCoor = new Coordinate(); // Coordenada del elemtex pegado a la geometria de la parcela
-			point = gf.createPoint(shapeTex.getCoor());
+			point = factory.createPoint(shapeTex.getCoor());
 
 			minDist = 0.00008; // Distancia minima ~ 80 metros
 
