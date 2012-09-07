@@ -73,4 +73,4 @@ TipoRegistro=0
 # Imprimir tanto en las vias como en las relaciones, la lista de shapes que las componen o las
 # utilizan. Es para casos de debugging si se quiere tener los detalles.
 # No=0 / Si=1
-PrintShapeIds=1
+PrintShapeIds=0
