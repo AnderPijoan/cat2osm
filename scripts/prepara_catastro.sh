@@ -772,7 +772,7 @@ do
 
       let opcion_valida=0
       while [[ $opcion_valida -eq 0 ]]; do
-        echo -e -n "¿Mover portales? (s/\033[4m\033[1mn\033[0m\033[0m): "
+        echo -e -n "¿Mover portales? (\033[1ms\033[0m/\033[4m\033[0mn\033[0m\033[0m): "
         read -e movpor
         if [[ "$movpor" == "s" ]]; then
           let movpor=1
