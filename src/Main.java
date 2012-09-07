@@ -239,33 +239,35 @@ public class Main {
 		System.out.println("["+new Timestamp(new Date().getTime())+"] Leídos "+utils.getTotalNodes().size()+" códigos para nodos, " +
 				utils.getTotalWays().size()+" códigos para ways y "+ utils.getTotalRelations().size()+" códigos para relations.");
 
+		// Mover las entradas de las casas a sus respectivas parcelas
+		if (archivo.equals("*") && Config.get("MovePortales").equals("1")){
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
+			shapes = catastro.calcularEntradas(shapes);
+		}
+		
 		int pos = 0;
 		for (String key : utils.getTotalNodes().keySet()){
+			
+			String folder = key.startsWith("ELEM")? "elementos" : ( key.startsWith("EJES")? "ejes" : "masas" );
 
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Exportando " + key + "[" + pos++ +"/" + utils.getTotalNodes().keySet().size() + "]");
 
 			// Por si acaso si hubiera archivos de un fallo en ejecucion anterior
-			if (new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + key +"tempRelations.osm").exists()
-					&& new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + key +"tempWays.osm").exists()
-					&& new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + key +"tempNodes.osm").exists()){
+			if (new File(Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key +"tempRelations.osm").exists()
+					&& new File(Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key +"tempWays.osm").exists()
+					&& new File(Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key +"tempNodes.osm").exists()){
 
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Se han encontrado 3 archivos temporales de una posible ejecución interrumpida, se procederá a juntarlos en un archivo resultado.");
-				catastro.juntarFiles(key, Config.get("ResultFileName"));
+				catastro.juntarFiles(key, folder, Config.get("ResultFileName"));
 				System.out.println("["+new Timestamp(new Date().getTime())+"] ¡¡Terminada la exportación!!");
 
 			}
 			else if (shapes.get(key) != null){
 
 				// Calcular los usos / destinos de las parcelas en funcion del que mas area tiene
-				if (!key.startsWith("EJES") && !key.startsWith("ELEMLIN") ){
+				if (!key.startsWith("EJES") && !key.startsWith("ELEM") ){
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Calculando usos de las parcelas.");
 					catastro.calcularUsos(key, shapes.get(key));
-				}
-
-				// Mover las entradas de las casas a sus respectivas parcelas
-				if (archivo.equals("*")){
-					System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
-					shapes = catastro.calcularEntradas(shapes);
 				}
 
 				// Operacion de simplificacion de relaciones sin tags relevantes
@@ -290,15 +292,15 @@ public class Main {
 				// Escribir los datos
 				if (archivo.equals("*") || archivo.equals("CONSTRU") || archivo.equals("ELEMLIN") || archivo.equals("MASA") || archivo.equals("PARCELA") || archivo.equals("SUBPARCE")){
 					System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo relations.\r");
-					catastro.printRelations(key, shapes.get(key));
+					catastro.printRelations(key, folder, shapes.get(key));
 					System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escribiendo ways.\r");
-					catastro.printWays(key, shapes.get(key));
+					catastro.printWays(key, folder, shapes.get(key));
 				}
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escribiendo nodos.\r");
-				catastro.printNodes(key, shapes.get(key));			
+				catastro.printNodes(key, folder, shapes.get(key));			
 
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escribiendo el archivo resultado.\r");
-				catastro.juntarFiles(key, Config.get("ResultFileName") + key);
+				catastro.juntarFiles(key, folder, Config.get("ResultFileName") + key);
 				System.out.println("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escrito el archivo resultado, Terminado.\r");
 
 			}
@@ -526,14 +528,14 @@ public class Main {
 
 				// Escribir los datos
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo relations.\r");
-				catastro.printRelations(key, shapes.get(key));
+				catastro.printRelations(key, "ejes", shapes.get(key));
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escribiendo ways.\r");
-				catastro.printWays(key, shapes.get(key));
+				catastro.printWays(key, "ejes", shapes.get(key));
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escribiendo nodos.\r");
-				catastro.printNodes(key, shapes.get(key));			
+				catastro.printNodes(key, "ejes", shapes.get(key));			
 
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escribiendo el archivo resultado.\r");
-				catastro.juntarFiles(key, Config.get("ResultFileName") + key);
+				catastro.juntarFiles(key, "ejes", Config.get("ResultFileName") + key);
 				System.out.println("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escrito el archivo resultado, Terminado.");
 
 			}

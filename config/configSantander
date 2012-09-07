@@ -66,6 +66,12 @@ FechaConstruDesde=0
 # Ejemeplo: FechaHasta=20060101
 FechaConstruHasta=99999999
 
+# Utilizar el algoritmo de asignacion de portales a sus respectivas parcelas
+# Movera los portales a sus parcelas y se exportaran en los archivos de masas los que se hayan podido asignar
+# y en los de elementos textuales los que no haya habido coincidencia.
+# No=0 / Si=1
+MovePortales=1
+
 # Tipo de Registro de catastro a usar (0 = todos)
 # Los registros de catastro tienen la mayoría de la información necesaria para los shapefiles.
 TipoRegistro=0

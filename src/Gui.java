@@ -40,7 +40,7 @@ public class Gui extends JFrame {
 
 
 		JPanel labels = new JPanel();
-		labels.setLayout(new GridLayout(15,1));
+		labels.setLayout(new GridLayout(16,1));
 
 		String[] labelsText = {"Carpeta donde se exportarán los archivos temporales y el resultado.\n(Tiene que tener privilegios lectura/escritura).",
 				"Nombre del archivo que exportará Cat2Osm como resultado.",
@@ -64,11 +64,12 @@ public class Gui extends JFrame {
 				"Si se quiere delimitar una fecha de construcción desde la cual coger los datos (Formato AAAAMMDD).\nÚnicamente imprimirá las relations que cumplan estar entre las fechas de construcción.\nEjemeplo: 20060127 (27 de Enero del 2006)",
 				"Si se quiere delimitar una fecha de construcción hasta la cual coger los datos (Formato AAAAMMDD).\nÚnicamente imprimirá las relations que cumplan estar entre las fechas de construcción.\nEjemeplo: 20060127 (27 de Enero del 2006)", 
 				"Tipo de Registro de catastro a usar (0 = todos).\nLos registros de catastro tienen la mayoría de la información necesaria para los shapefiles.",
+				"Utilizar el algoritmo de asignación de portales a sus respectivas parcelas. Moverá los portales a sus parcelas y se exportarán en los archivos de masas los que se hayan podido asignar y en los de elementos textuales los que no haya habido coincidencia.",
 				"Imprimir tanto en las vías como en las relaciones la lista de shapes que las componen o las utilizan.\nEs para casos de debugging si se quiere tener los detalles.",
 				"Utilizar de forma adicional un archivo de reglas para ASIGNAR TAGS a los elementos de ELEMTEX (consultar wiki para el funcionamiento). Si no se selecciona ningún archivo ELEMTEX será exportado sin asignación de tags."};
 
 		JPanel buttons = new JPanel();
-		buttons.setLayout(new GridLayout(15,1));
+		buttons.setLayout(new GridLayout(16,1));
 
 
 		JButton resultPath, urbanoShpPath, rusticoShpPath, urbanoCatFile, rusticoCatFile, rejillaFile, rulesFile = null;
@@ -99,7 +100,9 @@ public class Gui extends JFrame {
 		final JTextField fconstruhasta= new JTextField("99999999");
 
 		final JComboBox<String> tipoReg = new JComboBox<String>();
+		final JComboBox<String> movePortales = new JComboBox<String>();
 		final JComboBox<String> shapesId = new JComboBox<String>();
+		
 		
 		final JFileChooser fcRules = new JFileChooser();
 		fcRules.setFileFilter(new ExtensionFileFilter("Archivos .rules", ".rules"));
@@ -221,13 +224,20 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 13:{
+				movePortales.addItem("SI");
+				movePortales.addItem("NO");
+				movePortales.setBackground(new Color(255,255,255));
+				buttons.add(movePortales);
+				break;
+			}
+			case 14:{
 				shapesId.addItem("NO");
 				shapesId.addItem("SI");
 				shapesId.setBackground(new Color(255,255,255));
 				buttons.add(shapesId);
 				break;
 			}
-			case 14:{
+			case 15:{
 				rulesFile = new JButton("Seleccionar archivo de reglas .rules (opcional)");
 				rulesFile.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
@@ -342,6 +352,7 @@ public class Gui extends JFrame {
 					out.write("\nFechaConstruDesde="+fconstrudesde.getText());
 					out.write("\nFechaConstruHasta="+fconstruhasta.getText());
 					out.write("\nTipoRegistro="+tipoReg.getSelectedItem());
+					out.write("\nMovePortales="+(movePortales.getSelectedIndex()+1)%2);
 					out.write("\nShapeIds="+shapesId.getSelectedIndex());
 					if (fcRules.getSelectedFile() != null)out.write("\nElemtexRules="+fcRules.getSelectedFile());
 
