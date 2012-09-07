@@ -58,6 +58,7 @@ declare -r fechahasta="99999999"     ## fecha de fin por defecto
 declare -r fechaconstrudesde="0"     ## fecha de inicio de construcción de edificios por defecto
 declare -r fechaconstruhasta="99999999" ## fecha de fin de construcción de edificios por defecto
 declare -r tiporegistro="0"          ## tipo de registro por defecto (todos)
+declare -r moverportales="1"          ## mover portales
 declare -r printshapeids="0"         ## no imprimir shapeids por defecto (solo vale para depuracion)
 declare -r prefijoconfig="config"    ## prefijo por defecto de los archivos config
 declare -r sufijoconfig=".config"    ## sufijo de los archivos config
@@ -769,6 +770,33 @@ do
           exit 1
       esac
 
+      let opcion_valida=0
+      while [[ $opcion_valida -eq 0 ]]; do
+        echo -e -n "¿Mover portales? (s/\033[4m\033[1mn\033[0m\033[0m): "
+        read -e movpor
+        if [[ "$movpor" == "s" ]]; then
+          let movpor=1
+          let opcion_valida=1
+        elif [[ "$movpor" == "n" ]]; then
+          let movpor=0
+          let opcion_valida=1
+        elif [[ -z "$movpor" ]]; then
+          let movpor=$moverportales
+          let opcion_valida=1
+        fi
+      done
+      case "$movpor" in
+        1)
+          echo -e "OK. Se moverán portales.\n"
+          ;;
+        0)
+          echo -e "NO moverán portales.\n"
+          ;;
+        *)
+          echo -e "Error inesperado.\n" 1>&2 #no debería pasar
+          exit 1
+      esac
+
       echo -e "\nGenerando archivos config..."
 
 
@@ -952,6 +980,7 @@ do
             echo "FechaHasta=$fechah"         >> "$config_filename"
             echo "FechaConstruDesde=$fechacd" >> "$config_filename"
             echo "FechaConstruHasta=$fechach" >> "$config_filename"
+	    echo "MoverPortales=$movpor"     >> "$config_filename"
             echo "TipoRegistro=$tr"           >> "$config_filename"
             echo "PrintShapeIds=$psi"         >> "$config_filename"
           done

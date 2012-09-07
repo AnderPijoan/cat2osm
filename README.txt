@@ -16,7 +16,6 @@ rutaarchivoconfig -elemtex        Generar un archivo con las geometrías ELEMTEX
 rutaarchivoconfig -masa           Generar un archivo con las geometrías MASA
 rutaarchivoconfig -parcela        Generar un archivo con las geometrías PARCELA
 rutaarchivoconfig -subparce       Generar un archivo con las geometrías SUBPARCE
-rutaarchivoconfig -portales       Generar un archivo con los números de portal del archivo ELEMTEX y ajustándolos a su parcela más cercana
 rutaarchivoconfig -usos           Generar un archivo con los usos de inmuebles que no se pueden asignar directamente a una construcción
 
 
