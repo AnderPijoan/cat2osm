@@ -61,7 +61,7 @@ public class ShapeElemlin extends Shape {
 		// de ELEMLIN intente juntar todos los ways con todos los que se toquen
 		// (a diferencia de las otros elementos que solo tiene que unir ways si pertenecen
 		// a los mismos shapes)
-		codigoMasa = "ELEMLIN" + ttggss;
+		codigoMasa = "ELEMLIN-" + ttggss;
 		
 		// Si queremos coger todos los atributos del .shp
 		/*this.atributos = new ArrayList<ShapeAttribute>();

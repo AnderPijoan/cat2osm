@@ -330,15 +330,15 @@ public class ShapeParser extends Thread{
 				if (pro == 32628)                       // Canarias
 					outScript.write("ogr2ogr.exe -t_srs EPSG:4326 " +                          // proyeccion
 							f.getPath().substring(0, f.getPath().length()-4) + " " +   // archivo origen
-							Config.get("ResultPath")+"\\" + tipo + f.getName());        // archivo fin
+							Config.get("ResultPath") + "\\" +  Config.get("ResultFileName") + "\\" + tipo + f.getName());        // archivo fin
 				else if (23029 <= pro && pro <= 23031)	// ED50				
 					outScript.write("ogr2ogr.exe -s_srs \"+init=epsg:" + pro + " +nadgrids=.\\" + Config.get("NadgridsPath") + " +wktext\" -t_srs EPSG:4326 " + 
 							f.getPath().substring(0, f.getPath().length()-4) + " " +
-							Config.get("ResultPath")+"\\" + tipo + f.getName());
+							Config.get("ResultPath") + "\\" +  Config.get("ResultFileName") + "\\" + tipo + f.getName());
 				else if (25829 <= pro && pro <= 25831)  // ETRS89
 					outScript.write("ogr2ogr.exe -s_srs \"+init=epsg:" + pro + " +wktext\" -t_srs EPSG:4326 " +
 							f.getPath().substring(0, f.getPath().length()-4) + " " +
-							Config.get("ResultPath")+"\\" + tipo + f.getName());
+							Config.get("ResultPath") + "\\" +  Config.get("ResultFileName") + "\\" + tipo + f.getName());
 				outScript.close();
 
 				Runtime run = Runtime.getRuntime();
@@ -358,22 +358,22 @@ public class ShapeParser extends Thread{
 					proyeccion = "-s_srs \"+init=epsg:" + pro + " +wktext\"";
 
 				String command = "ogr2ogr " + proyeccion + " -t_srs EPSG:4326 " + 
-						"\"" + Config.get("ResultPath") + "/" + tipo + f.getName() + "\" " +  // archivo fin
+						"\"" + Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + tipo + f.getName() + "\" " +  // archivo fin
 						"\"" + f.toPath() + "\"";                                                 // archivo origen
 
-				FileWriter fstreamScript = new FileWriter(Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh");
+				FileWriter fstreamScript = new FileWriter(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/script" + tipo+f.getName() + ".sh");
 				BufferedWriter outScript = new BufferedWriter(fstreamScript);
 
 				outScript.write("#!/bin/bash\n");
 				outScript.write(command);
 				outScript.close();
-				Process pr = Runtime.getRuntime().exec( new String[] { "chmod", "+x", Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh" } );
+				Process pr = Runtime.getRuntime().exec( new String[] { "chmod", "+x", Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/script" + tipo+f.getName() + ".sh" } );
 				pr.waitFor();
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Ejecutando proyeccion de los shapefiles " +
 						tipo+f.getName() +": " + command);
 
 				Runtime run = Runtime.getRuntime();
-				pr  = run.exec( new String[] { Config.get("ResultPath")+"/script"+tipo+f.getName()+".sh" } );
+				pr  = run.exec( new String[] { Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/script" + tipo+f.getName() + ".sh" } );
 				pr.waitFor();
 				bf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
 				while ((line = bf.readLine()) != null)
@@ -383,7 +383,7 @@ public class ShapeParser extends Thread{
 			//line = "scripts/ogr2ogr.bat " + f.getPath().substring(0, f.getPath().length()-4) +" "+ Config.get("ResultPath")+"/"+tipo+f.getName() +" "+ f.getPath();
 		} catch (Exception er){ System.out.println("["+new Timestamp(new Date().getTime())+"] No se ha podido proyectar los shapefiles "+tipo+f.getName()+"."); er.printStackTrace(); }
 
-		return new File(Config.get("ResultPath")+"/"+tipo+f.getName());
+		return new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + tipo+f.getName());
 	}
 
 
@@ -394,7 +394,7 @@ public class ShapeParser extends Thread{
 	 */
 	public void borrarShpFiles(String filename){
 
-		String path = Config.get("ResultPath");
+		String path = Config.get("ResultPath") + "/" + Config.get("ResultFileName");
 
 		System.out.println("["+new Timestamp(new Date().getTime())+"] Terminado de leer los archivos "+filename+".");
 

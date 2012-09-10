@@ -72,7 +72,7 @@ public class ShapeElemtex extends Shape {
 
 		// Para agrupar geometrias segun su codigo de masa que como en este caso no existe se
 		// asigna el del nombre del fichero shapefile
-		codigoMasa = "ELEMTEX" + ttggss;
+		codigoMasa = "ELEMTEX-" + ttggss;
 		
 		// Si queremos coger todos los atributos del .shp
 		//		this.atributos = new ArrayList<ShapeAttribute>();

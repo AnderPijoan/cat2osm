@@ -106,8 +106,17 @@ public class Main {
 		File dir = new File(Config.get("ResultPath"));
 		if (!dir.exists()) 
 		{
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Creando el directorio donde almacenar el resultado ("+Config.get("ResultPath")+").");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Creando el directorio general de resultados ("+Config.get("ResultPath")+").");
 			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
+		
+		// Nos aseguramos de que existe la carpeta result/nombreresult
+		File dir2 = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName"));
+		if (!dir2.exists()) 
+		{
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Creando el directorio donde almacenar este resultado concreto ("+Config.get("ResultPath")+ "/" + Config.get("ResultFileName")+").");
+			try                { dir2.mkdirs(); }
 			catch (Exception e){ e.printStackTrace(); }
 		}
 
@@ -268,13 +277,6 @@ public class Main {
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Simplificando vias.");
 					catastro.simplificarWays(key, shapes.get(key));
 				}
-				
-				
-				// Operacion de union de calles, solo para ejes
-				if (key.startsWith("EJES")){
-				System.out.println("["+new Timestamp(new Date().getTime())+"]    Uniendo calles.");
-				catastro.unirShapes(key, shapes.get(key));
-				}
 
 
 				// Si son ELEMLIN o EJES, juntar todos los ways que compartan un node
@@ -296,7 +298,7 @@ public class Main {
 				catastro.printNodes(key, folder, shapes.get(key));			
 
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escribiendo el archivo resultado.\r");
-				catastro.juntarFiles(key, folder, Config.get("ResultFileName") + key);
+				catastro.juntarFiles(key, folder, Config.get("ResultFileName") + "-" + key);
 				System.out.println("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escrito el archivo resultado, Terminado.\r");
 
 			}

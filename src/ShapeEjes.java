@@ -89,7 +89,7 @@ public class ShapeEjes extends Shape {
 		// de EJES intente juntar todos los ways con todos los que se toquen
 		// (a diferencia de las otros elementos que solo tiene que unir ways si pertenecen
 		// a los mismos shapes)
-		codigoMasa = (via == null ? "EJESSINNOMBRE" : "EJES" + via.trim().replaceAll("[^\\p{L}\\p{N}]", ""));
+		codigoMasa = (via == null ? "EJES-SINNOMBRE" : "EJES-" + via.trim().replaceAll("[^\\p{L}\\p{N}]", ""));
 		
 		this.nodes = new ArrayList<Long>();
 		this.ways = new ArrayList<Long>();

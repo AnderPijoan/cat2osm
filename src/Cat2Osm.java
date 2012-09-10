@@ -111,7 +111,7 @@ public class Cat2Osm {
 		int bar = 0;
 		int pos = 0;
 		long timeElapsed = 0;
-		float size = shapesTotales.get("ELEMTEX189401").size();
+		float size = shapesTotales.get("ELEMTEX-189401").size();
 		long time = System.currentTimeMillis();
 
 		// Cache para almacenar las Parcelas y sus keys ya que luego no se pueden recuperar
@@ -148,7 +148,7 @@ public class Cat2Osm {
 		// Buscamos la parcela mas cercana
 		// Los shapes con key = "ELEMTEX189401" seran todos los elementos textuales de
 		// entradas a parcelas
-		for (Shape shapeTex : shapesTotales.get("ELEMTEX189401")){
+		for (Shape shapeTex : shapesTotales.get("ELEMTEX-189401")){
 
 			int progress = (int) ((pos++/size)*100);
 			if (bar != progress){
@@ -422,7 +422,7 @@ public class Cat2Osm {
 			else{
 
 				if (shapeTex.getNodesIds(0) != null && !shapeTex.getNodesIds(0).isEmpty()){
-					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), "ELEMTEX189401", shapeTex.getNodesIds(0).get(0)));
+					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), "ELEMTEX-189401", shapeTex.getNodesIds(0).get(0)));
 					if (nodeTex != null) nodeTex.addTag(new String[] {"FIXME","FIXME"});
 				}
 			}
@@ -804,7 +804,7 @@ public class Cat2Osm {
 		if (utils.getTotalNodes().get(key) == null)
 			return;
 
-		File dir = new File(Config.get("ResultPath") + "/" + folder);
+		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
 		if (!dir.exists()) 
 		{
 			try                { dir.mkdirs(); }
@@ -812,7 +812,7 @@ public class Cat2Osm {
 		}
 
 		// Archivo temporal para escribir los nodos
-		String fstreamNodes = Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key+ "tempNodes.osm";
+		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key+ "tempNodes.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
 
@@ -837,7 +837,7 @@ public class Cat2Osm {
 		if (utils.getTotalWays().get(key) == null)
 			return;
 
-		File dir = new File(Config.get("ResultPath") + "/" + folder);
+		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
 		if (!dir.exists()) 
 		{
 			try                { dir.mkdirs(); }
@@ -845,7 +845,7 @@ public class Cat2Osm {
 		}
 
 		// Archivo temporal para escribir los ways
-		String fstreamWays = Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key +"tempWays.osm";
+		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key +"tempWays.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
 
@@ -872,7 +872,7 @@ public class Cat2Osm {
 		if ( utils.getTotalRelations().get(key) == null)
 			return;
 
-		File dir = new File(Config.get("ResultPath") + "/" + folder);
+		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
 		if (!dir.exists()) 
 		{
 			try                { dir.mkdirs(); }
@@ -880,7 +880,7 @@ public class Cat2Osm {
 		}
 
 		// Archivo temporal para escribir los ways
-		String fstreamRelations = Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempRelations.osm";
+		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outRelations = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamRelations), "UTF-8"));
 
@@ -901,7 +901,7 @@ public class Cat2Osm {
 	 */
 	public void juntarFiles(String key, String folder, String filename) throws IOException{
 
-		String path = Config.get("ResultPath");
+		String path = Config.get("ResultPath") + "/" + Config.get("ResultFileName");
 
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
 		new File(path + "/" + folder + "/" + filename +".osm").delete();
@@ -919,9 +919,9 @@ public class Cat2Osm {
 		// Concatenamos todos los archivos
 		String str;
 
-		if (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempNodes.osm").exists())
+		if (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempNodes.osm").exists())
 		{
-			BufferedReader inNodes = new BufferedReader(new FileReader(path + "/" + folder + "/" +Config.get("ResultFileName") + key + "tempNodes.osm"));
+			BufferedReader inNodes = new BufferedReader(new FileReader(path + "/" + folder + "/" +Config.get("ResultFileName") + "-" + key + "tempNodes.osm"));
 			while ((str = inNodes.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
@@ -930,9 +930,9 @@ public class Cat2Osm {
 			inNodes.close();
 		}
 
-		if (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempWays.osm").exists())
+		if (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempWays.osm").exists())
 		{
-			BufferedReader inWays = new BufferedReader(new FileReader(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempWays.osm"));
+			BufferedReader inWays = new BufferedReader(new FileReader(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempWays.osm"));
 			while ((str = inWays.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
@@ -940,9 +940,9 @@ public class Cat2Osm {
 			inWays.close();
 		}
 
-		if (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempRelations.osm").exists())
+		if (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm").exists())
 		{
-			BufferedReader inRelations = new BufferedReader(new FileReader(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempRelations.osm"));
+			BufferedReader inRelations = new BufferedReader(new FileReader(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm"));
 			while ((str = inRelations.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
@@ -955,13 +955,13 @@ public class Cat2Osm {
 		outOsm.close();
 
 		boolean borrado = true;
-		borrado = borrado && (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempNodes.osm")).delete();
-		borrado = borrado && (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempWays.osm")).delete();
-		borrado = borrado && (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + key + "tempRelations.osm")).delete();
+		borrado = borrado && (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempNodes.osm")).delete();
+		borrado = borrado && (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempWays.osm")).delete();
+		borrado = borrado && (new File(path + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm")).delete();
 
 		if (!borrado)
 			System.out.println("["+new Timestamp(new Date().getTime())+"] NO se pudo borrar alguno de los archivos temporales." +
-					" Estos estarán en la carpeta "+ path +".");
+					" Estos estarán en la carpeta "+ path + "/" + folder +".");
 
 	}
 
@@ -3187,7 +3187,7 @@ public class Cat2Osm {
 				if (elemtex.getNodesIds(0) != null && !elemtex.getNodesIds(0).isEmpty()){
 
 					Long nodeTexId = elemtex.getNodesIds(0).get(0);
-					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), "ELEMTEX189401", nodeTexId));
+					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), "ELEMTEX-189401", nodeTexId));
 
 					if (nodeTex != null){
 						
@@ -3207,8 +3207,8 @@ public class Cat2Osm {
 
 							// Borramos el nodo original del Elemtex con los datos de la entrada
 //							List<Long> l = new ArrayList<Long>();
-//							l.add(utils.getTotalNodes().get("ELEMTEX189401").get(nodeTex));
-//							utils.deleteNodes("ELEMTEX189401", l);
+//							l.add(utils.getTotalNodes().get("ELEMTEX-189401").get(nodeTex));
+//							utils.deleteNodes("ELEMTEX-189401", l);
 
 						}
 						// Si no ha habido coincidencia, actualizamos la posicion del nodo inicial del Elemtex y 
@@ -3244,7 +3244,7 @@ public class Cat2Osm {
 
 										// Borramos el way de la lista general de ways
 										utils.getTotalWays().get(key).remove(way);
-										utils.getTotalNodes().get("ELEMTEX189401").remove(nodeTex);
+										utils.getTotalNodes().get("ELEMTEX-189401").remove(nodeTex);
 
 										// Actualizamos la coordenada del nodo Elemtex que tiene los tags del portal
 										nodeTex.setCoor(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate());
@@ -3252,7 +3252,7 @@ public class Cat2Osm {
 										// Anadimos el nuevo nodo al way
 										wayTemp.addNode(x+1, nodeTexId);
 										
-										// Leemos el nodo de la key = "ELEMTEX189401" y lo metemos en la nueva key que corresponde
+										// Leemos el nodo de la key = "ELEMTEX-189401" y lo metemos en la nueva key que corresponde
 										utils.getTotalNodes().get(key).put(nodeTex, nodeTexId);
 
 										// Metemos en la lista general el nuevo way con el mismo id que el que hemos borrado

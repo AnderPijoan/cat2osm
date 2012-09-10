@@ -980,7 +980,7 @@ do
             echo "FechaHasta=$fechah"         >> "$config_filename"
             echo "FechaConstruDesde=$fechacd" >> "$config_filename"
             echo "FechaConstruHasta=$fechach" >> "$config_filename"
-	    echo "MoverPortales=$movpor"     >> "$config_filename"
+	    echo "MovePortales=$movpor"     >> "$config_filename"
             echo "TipoRegistro=$tr"           >> "$config_filename"
             echo "PrintShapeIds=$psi"         >> "$config_filename"
           done
