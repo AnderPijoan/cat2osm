@@ -93,6 +93,21 @@ public class Main {
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
 
+
+		// Archivo global de resultado
+		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
+		new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm").delete();
+
+		// Archivo al que se le concatenan todos los archivos de nodos, ways y relations
+		String fstreamOsm = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outOsmGlobal = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
+
+		// Cabecera del archivo
+		outOsmGlobal.write("<?xml version='1.0' encoding='UTF-8'?>");outOsmGlobal.newLine();
+		outOsmGlobal.write("<osm version=\"0.6\" generator=\"cat2osm-"+Cat2Osm.VERSION+"\">");outOsmGlobal.newLine();
+		
+
 		// Cuando queremos ver todo el archivo Elemtex, tendremos que mostrar no solo las entradas sino todo
 		if (archivo.equals("ELEMTEX"))
 			Cat2Osm.utils.setOnlyEntrances(false);
@@ -110,7 +125,7 @@ public class Main {
 			try                { dir.mkdirs(); }
 			catch (Exception e){ e.printStackTrace(); }
 		}
-		
+
 		// Nos aseguramos de que existe la carpeta result/nombreresult
 		File dir2 = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName"));
 		if (!dir2.exists()) 
@@ -235,16 +250,16 @@ public class Main {
 
 		// Mover las entradas de las casas a sus respectivas parcelas
 		if (archivo.equals("*") && Config.get("MovePortales").equals("1")){
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
-			shapes = catastro.calcularEntradas(shapes);
+			//System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
+			//shapes = catastro.calcularEntradas(shapes);
 		}
-		
+
 		int pos = 0;
 		for (String key : utils.getTotalNodes().keySet()){
-			
+
 			String folder = key.startsWith("ELEM")? "elementos" : ( key.startsWith("EJES")? "ejes" : "masas" );
 
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Exportando " + key + "[" + pos++ +"/" + utils.getTotalNodes().keySet().size() + "]");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Exportando " + Config.get("ResultFileName") + "-" + key + "[" + pos++ +"/" + utils.getTotalNodes().keySet().size() + "]");
 
 			// Por si acaso si hubiera archivos de un fallo en ejecucion anterior
 			if (new File(Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key +"tempRelations.osm").exists()
@@ -252,8 +267,8 @@ public class Main {
 					&& new File(Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key +"tempNodes.osm").exists()){
 
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Se han encontrado 3 archivos temporales de una posible ejecución interrumpida, se procederá a juntarlos en un archivo resultado.");
-				catastro.juntarFiles(key, folder, Config.get("ResultFileName"));
-				System.out.println("["+new Timestamp(new Date().getTime())+"] ¡¡Terminada la exportación!!");
+				catastro.juntarFilesTemporales(key, folder, Config.get("ResultFileName"), outOsmGlobal);
+				System.out.println("["+new Timestamp(new Date().getTime())+"] ¡¡Terminada la exportación de " + Config.get("ResultFileName") + "!!");
 
 			}
 			else if (shapes.get(key) != null){
@@ -264,14 +279,14 @@ public class Main {
 					catastro.calcularUsos(key, shapes.get(key));
 				}
 
-				
+
 				// Operacion de simplificacion de relaciones sin tags relevantes
 				if (archivo.equals("*")){
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Simplificando Relaciones sin tags relevantes.");
 					catastro.simplificarRelationsSinTags(key, shapes.get(key));
 				}
 
-				
+
 				// Operacion de simplifiacion de vias
 				if (!key.startsWith("ELEMPUN") && !key.startsWith("ELEMTEX") ){
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Simplificando vias.");
@@ -287,24 +302,29 @@ public class Main {
 				}
 
 				// Escribir los datos
+				
 				if (!archivo.equals("ELEMPUN") && !archivo.equals("ELEMTEX")){
 					System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo relations.\r");
 					catastro.printRelations(key, folder, shapes.get(key));
 					System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escribiendo ways.\r");
 					catastro.printWays(key, folder, shapes.get(key));
 				}
-				
+
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escribiendo nodos.\r");
 				catastro.printNodes(key, folder, shapes.get(key));			
 
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escribiendo el archivo resultado.\r");
-				catastro.juntarFiles(key, folder, Config.get("ResultFileName") + "-" + key);
+				catastro.juntarFilesTemporales(key, folder, Config.get("ResultFileName") + "-" + key, outOsmGlobal);
 				System.out.println("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escrito el archivo resultado, Terminado.\r");
 
 			}
 		}
 
-		System.out.println("["+new Timestamp(new Date().getTime())+"] ¡¡Terminada la exportación!!");
+		// Terminamos el archivo global de resultado
+		outOsmGlobal.write("</osm>");outOsmGlobal.newLine();
+		outOsmGlobal.close();
+
+		System.out.println("["+new Timestamp(new Date().getTime())+"] ¡¡Terminada la exportación de " + Config.get("ResultFileName") + "!!");
 
 	}
 
@@ -426,7 +446,7 @@ public class Main {
 		outNodes.write("</osm>");
 		outNodes.newLine();
 		outNodes.close();
-		System.out.println("["+new Timestamp(new Date().getTime())+"] ¡¡Terminada la exportación!!");
+		System.out.println("["+new Timestamp(new Date().getTime())+"] ¡¡Terminada la exportación de usos de " + Config.get("ResultFileName") + "!!");
 
 	}
 

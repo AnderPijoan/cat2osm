@@ -33,14 +33,14 @@ public class RelationOsm {
 			ids.add(id);
 			types.add(type);
 			roles.add(role);}
-		
+
 		// Borramos si existiese algun nulo
 		ids.remove(null);
 		types.remove(null);
 		roles.remove(null);
 	}
 
-	
+
 	/** Inserta un nuevo member y desplaza los existentes a la derecha
 	 * @param pos
 	 * @param id
@@ -52,7 +52,7 @@ public class RelationOsm {
 			ids.add(pos,id);
 			types.add(pos,type);
 			roles.add(pos,role);}
-		
+
 		// Borramos si existiese algun nulo
 		ids.remove(null);
 		types.remove(null);
@@ -227,22 +227,22 @@ public class RelationOsm {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public String printRelation(String key, Long id, Cat2OsmUtils utils){
 		String s = "";
-		
+
 		// Si no esta dentro de las fechas de construccion indicadas
 		if ( fechaConstru < Long.parseLong(Config.get("FechaConstruDesde")) || fechaConstru > Long.parseLong(Config.get("FechaConstruHasta"))){
 			noprint(key, id, utils);
 			return "";
 		}
-		
+
 		if (ids.size()<1){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Relation id="+ id +" con menos de un way. No se imprimirá.");
 			noprint(key, id, utils);
 			return "";
 		}
-		
+
 		// Si una relation tiene menos de dos ways, deberia quedarse como way
 		// ya que sino es redundante.
-		else if (ids.size()==1){
+		else if (ids.size() == 1){
 
 			// Un way que va a ser inner en una relation solo tiene que tener los tags distintos
 			// respecto a sus outter
@@ -279,18 +279,19 @@ public class RelationOsm {
 			}
 
 			WayOsm way = ((WayOsm) utils.getKeyFromValue((Map<String, Map<Object, Long>>) ((Object)utils.getTotalWays()), key, ids.get(0)));
-			
+
 			if (way == null){
 				System.out.println("["+new Timestamp(new Date().getTime())+"] Una vía ha dado un error y no se imprimirá. Esto dejará sus nodos sueltos.");
 				return "";
-				}
-				
+			}
+
 			s = ("<way id=\""+ ids.get(0) +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\">\n");
-
+			
 			// Referencias a los nodos
-			for (int x = 0; x < way.getNodes().size(); x++)
-				s += ("<nd ref=\""+ way.getNodes().get(x) +"\"/>\n");
-
+			for (Long nodeId : way.getNodes())
+				if (((WayOsm) utils.getKeyFromValue((Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, id)).getNodes().contains(nodeId))
+					s += ("<nd ref=\""+ nodeId +"\"/>\n");
+			
 			// Mostrar los shapes que usan ese way, para debugging
 			if (way.getShapes() != null && Config.get("PrintShapeIds").equals("1"))
 				for (int x = 0; x < way.getShapes().size(); x++)
@@ -319,7 +320,7 @@ public class RelationOsm {
 
 			s += "<tag k=\"source\" v=\"catastro\"/>\n";
 			s += "<tag k=\"source:date\" v=\""+new StringBuffer(Cat2OsmUtils.getFechaArchivos()+"").insert(4, "-").toString().substring(0, 7)+"\"/>\n";
-			
+
 			s += ("</way>\n");
 		}
 
@@ -338,7 +339,7 @@ public class RelationOsm {
 					s += ("<member type=\""+ types.get(x) +"\" ref=\""+ ids.get(x)+"\" role=\""+ roles.get(x) +"\" />\n");			
 
 			for (int x = 0; x < tags.size(); x++){
-
+				
 				// Filtramos para que no salgan todos los tags, abajo se explica el porque
 				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].startsWith("CAT2OSMSHAPEID")) {
 
@@ -369,7 +370,7 @@ public class RelationOsm {
 			//sera un multipolygono
 			if (AreaCerrada(utils))
 				s += "<tag k=\"type\" v=\"multipolygon\"/>\n";
-			
+
 			s += "<tag k=\"source\" v=\"catastro\"/>\n";
 			s += "<tag k=\"source:date\" v=\""+new StringBuffer(Cat2OsmUtils.getFechaArchivos()+"").insert(4, "-").toString().substring(0, 7)+"\"/>\n";
 
@@ -411,23 +412,23 @@ public class RelationOsm {
 		if (this.fechaConstru > fechaConstru)
 			this.fechaConstru = fechaConstru;
 	}
-	
-	
+
+
 	public void noprint(String key, Long id, Cat2OsmUtils utils){
-		
-		List<WayOsm> ways = utils.getWays(key, ids);
 
-		for (WayOsm way : ways)
-			if (way != null)
-				for (String sId : shapes){
-					List<NodeOsm> nodes = utils.getNodes(key, way.getNodes());
-
-					for (NodeOsm node : nodes)
-						if (node != null)
-							node.deleteShapeId(sId);
-
-					way.deleteShapeId(sId);
-				}		
+//		List<WayOsm> ways = utils.getWays(key, ids);
+//
+//		for (WayOsm way : ways)
+//			if (way != null)
+//				for (String sId : shapes){
+//					List<NodeOsm> nodes = utils.getNodes(key, way.getNodes());
+//
+//					for (NodeOsm node : nodes)
+//						if (node != null)
+//							node.deleteShapeId(sId);
+//
+//					way.deleteShapeId(sId);
+//				}		
 	}
 
 }

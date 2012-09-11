@@ -363,11 +363,11 @@ public class Cat2OsmUtils {
      * @return nodes lista de NodeOsm
      */
     @SuppressWarnings("unchecked")
-    public synchronized List<NodeOsm> getNodes(String codigo, List<Long> ids){
+    public synchronized List<NodeOsm> getNodes(String key, List<Long> ids){
         List<NodeOsm> nodes = new ArrayList<NodeOsm>();
         
         for (Long l: ids)
-        	nodes.add(((NodeOsm) getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)totalNodes), codigo, l)));
+        	nodes.add(((NodeOsm) getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)totalNodes), key, l)));
         
         nodes.remove(null);
         
@@ -375,19 +375,18 @@ public class Cat2OsmUtils {
     }
     
 	/** Dada una lista de identificadores de nodes, borra esos nodes de la lista de nodos y de ways
-     * @param codigo Codigo de masa en la que estan esos nodes
+     * @param key Codigo de masa en la que estan esos nodes
      * @param ids Lista de nodos
      */
     @SuppressWarnings("unchecked")
-    public synchronized void deleteNodes(String codigo, List<Long> ids){
+    public synchronized void deleteNodes(String key, List<Long> ids){
     	
     	for (Long id : ids){
     		
-    		NodeOsm node = ((NodeOsm) getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)totalNodes), codigo, id));
-    		if (node != null)
-    		totalNodes.get(codigo).remove(node);
+    		NodeOsm node = ((NodeOsm) getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)totalNodes), key, id));
+    		totalNodes.get(key).remove(node);
     		
-    		for (WayOsm w : totalWays.get(codigo).keySet())
+    		for (WayOsm w : totalWays.get(key).keySet())
     			w.getNodes().remove(id);
     	}
     }

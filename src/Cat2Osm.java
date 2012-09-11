@@ -2,11 +2,13 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -475,7 +477,7 @@ public class Cat2Osm {
 		for (Shape shape: shapes) {
 			if (shape != (null) && shape instanceof ShapeConstru) {
 				if (tagsBuildingMap.containsKey(shape.getRefCat())) {
-					RelationOsm r2 = ((RelationOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object) utils.getTotalRelations()), key, shape.getRelationId()));	
+					RelationOsm r2 = ((RelationOsm) utils.getKeyFromValue((Map<String, Map <Object, Long>>) ((Object) utils.getTotalRelations()), key, shape.getRelationId()));	
 					r2.addTags(tagsBuildingMap.get(shape.getRefCat()));
 				}
 			}
@@ -598,9 +600,9 @@ public class Cat2Osm {
 								utils.getTotalWays().get(key).remove(removeWay);
 
 								// Borramos el way que no se va a usar de los shapes
-								for (int shapeIds = 0; shapeIds < removeWay.getShapes().size(); shapeIds++){
+								for (int shapeIdsPos = 0; shapeIdsPos < removeWay.getShapes().size(); shapeIdsPos++){
 
-									String shapeId = removeWay.getShapes().get(shapeIds);
+									String shapeId = removeWay.getShapes().get(shapeIdsPos);
 
 									for (Shape s : shapes)
 										if (s != null && s.getShapeId() == shapeId)
@@ -855,7 +857,7 @@ public class Cat2Osm {
 				for (int pos = 0; pos < shape.getWaysIds(subpoligons).size(); pos++)
 					try {
 						outWays.write(((WayOsm)utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, shape.getWaysIds(subpoligons).get(pos)))
-								.printWay(shape.getWaysIds(subpoligons).get(pos)));
+								.printWay(key, shape.getWaysIds(subpoligons).get(pos), utils));
 					} catch (Exception e){}
 		outWays.close();
 	}
@@ -879,7 +881,7 @@ public class Cat2Osm {
 			catch (Exception e){ e.printStackTrace(); }
 		}
 
-		// Archivo temporal para escribir los ways
+		// Archivo temporal para escribir relations
 		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outRelations = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamRelations), "UTF-8"));
@@ -899,7 +901,7 @@ public class Cat2Osm {
 	 * @param tF Ruta donde estan los archivos temporadles (nodos, ways y relations)
 	 * @throws IOException
 	 */
-	public void juntarFiles(String key, String folder, String filename) throws IOException{
+	public void juntarFilesTemporales(String key, String folder, String filename, BufferedWriter outOsmGlobal) throws IOException{
 
 		String path = Config.get("ResultPath") + "/" + Config.get("ResultFileName");
 
@@ -926,6 +928,8 @@ public class Cat2Osm {
 				outOsm.write(str);
 				outOsm.newLine();
 
+				outOsmGlobal.write(str);
+				outOsmGlobal.newLine();
 			}
 			inNodes.close();
 		}
@@ -936,6 +940,9 @@ public class Cat2Osm {
 			while ((str = inWays.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
+				
+				outOsmGlobal.write(str);
+				outOsmGlobal.newLine();
 			}
 			inWays.close();
 		}
@@ -946,11 +953,13 @@ public class Cat2Osm {
 			while ((str = inRelations.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
+				
+				outOsmGlobal.write(str);
+				outOsmGlobal.newLine();
 			}
 			inRelations.close();
 		}
-		outOsm.write("</osm>");
-		outOsm.newLine();
+		outOsm.write("</osm>");outOsm.newLine();
 
 		outOsm.close();
 
@@ -964,7 +973,50 @@ public class Cat2Osm {
 					" Estos estarán en la carpeta "+ path + "/" + folder +".");
 
 	}
+	
+	
+	public void printResults(String archivo, String key, String folder, List<Shape> shapes, BufferedWriter outOsmGlobal) throws IOException{
+		
+		// Comprobar si existe el directorio para guardar los archivos
+		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
+		if (!dir.exists()) 
+		{
+			try                { dir.mkdirs(); }
+			catch (Exception e){ e.printStackTrace(); }
+		}
+		
+		// Archivo temporal para escribir relations
+		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outRelations = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamRelations), "UTF-8"));
 
+		// Archivo temporal para escribir los ways
+		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key +"tempWays.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
+	
+		// Archivo temporal para escribir los nodos
+		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key+ "tempNodes.osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
+		
+		
+		// Recorremos todos los shapes
+		for(Shape shape : shapes){
+			
+			// Empezamos comprobando la relation
+			
+			
+		}
+		
+		outRelations.close();
+		outWays.close();
+		outNodes.close();
+		
+		System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escribiendo el archivo resultado.\r");
+		juntarFilesTemporales(key, folder, Config.get("ResultFileName") + "-" + key, outOsmGlobal);
+	}
+	
 
 	/** Lee linea a linea el archivo cat, coge los shapes q coincidan 
 	 * con esa referencia catastral y les anade los tags de los registros .cat
