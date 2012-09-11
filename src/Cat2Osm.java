@@ -35,7 +35,7 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
 public class Cat2Osm {
 
-	public static final String VERSION = "2012-09-07";
+	public static final String VERSION = "2012-09-11";
 	public static Cat2OsmUtils utils;
 
 
@@ -93,8 +93,8 @@ public class Cat2Osm {
 
 		for(Shape shape : shapes) 
 			if (shape != null && shape instanceof ShapeParcela)
-				shapeList.add(shape);
-
+				shapeList.add((ShapeParcela) shape);
+		
 		return shapeList;
 	}
 
@@ -673,8 +673,7 @@ public class Cat2Osm {
 								!tags.get(x)[0].startsWith("CAT2OSMSHAPEID") && 
 								!tags.get(x)[0].equals("source") && 
 								!tags.get(x)[0].equals("source:date") && 
-								!tags.get(x)[0].equals("type") && 
-								!tags.get(x)[0].equals("catastro:ref"))
+								!tags.get(x)[0].equals("type"))
 							with_data = true;
 
 				}
@@ -793,106 +792,6 @@ public class Cat2Osm {
 		System.out.println("["+new Timestamp(new Date().getTime())+"]    Terminado.");
 		return shapes;
 
-	}
-
-
-	/** Escribe el osm con todos los nodos (Del archivo totalNodes, sin orden)
-	 * @param tF Ruta donde escribir este archivo, sera temporal
-	 * @throws IOException
-	 */
-	@SuppressWarnings({ "unchecked" })
-	public void printNodes(String key, String folder, List<Shape> shapes) throws IOException{
-
-		if (utils.getTotalNodes().get(key) == null)
-			return;
-
-		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
-		if (!dir.exists()) 
-		{
-			try                { dir.mkdirs(); }
-			catch (Exception e){ e.printStackTrace(); }
-		}
-
-		// Archivo temporal para escribir los nodos
-		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key+ "tempNodes.osm";
-		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
-
-		for (Shape shape : shapes)
-			for (int subpoligons = 0; subpoligons < shape.getPoligons().size(); subpoligons++)
-				for (int pos = 0; pos < shape.getNodesIds(subpoligons).size(); pos++)
-					try{
-						outNodes.write(((NodeOsm)utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, shape.getNodesIds(subpoligons).get(pos)))
-								.printNode(shape.getNodesIds(subpoligons).get(pos)));
-					} catch (Exception e){}
-		outNodes.close();
-	}
-
-
-	/** Escribe el osm con todos los ways (Del archivo waysTotales, sin orden)
-	 * @param tF Ruta donde escribir este archivo, sera temporal
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unchecked")
-	public void printWays(String key, String folder, List<Shape> shapes) throws IOException{
-
-		if (utils.getTotalWays().get(key) == null)
-			return;
-
-		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
-		if (!dir.exists()) 
-		{
-			try                { dir.mkdirs(); }
-			catch (Exception e){ e.printStackTrace(); }
-		}
-
-		// Archivo temporal para escribir los ways
-		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key +"tempWays.osm";
-		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
-
-		// Escribimos todos los ways y sus referencias a los nodos en el archivo
-		for (Shape shape : shapes)
-			for (int subpoligons = 0; subpoligons < shape.getPoligons().size(); subpoligons++)
-				for (int pos = 0; pos < shape.getWaysIds(subpoligons).size(); pos++)
-					try {
-						outWays.write(((WayOsm)utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, shape.getWaysIds(subpoligons).get(pos)))
-								.printWay(key, shape.getWaysIds(subpoligons).get(pos), utils));
-					} catch (Exception e){}
-		outWays.close();
-	}
-
-
-	/** Escribe el osm con todas las relations. 
-	 * Este si que hay que hacerlo desde los shapes para saber los poligonos inner y outer
-	 * @param tF Ruta donde escribir este archivo, sera temporal
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unchecked")
-	public void printRelations(String key, String folder, List<Shape> shapes) throws IOException{
-
-		if ( utils.getTotalRelations().get(key) == null)
-			return;
-
-		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
-		if (!dir.exists()) 
-		{
-			try                { dir.mkdirs(); }
-			catch (Exception e){ e.printStackTrace(); }
-		}
-
-		// Archivo temporal para escribir relations
-		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm";
-		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outRelations = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamRelations), "UTF-8"));
-
-		// Escribimos todos las relaciones y sus referencias a los ways en el archivo
-		for (Shape shape : shapes)
-			try {
-				outRelations.write( ((RelationOsm)utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape.getRelationId()))
-						.printRelation(key, shape.getRelationId() ,utils));
-			} catch (Exception e){}
-		outRelations.close();
 	}
 
 
@@ -1108,12 +1007,12 @@ public class Cat2Osm {
 			String key = "";
 
 			if (tipo.equals("UR") && c.getRefCatastral() != null) // El codigo de masa son los primeros 5 caracteres
-				key = c.getRefCatastral().substring(0, 5).replaceAll("[^\\p{L}\\p{N}]", "");
+				key = c.getRefCatastral().substring(0, 5).replaceAll("[^\\p{L}\\p{N}]", "") + "-";
 			if (tipo.equals("RU") && c.getRefCatastral() != null) // El codigo de masa son los caracteres 6, 7 y 8
-				key = c.getRefCatastral().substring(6, 9).replaceAll("[^\\p{L}\\p{N}]", "");
-
-			if (!key.equals("") && shapesTotales.get(key) != null && (c.getTipoRegistro() == tipoRegistrosBuscar || tipoRegistrosBuscar == 0)){
-
+				key = c.getRefCatastral().substring(6, 9).replaceAll("[^\\p{L}\\p{N}]", "") + "-";
+			
+			if (shapesTotales.get(key) != null && (c.getTipoRegistro() == tipoRegistrosBuscar || tipoRegistrosBuscar == 0)){
+				
 				// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
 				List <Shape> matches = buscarRefCat(shapesTotales.get(key), c.getRefCatastral());
 
@@ -1133,10 +1032,11 @@ public class Cat2Osm {
 						// se ha hecho que la parcela acumule todos los destinos y usos y al final elija el que mayor
 						// area tiene. Ese dato solo se almacena en el shape, luego habra que llamar al metodo
 						// que calcule los destinos para pasarlos a las relaciones.
-					case 14:
+					case 14: 
 						matches = buscarParce(matches);
-						for (Shape match : matches)
+						for (Shape match : matches){
 							((ShapeParcela) match).addDestino(c.getUsoDestino(), c.getArea());
+						}
 						break;
 
 						// El registro 15 es para bienes inmuebles pero como no hay forma de relacionarlo
@@ -1145,8 +1045,9 @@ public class Cat2Osm {
 						// que calcule los destinos para pasarlos a las relaciones.
 					case 15:
 						matches = buscarParce(matches);
-						for (Shape match : matches)
+						for (Shape match : matches){
 							((ShapeParcela) match).addUso(c.getUsoDestino(), c.getArea());
+						}
 						break;
 
 						// Para los tipos de registro de subparcelas, buscamos la subparcela concreta para

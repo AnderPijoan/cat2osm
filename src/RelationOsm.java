@@ -273,9 +273,12 @@ public class RelationOsm {
 			way.getNodes().remove(null);
 			
 			// Referencias a los nodos
-			for (Long nodeId : way.getNodes()){
+			for (Long nodeId : way.getNodes()){				
 					s += ("<nd ref=\""+ nodeId +"\"/>\n");
 			}
+			
+			if (way.getNodes().get(0) != way.getNodes().get(way.getNodes().size()-1) && refCatastral != null)
+				System.out.println(refCatastral);
 			
 			// Mostrar los shapes que usan ese way, para debugging
 			if (way.getShapes() != null && Config.get("PrintShapeIds").equals("1"))

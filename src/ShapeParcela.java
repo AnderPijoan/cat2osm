@@ -252,6 +252,7 @@ public class ShapeParcela extends Shape {
 		}
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public String getUsoDestinoMasArea(){
 		
 		// Si hay destinos cogemos el de mayor area
@@ -288,7 +289,6 @@ public class ShapeParcela extends Shape {
 			}
 			return uso;
 		}
-
 		return "";
 	}
 

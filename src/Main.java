@@ -92,20 +92,6 @@ public class Main {
 		// Clases
 		Cat2OsmUtils utils = new Cat2OsmUtils();
 		Cat2Osm catastro = new Cat2Osm(utils);
-
-
-		// Archivo global de resultado
-		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
-		new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm").delete();
-
-		// Archivo al que se le concatenan todos los archivos de nodos, ways y relations
-		String fstreamOsm = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm";
-		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outOsmGlobal = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
-
-		// Cabecera del archivo
-		outOsmGlobal.write("<?xml version='1.0' encoding='UTF-8'?>");outOsmGlobal.newLine();
-		outOsmGlobal.write("<osm version=\"0.6\" generator=\"cat2osm-"+Cat2Osm.VERSION+"\">");outOsmGlobal.newLine();
 		
 
 		// Cuando queremos ver todo el archivo Elemtex, tendremos que mostrar no solo las entradas sino todo
@@ -135,6 +121,20 @@ public class Main {
 			catch (Exception e){ e.printStackTrace(); }
 		}
 
+		
+		// Archivo global de resultado
+		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
+		new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm").delete();
+
+		// Archivo al que se le concatenan todos los archivos de nodos, ways y relations
+		String fstreamOsm = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm";
+		// Indicamos que el archivo se codifique en UTF-8
+		BufferedWriter outOsmGlobal = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
+
+		// Cabecera del archivo
+		outOsmGlobal.write("<?xml version='1.0' encoding='UTF-8'?>");outOsmGlobal.newLine();
+		outOsmGlobal.write("<osm version=\"0.6\" generator=\"cat2osm-"+Cat2Osm.VERSION+"\">");outOsmGlobal.newLine();
+		
 
 		Pattern p = Pattern.compile("\\d{4}-\\d{1,2}");
 		Matcher m = p.matcher(Config.get("UrbanoCATFile"));

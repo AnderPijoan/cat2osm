@@ -353,7 +353,7 @@ public class Gui extends JFrame {
 					out.write("\nFechaConstruHasta="+fconstruhasta.getText());
 					out.write("\nTipoRegistro="+tipoReg.getSelectedItem());
 					out.write("\nMovePortales="+(movePortales.getSelectedIndex()+1)%2);
-					out.write("\nShapeIds="+shapesId.getSelectedIndex());
+					out.write("\nPrintShapeIds="+shapesId.getSelectedIndex());
 					if (fcRules.getSelectedFile() != null)out.write("\nElemtexRules="+fcRules.getSelectedFile());
 
 					out.close();
