@@ -250,8 +250,8 @@ public class Main {
 
 		// Mover las entradas de las casas a sus respectivas parcelas
 		if (archivo.equals("*") && Config.get("MovePortales").equals("1")){
-			//System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
-			//shapes = catastro.calcularEntradas(shapes);
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
+			shapes = catastro.calcularEntradas(shapes);
 		}
 
 		int pos = 0;
@@ -300,22 +300,14 @@ public class Main {
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Uniendo shapes.");
 					catastro.unirShapes(key, shapes.get(key));
 				}
-
-				// Escribir los datos
 				
-				if (!archivo.equals("ELEMPUN") && !archivo.equals("ELEMTEX")){
-					System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo relations.\r");
-					catastro.printRelations(key, folder, shapes.get(key));
-					System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escribiendo ways.\r");
-					catastro.printWays(key, folder, shapes.get(key));
-				}
+				// Escribir los datos en los archivos temporales
+				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo archivos temporales.\r");
+				catastro.printResults(key, folder, shapes.get(key));
 
-				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escribiendo nodos.\r");
-				catastro.printNodes(key, folder, shapes.get(key));			
-
-				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escribiendo el archivo resultado.\r");
+				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo el archivo resultado.\r");
 				catastro.juntarFilesTemporales(key, folder, Config.get("ResultFileName") + "-" + key, outOsmGlobal);
-				System.out.println("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escrito el archivo resultado, Terminado.\r");
+				System.out.println("["+new Timestamp(new Date().getTime())+"]    Terminado " + Config.get("ResultFileName") + "-" + key + "[" + pos++ +"/" + utils.getTotalNodes().keySet().size() + "]\r");
 
 			}
 		}

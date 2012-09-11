@@ -127,24 +127,24 @@ public class Cat2Osm {
 
 		for (String key : shapesTotales.keySet())
 			if (!key.startsWith("EJES") && !key.startsWith("ELEM"))
-			for (Shape shapePar : shapesTotales.get(key)){
+				for (Shape shapePar : shapesTotales.get(key)){
 
-				// Si es un shape de parcela y tiene geometria
-				if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
+					// Si es un shape de parcela y tiene geometria
+					if (shapePar instanceof ShapeParcela &&  shapePar.getPoligons() != null && !shapePar.getPoligons().isEmpty()){
 
-					// Cogemos la geometria exterior de la parcela
-					Geometry geom = (LineString) shapePar.getPoligons().get(0);
+						// Cogemos la geometria exterior de la parcela
+						Geometry geom = (LineString) shapePar.getPoligons().get(0);
 
-					// Para hacer la query es necesario en Envelope
-					Envelope env = geom.getEnvelopeInternal();
+						// Para hacer la query es necesario en Envelope
+						Envelope env = geom.getEnvelopeInternal();
 
-					// Si existe
-					if (!env.isNull()){
-						index.insert(env, new LocationIndexedLine(geom));
-						cacheKeys.put((ShapeParcela) shapePar, key);
+						// Si existe
+						if (!env.isNull()){
+							index.insert(env, new LocationIndexedLine(geom));
+							cacheKeys.put((ShapeParcela) shapePar, key);
+						}
 					}
 				}
-			}
 
 
 		// Buscamos la parcela mas cercana
@@ -940,7 +940,7 @@ public class Cat2Osm {
 			while ((str = inWays.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
-				
+
 				outOsmGlobal.write(str);
 				outOsmGlobal.newLine();
 			}
@@ -953,7 +953,7 @@ public class Cat2Osm {
 			while ((str = inRelations.readLine()) != null){
 				outOsm.write(str);
 				outOsm.newLine();
-				
+
 				outOsmGlobal.write(str);
 				outOsmGlobal.newLine();
 			}
@@ -973,10 +973,11 @@ public class Cat2Osm {
 					" Estos estarán en la carpeta "+ path + "/" + folder +".");
 
 	}
-	
-	
-	public void printResults(String archivo, String key, String folder, List<Shape> shapes, BufferedWriter outOsmGlobal) throws IOException{
-		
+
+
+	@SuppressWarnings("unchecked")
+	public void printResults(String key, String folder, List<Shape> shapes) throws IOException{
+
 		// Comprobar si existe el directorio para guardar los archivos
 		File dir = new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder);
 		if (!dir.exists()) 
@@ -984,7 +985,7 @@ public class Cat2Osm {
 			try                { dir.mkdirs(); }
 			catch (Exception e){ e.printStackTrace(); }
 		}
-		
+
 		// Archivo temporal para escribir relations
 		String fstreamRelations = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key + "tempRelations.osm";
 		// Indicamos que el archivo se codifique en UTF-8
@@ -994,29 +995,96 @@ public class Cat2Osm {
 		String fstreamWays = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key +"tempWays.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outWays = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamWays), "UTF-8"));
-	
+
 		// Archivo temporal para escribir los nodos
 		String fstreamNodes = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + folder + "/" + Config.get("ResultFileName") + "-" + key+ "tempNodes.osm";
 		// Indicamos que el archivo se codifique en UTF-8
 		BufferedWriter outNodes = new BufferedWriter(new OutputStreamWriter (new FileOutputStream(fstreamNodes), "UTF-8"));
-		
-		
+
+		boolean relationToWay = false;
+		boolean waysOK = true;
+		boolean nodesOK = true;
+
 		// Recorremos todos los shapes
 		for(Shape shape : shapes){
+
+			relationToWay = false;
 			
 			// Empezamos comprobando la relation
-			
-			
+			RelationOsm relation = (RelationOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape.getRelationId());
+
+			if (relation != null){
+				
+				relation.getIds().remove(null);
+				
+				// Si no esta dentro de las fechas de construccion indicadas no se imprime
+				if ( relation.getFechaConstru() < Long.parseLong(Config.get("FechaConstruDesde")) || relation.getFechaConstru() > Long.parseLong(Config.get("FechaConstruHasta"))){
+					break;
+				}
+				
+				// Si no tiene ids no se imprime
+				if (relation.getIds().size()<1){
+					System.out.println("["+new Timestamp(new Date().getTime())+"]    Relation id="+ shape.getRelationId() +" con menos de un way. No se imprimirá.");
+					break;
+				}
+				
+				// Para asegurarnos de que todos los ways se imprimen bien
+				waysOK = true;
+				
+				// Recorremos todos los ways que componen la relation
+				for (Long wayId : relation.getIds()){
+
+					WayOsm way = (WayOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, wayId);
+					
+					if (way != null && waysOK){
+						
+						way.getNodes().remove(null);
+						
+						// Si unicamente esta compuesta por un way, debera quedarse como way en lugar de relation ya que
+						// sino es redundante. Por ello imprimiremos los nodos y luego la relation como way
+						if (relation.getIds().size() == 1) relationToWay = true;
+						
+						// Para asegurarnos de que todos los nodos se imprimen bien
+						nodesOK = true;
+						
+						// Recorremos todos los nodos del way y los imprimimos
+						for (Long nodeId : way.getNodes()){
+
+							NodeOsm node = (NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, nodeId);
+
+							if (node != null){
+								outNodes.write(node.printNode(nodeId)); outNodes.newLine();
+							}
+							else{
+								nodesOK = false;
+							}
+								
+						}
+						
+						// Si los nodos se han impreso bien
+						if (!relationToWay && nodesOK){
+							outWays.write(way.printWay(key, wayId, utils));
+						}
+						else if(!relationToWay){
+							waysOK = false;
+						}
+					}
+				}
+			if (!relationToWay && waysOK){
+				outRelations.write(relation.printRelation(key, shape.getRelationId(), utils));
+			}
+			else if (relationToWay && waysOK){
+				outWays.write(relation.printRelation(key, shape.getRelationId(), utils));
+			}
+			}
 		}
-		
+
 		outRelations.close();
 		outWays.close();
 		outNodes.close();
-		
-		System.out.print("["+new Timestamp(new Date().getTime())+"]    Escritas relations, Escritos ways, Escritos nodos, Escribiendo el archivo resultado.\r");
-		juntarFilesTemporales(key, folder, Config.get("ResultFileName") + "-" + key, outOsmGlobal);
+
 	}
-	
+
 
 	/** Lee linea a linea el archivo cat, coge los shapes q coincidan 
 	 * con esa referencia catastral y les anade los tags de los registros .cat
@@ -3205,7 +3273,7 @@ public class Cat2Osm {
 	 */
 	@SuppressWarnings("unchecked")
 	public void anadirEntradaParcela(String key, ShapeParcela parcela, ShapeElemtex elemtex, Coordinate espejo){
-		
+
 		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
 		com.vividsolutions.jts.geom.GeometryFactory factory = JTSFactoryFinder.getGeometryFactory(null);
 
@@ -3242,13 +3310,13 @@ public class Cat2Osm {
 					NodeOsm nodeTex = ((NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), "ELEMTEX-189401", nodeTexId));
 
 					if (nodeTex != null){
-						
+
 						// Si el nodo de entrada va a crearse justo sobre un nodo ya existente, lo reutilizamos
 						Coordinate coor = new Coordinate(Cat2OsmUtils.round(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate().x,7), Cat2OsmUtils.round(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate().y,7));
 						Long matchId = utils.getTotalNodes().get(key).get(new NodeOsm(coor));
 
 						if (matchId != null){
-							
+
 							NodeOsm match = ((NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, matchId));
 
 							match.addShapes(nodeTex.getShapes());
@@ -3258,9 +3326,9 @@ public class Cat2Osm {
 							utils.getTotalNodes().get(key).put(match, matchId);
 
 							// Borramos el nodo original del Elemtex con los datos de la entrada
-//							List<Long> l = new ArrayList<Long>();
-//							l.add(utils.getTotalNodes().get("ELEMTEX-189401").get(nodeTex));
-//							utils.deleteNodes("ELEMTEX-189401", l);
+							//							List<Long> l = new ArrayList<Long>();
+							//							l.add(utils.getTotalNodes().get("ELEMTEX-189401").get(nodeTex));
+							//							utils.deleteNodes("ELEMTEX-189401", l);
 
 						}
 						// Si no ha habido coincidencia, actualizamos la posicion del nodo inicial del Elemtex y 
@@ -3300,10 +3368,10 @@ public class Cat2Osm {
 
 										// Actualizamos la coordenada del nodo Elemtex que tiene los tags del portal
 										nodeTex.setCoor(geomParcela.intersection(segmentoEntradaEspejo).getCoordinate());
-										
+
 										// Anadimos el nuevo nodo al way
 										wayTemp.addNode(x+1, nodeTexId);
-										
+
 										// Leemos el nodo de la key = "ELEMTEX-189401" y lo metemos en la nueva key que corresponde
 										utils.getTotalNodes().get(key).put(nodeTex, nodeTexId);
 
@@ -3312,7 +3380,7 @@ public class Cat2Osm {
 
 										// Anadimos el nuevo id de nodo al shape de parcela
 										parcela.getNodesIds(0).add(x+1, nodeTexId);
-										
+
 										break;
 									}
 								}

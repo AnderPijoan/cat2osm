@@ -224,56 +224,39 @@ public class RelationOsm {
 	 * @param id Id de la relation
 	 * @return Devuelve en un String la relation lista para imprimir
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked" })
 	public String printRelation(String key, Long id, Cat2OsmUtils utils){
 		String s = "";
 
-		// Si no esta dentro de las fechas de construccion indicadas
-		if ( fechaConstru < Long.parseLong(Config.get("FechaConstruDesde")) || fechaConstru > Long.parseLong(Config.get("FechaConstruHasta"))){
-			noprint(key, id, utils);
-			return "";
-		}
-
-		if (ids.size()<1){
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Relation id="+ id +" con menos de un way. No se imprimirá.");
-			noprint(key, id, utils);
-			return "";
-		}
-
 		// Si una relation tiene menos de dos ways, deberia quedarse como way
 		// ya que sino es redundante.
-		else if (ids.size() == 1){
+		if (ids.size() == 1){
 
 			// Un way que va a ser inner en una relation solo tiene que tener los tags distintos
 			// respecto a sus outter
-			Iterator<Entry<RelationOsm, Long>> it = utils.getTotalRelations().get(key).entrySet().iterator();
-
-			// Para todas las relaciones que hay
-			while(it.hasNext()){
-				Map.Entry e = (Map.Entry) it.next();
+			for (RelationOsm relation : utils.getTotalRelations().get(key).keySet()){
 
 				// Si una tiene el id del way que vamos a imprimir
-				if ( ((RelationOsm) e.getKey()).getIds().contains(ids.get(0))){
+				if ( relation.getIds().contains(ids.get(0))){
 
 					// Cogemos la posicion que ocupa ese id en la lista de ids de la relacion
-					int pos = ((RelationOsm) e.getKey()).getIds().indexOf(ids.get(0));
+					int pos = relation.getIds().indexOf(ids.get(0));
 
 					// Si tiene un role de inner
-					if (((RelationOsm) e.getKey()).getRoles().get(pos).equals("inner")){
-						for (int y = 0; y < ((RelationOsm) e.getKey()).getIds().size(); y++)
+					if (relation.getRoles().get(pos).equals("inner")){
+						for (int y = 0; y < relation.getIds().size(); y++)
 							if (y != pos)
-								for (int z = 0; z < ((RelationOsm) e.getKey()).getTags().size(); z++)
+								for (int z = 0; z < relation.getTags().size(); z++)
 									for (int w = 0; w < this.tags.size(); w++)
-										if ( (this.tags.get(w)[0]).equals(((RelationOsm) e.getKey()).getTags().get(z)[0]) && (this.tags.get(w)[1]).equals(((RelationOsm) e.getKey()).getTags().get(z)[1]))
+										// Eliminamos los tags que coincidan ya que los del inner estan implicitos y no hay que escribirlos
+										if ( (this.tags.get(w)[0]).equals(relation.getTags().get(z)[0]) && (this.tags.get(w)[1]).equals(relation.getTags().get(z)[1]))
 											this.tags.remove(w);
 
 						// Este metodo de arriba se carga el building=yes y es necesario si tiene un building:levels
-						for (String[] tag : ((RelationOsm) e.getKey()).getTags())
+						for (String[] tag : relation.getTags())
 							if (tag[0].equals("building:levels")){
-								String[] temp = {"building","yes"};
-								((RelationOsm) e.getKey()).addTag(temp);
+								relation.addTag(new String[]{"building","yes"});
 							}
-
 					}
 				}
 			}
@@ -287,16 +270,19 @@ public class RelationOsm {
 
 			s = ("<way id=\""+ ids.get(0) +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" version=\"6\">\n");
 			
+			way.getNodes().remove(null);
+			
 			// Referencias a los nodos
-			for (Long nodeId : way.getNodes())
-				if (((WayOsm) utils.getKeyFromValue((Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, id)).getNodes().contains(nodeId))
+			for (Long nodeId : way.getNodes()){
 					s += ("<nd ref=\""+ nodeId +"\"/>\n");
+			}
 			
 			// Mostrar los shapes que usan ese way, para debugging
 			if (way.getShapes() != null && Config.get("PrintShapeIds").equals("1"))
 				for (int x = 0; x < way.getShapes().size(); x++)
 					s += "<tag k=\"CAT2OSMSHAPEID"+x+"\" v=\""+way.getShapes().get(x)+"\"/>\n";
 
+			// Imprimir los tags
 			for (int x = 0; x < tags.size(); x++) {
 
 				// Filtramos para que no salgan todos los tags, siguiente bucle se explica el porque
@@ -377,7 +363,6 @@ public class RelationOsm {
 			s += ("</relation>\n");
 
 			if (!with_data){
-				noprint(key, id, utils);
 				return "";
 			}
 
@@ -385,7 +370,7 @@ public class RelationOsm {
 
 		return s;
 	}
-
+	
 
 	public List<String> getShapes() {
 		return shapes;
@@ -411,24 +396,6 @@ public class RelationOsm {
 	public void setFechaConstru(long fechaConstru) {
 		if (this.fechaConstru > fechaConstru)
 			this.fechaConstru = fechaConstru;
-	}
-
-
-	public void noprint(String key, Long id, Cat2OsmUtils utils){
-
-//		List<WayOsm> ways = utils.getWays(key, ids);
-//
-//		for (WayOsm way : ways)
-//			if (way != null)
-//				for (String sId : shapes){
-//					List<NodeOsm> nodes = utils.getNodes(key, way.getNodes());
-//
-//					for (NodeOsm node : nodes)
-//						if (node != null)
-//							node.deleteShapeId(sId);
-//
-//					way.deleteShapeId(sId);
-//				}		
 	}
 
 }

@@ -333,6 +333,9 @@ public class Cat2OsmUtils {
 	@SuppressWarnings("unchecked")
 	public synchronized Object getKeyFromValue(Map<String, Map <Object, Long>> map, String key, Long id){
 		
+		if (map.get(key) == null)
+			return null;
+		
 		for (Object o: map.get(key).entrySet()) {
 			Map.Entry<Object,Long> entry = (Map.Entry<Object, Long>) o;
 			if(entry.getValue().equals(id))
