@@ -251,7 +251,9 @@ public class Main {
 		// Mover las entradas de las casas a sus respectivas parcelas
 		if (archivo.equals("*") && Config.get("MovePortales").equals("1")){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Moviendo puntos de entrada a sus parcelas mas cercanas.");
-			shapes = catastro.calcularEntradas(shapes);
+			HashMap <String, List<Shape>> shapesTemp = catastro.calcularEntradas(shapes);
+			if (shapesTemp != null)
+			shapes = shapesTemp;
 		}
 
 		int pos = 0;

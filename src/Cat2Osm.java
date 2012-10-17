@@ -108,6 +108,9 @@ public class Cat2Osm {
 	@SuppressWarnings("unchecked")
 	public HashMap <String, List<Shape>> calcularEntradas(HashMap <String, List<Shape>> shapesTotales){
 
+		if (shapesTotales.get("ELEMTEX-189401") == null)
+			return null;
+		
 		// Variabbles para el calculo del tiempo estimado
 		System.out.print("["+new Timestamp(new Date().getTime())+"]    Progreso = 0%. Estimando tiempo restante...\r");
 		int bar = 0;
