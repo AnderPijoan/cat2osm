@@ -35,7 +35,7 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
 public class Cat2Osm {
 
-	public static final String VERSION = "2012-09-11";
+	public static final String VERSION = "2012-10-17";
 	public static Cat2OsmUtils utils;
 
 
