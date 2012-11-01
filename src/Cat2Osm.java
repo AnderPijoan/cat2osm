@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.zip.GZIPOutputStream;
 
 import org.geotools.geometry.jts.JTSFactoryFinder;
 
@@ -809,11 +810,12 @@ public class Cat2Osm {
 
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
 		new File(path + "/" + folder + "/" + filename +".osm").delete();
+		new File(path + "/" + folder + "/" + filename +".osm.gz").delete();
 
 		// Archivo al que se le concatenan los nodos, ways y relations
-		String fstreamOsm = path + "/" + folder + "/" + filename + ".osm";
+		String fstreamOsm = path + "/" + folder + "/" + filename + ".osm.gz";
 		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outOsm = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
+		BufferedWriter outOsm = new BufferedWriter( new OutputStreamWriter (new GZIPOutputStream(new FileOutputStream(fstreamOsm)), "UTF-8"));
 
 		// Juntamos los archivos en uno, al de los nodos le concatenamos el de ways y el de relations
 		// Cabecera del archivo Osm
