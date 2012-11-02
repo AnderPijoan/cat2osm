@@ -1079,6 +1079,7 @@ public class Cat2Osm {
 						}
 			}
 		}
+		bufRdr.close();
 	}
 
 
@@ -1159,6 +1160,7 @@ public class Cat2Osm {
 						}
 			}
 		}
+		bufRdr.close();
 	}
 
 
