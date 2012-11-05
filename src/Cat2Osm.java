@@ -95,7 +95,7 @@ public class Cat2Osm {
 		for(Shape shape : shapes) 
 			if (shape != null && shape instanceof ShapeParcela)
 				shapeList.add((ShapeParcela) shape);
-		
+
 		return shapeList;
 	}
 
@@ -111,7 +111,7 @@ public class Cat2Osm {
 
 		if (shapesTotales.get("ELEMTEX-189401") == null)
 			return null;
-		
+
 		// Variabbles para el calculo del tiempo estimado
 		System.out.print("["+new Timestamp(new Date().getTime())+"]    Progreso = 0%. Estimando tiempo restante...\r");
 		int bar = 0;
@@ -912,74 +912,106 @@ public class Cat2Osm {
 		// Recorremos todos los shapes
 		for(Shape shape : shapes){
 
-			relationToWay = false;
-			
-			// Empezamos comprobando la relation
-			RelationOsm relation = (RelationOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape.getRelationId());
+			switch(shape.getClass().getName()){
 
-			if (relation != null){
-				
-				relation.getIds().remove(null);
-				
-				// Si no esta dentro de las fechas de construccion indicadas no se imprime
-				if ( relation.getFechaConstru() < Long.parseLong(Config.get("FechaConstruDesde")) || relation.getFechaConstru() > Long.parseLong(Config.get("FechaConstruHasta"))){
-					break;
-				}
-				
-				// Si no tiene ids no se imprime
-				if (relation.getIds().size()<1){
-					System.out.println("["+new Timestamp(new Date().getTime())+"]    Relation id="+ shape.getRelationId() +" con menos de un way. No se imprimirá.");
-					break;
-				}
-				
-				// Para asegurarnos de que todos los ways se imprimen bien
-				waysOK = true;
-				
-				// Recorremos todos los ways que componen la relation
-				for (Long wayId : relation.getIds()){
+			case "ShapeConstru":
+			case "ShapeEjes":
+			case "ShapeElemlin":
+			case "ShapeMasa":
+			case "ShapeParcela":
+			case "ShapeSubparce":{
 
-					WayOsm way = (WayOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, wayId);
-					
-					if (way != null && waysOK){
-						
-						way.getNodes().remove(null);
-						
-						// Si unicamente esta compuesta por un way, debera quedarse como way en lugar de relation ya que
-						// sino es redundante. Por ello imprimiremos los nodos y luego la relation como way
-						if (relation.getIds().size() == 1) relationToWay = true;
-						
-						// Para asegurarnos de que todos los nodos se imprimen bien
-						nodesOK = true;
-						
-						// Recorremos todos los nodos del way y los imprimimos
-						for (Long nodeId : way.getNodes()){
+				relationToWay = false;
 
-							NodeOsm node = (NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, nodeId);
+				// Empezamos comprobando la relation
+				RelationOsm relation = (RelationOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape.getRelationId());
 
-							if (node != null){
-								outNodes.write(node.printNode(nodeId)); outNodes.newLine();
+				if (relation != null){
+
+					relation.getIds().remove(null);
+
+					// Si no esta dentro de las fechas de construccion indicadas no se imprime
+					if ( relation.getFechaConstru() < Long.parseLong(Config.get("FechaConstruDesde")) || relation.getFechaConstru() > Long.parseLong(Config.get("FechaConstruHasta"))){
+						break;
+					}
+
+					// Si no tiene ids no se imprime
+					if (relation.getIds().size()<1){
+						System.out.println("["+new Timestamp(new Date().getTime())+"]    Relation id="+ shape.getRelationId() +" con menos de un way. No se imprimirá.");
+						break;
+					}
+
+					// Para asegurarnos de que todos los ways se imprimen bien
+					waysOK = true;
+
+					// Recorremos todos los ways que componen la relation
+					for (Long wayId : relation.getIds()){
+
+						WayOsm way = (WayOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalWays()), key, wayId);
+
+						if (way != null && waysOK){
+
+							way.getNodes().remove(null);
+
+							// Si unicamente esta compuesta por un way, debera quedarse como way en lugar de relation ya que
+							// sino es redundante. Por ello imprimiremos los nodos y luego la relation como way
+							if (relation.getIds().size() == 1) relationToWay = true;
+
+							// Para asegurarnos de que todos los nodos se imprimen bien
+							nodesOK = true;
+
+							// Recorremos todos los nodos del way y los imprimimos
+							for (Long nodeId : way.getNodes()){
+
+								NodeOsm node = (NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, nodeId);
+
+								if (node != null){
+									outNodes.write(node.printNode(nodeId)); outNodes.newLine();
+								}
+								else{
+									nodesOK = false;
+								}
+
 							}
-							else{
-								nodesOK = false;
+
+							// Si los nodos se han impreso bien
+							if (!relationToWay && nodesOK){
+								outWays.write(way.printWay(key, wayId, utils));
 							}
-								
-						}
-						
-						// Si los nodos se han impreso bien
-						if (!relationToWay && nodesOK){
-							outWays.write(way.printWay(key, wayId, utils));
-						}
-						else if(!relationToWay){
-							waysOK = false;
+							else if(!relationToWay){
+								waysOK = false;
+							}
 						}
 					}
+					if (!relationToWay && waysOK){
+						outRelations.write(relation.printRelation(key, shape.getRelationId(), utils));
+					}
+					else if (relationToWay && waysOK){
+						outWays.write(relation.printRelation(key, shape.getRelationId(), utils));
+					}
 				}
-			if (!relationToWay && waysOK){
-				outRelations.write(relation.printRelation(key, shape.getRelationId(), utils));
+				
+				break;
 			}
-			else if (relationToWay && waysOK){
-				outWays.write(relation.printRelation(key, shape.getRelationId(), utils));
+				
+			case "ShapeElempun":
+			case "ShapeElemtex":{
+				
+				// Estos elementos no tienen relation ni way,
+				// solamente son un unico punto
+				
+				NodeOsm node = (NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, shape.getNodesIds(0).get(0));
+				
+				if (node != null){
+					outNodes.write(node.printNode(shape.getNodesIds(0).get(0))); outNodes.newLine();
+				}
+				
+				break;
 			}
+
+			default:
+				System.out.println("["+new Timestamp(new Date().getTime())+"] Nombre de clase inesperado al imprimir" +
+						"shapes : "+shape.getClass().getName());
 			}
 		}
 
@@ -1014,12 +1046,12 @@ public class Cat2Osm {
 				key = c.getRefCatastral().substring(0, 5).replaceAll("[^\\p{L}\\p{N}]", "") + "-";
 			if (tipo.equals("RU") && c.getRefCatastral() != null) // El codigo de masa son los caracteres 6, 7 y 8
 				key = c.getRefCatastral().substring(6, 9).replaceAll("[^\\p{L}\\p{N}]", "") + "-";
-			
+
 			if (shapesTotales.get(key) != null && (c.getTipoRegistro() == tipoRegistrosBuscar || tipoRegistrosBuscar == 0)){
-				
+
 				// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
 				List <Shape> matches = buscarRefCat(shapesTotales.get(key), c.getRefCatastral());
-				
+
 				if (matches != null)
 					switch (c.getTipoRegistro()){
 
@@ -1066,7 +1098,7 @@ public class Cat2Osm {
 				if (matches != null)
 					for (Shape shape : matches)
 						if (shape != (null)){
-							
+
 							for (Entry<RelationOsm, Long> e : utils.getTotalRelations().get(key).entrySet())
 								if (e.getValue().equals(shape.getRelationId())){
 									RelationOsm r = e.getKey();
@@ -1189,7 +1221,7 @@ public class Cat2Osm {
 		bufRdr.close();
 		return l;
 	}
-	
+
 	private BufferedReader createCatReader(File archivoCat) throws IOException {
 		InputStream inputStream = new FileInputStream(archivoCat);
 		if (archivoCat.getName().toLowerCase().endsWith(".gz")){

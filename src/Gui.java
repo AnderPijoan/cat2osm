@@ -44,13 +44,14 @@ public class Gui extends JFrame {
 
 		String[] labelsText = {"Carpeta donde se exportarán los archivos temporales y el resultado.\n(Tiene que tener privilegios lectura/escritura).",
 				"Nombre del archivo que exportará Cat2Osm como resultado.",
-				"Ruta a la CARPETA (con nombre generalmente XX_XXX_UA_XXXX-XX-XX_SHF) que contiene dentro las SUBCARPETAS EXTRAIDAS de los shapefiles URBANOS.\n",
-				"Ruta a la CARPETA (con nombre generalmente XX_XXX_RA_XXXX-XX-XX_SHF) que contiene dentro las SUBCARPETAS EXTRAIDAS de los shapefiles RUSTICOS.\n", 
-				"Ruta al ARCHIVO EXTRAIDO .CAT URBANO.",
-				"Ruta al ARCHIVO EXTRAIDO .CAT RÚSTICO.", 
+				"Ruta al ARCHIVO COMPRIMIDO (con nombre generalmente XX_XXX_UA_XXXX-XX-XX_SHF.zip) tal cual se ha descargado, que contiene dentro CARPETAS de los shapefiles URBANOS.\n",
+				"Ruta al ARCHIVO COMPRIMIDO (con nombre generalmente XX_XXX_RA_XXXX-XX-XX_SHF.zip) tal cual se ha descargado, que contiene dentro CARPETAS de los shapefiles RUSTICOS.\n", 
+				"Ruta al ARCHIVO .CAT.gz URBANO.",
+				"Ruta al ARCHIVO .CAT.gz RÚSTICO.", 
 				//"Ruta al directorio principal de FWTools.\n(De momento no es necesario)", 
 				"Ruta al ARCHIVO de la rejilla de la península (PENR2009.gsb o peninsula.gsb).\n(Necesario para reproyectar, se puede descargar en http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM)",
 				"Proyección en la que se encuentran los archivos shapefile." +
+						"\n\"auto\" para que busque automáticamente"+
 						"\n32628 para WGS84/ Zona UTM 29N"+
 						"\n23029 para ED_1950/ Zona UTM 29N,"+
 						"\n23030 para ED_1950/ Zona UTM 30N,"+
@@ -130,7 +131,7 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 2:{
-				urbanoShpPath = new JButton("Seleccionar carpeta shapesfiles Urbanos XX_XXX_U_XXXX-XX-XX_SHF ");
+				urbanoShpPath = new JButton("Seleccionar archivo comprimido de shapesfiles Urbanos XX_XXX_U_XXXX-XX-XX_SHF.zip ");
 				urbanoShpPath.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
 				{ fcShpUr.showOpenDialog(new JFrame()); }  
@@ -139,7 +140,7 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 3:{
-				rusticoShpPath = new JButton("Seleccionar carpeta shapefiles Rústicos XX_XXX_R_XXXX-XX-XX_SHF ");
+				rusticoShpPath = new JButton("Seleccionar  archivo comprimido de shapefiles Rústicos XX_XXX_R_XXXX-XX-XX_SHF.zip ");
 				rusticoShpPath.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
 				{ fcShpRu.showOpenDialog(new JFrame()); }  
@@ -148,7 +149,7 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 4:{
-				urbanoCatFile = new JButton("Seleccionar archivo .CAT Urbano XX_XX_U_XXXX-XX-XX.CAT");
+				urbanoCatFile = new JButton("Seleccionar archivo .CAT.gz Urbano XX_XX_U_XXXX-XX-XX.CAT.gz");
 				urbanoCatFile.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
 				{ fcCatUr.showOpenDialog(new JFrame()); }  
@@ -157,7 +158,7 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 5:{
-				rusticoCatFile = new JButton("Seleccionar archivo .CAT Rústico XX_XX_R_XXXX-XX-XX.CAT");
+				rusticoCatFile = new JButton("Seleccionar archivo .CAT.gz Rústico XX_XX_R_XXXX-XX-XX.CAT.gz");
 				rusticoCatFile.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
 				{ fcCatRu.showOpenDialog(new JFrame()); }  
@@ -181,7 +182,7 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 7:{
-
+				proj.addItem("auto");
 				proj.addItem("32628");
 				proj.addItem("23029");
 				proj.addItem("23030");

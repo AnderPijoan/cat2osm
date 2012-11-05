@@ -19,13 +19,13 @@ ResultFileName=AldeasecaDeAlba
 # Dentro tendrán que estar las subcarpetas extraidas tal cual vienen en catastro,
 # es decir dentro de la carpeta que indicamos debería haber una carpeta CONSTRU, ELEMLIN, ELEMPUN...
 # y dentro de estas (generalmente) 4 archivos.
-UrbanoSHPPath=files/AldeasecaDeAlba/37_21_UA_2011-09-16_SHF
-RusticoSHPPath=files/AldeasecaDeAlba/37_21_RA_2011-09-16_SHF
+UrbanoSHPPath=files/AldeasecaDeAlba/37_21_UA_2011-09-16_SHF.zip
+RusticoSHPPath=files/AldeasecaDeAlba/37_21_RA_2011-09-16_SHF.zip
 
 # Ruta a los archivos con los datos Cat de Catastro (.CAT)
 # Tiene que ser el archivo extraido con extensión .CAT
-UrbanoCATFile=files/AldeasecaDeAlba/37_21_U_2011-09-18.CAT
-RusticoCATFile=files/AldeasecaDeAlba/37_21_R_2011-09-17.CAT
+UrbanoCATFile=files/AldeasecaDeAlba/37_21_U_2011-09-18.CAT.gz
+RusticoCATFile=files/AldeasecaDeAlba/37_21_R_2011-09-17.CAT.gz
 
 # Ruta a la carpeta base de FWTools. (No necesario de momento)
 # FWTools debe estar instalado y la consola reconocer el comando ogr2ogr porque sino no podra reproyectar.
@@ -44,7 +44,7 @@ NadgridsPath=./peninsula.gsb
 # 25829 para ETRS_1989/ Zona UTM 29N
 # 25830 para ETRS_1989/ Zona UTM 30N
 # 25831 para ETRS_1989/ Zona UTM 31N
-Proyeccion=23030
+Proyeccion=auto
 
 # Si se quiere delimitar una fecha desde la cual coger los datos de catastro (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
