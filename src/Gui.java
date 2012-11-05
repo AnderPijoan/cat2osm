@@ -81,14 +81,14 @@ public class Gui extends JFrame {
 		final JTextField resultFileName = new JTextField("Resultado");
 
 		final JFileChooser fcShpUr = new JFileChooser();
-		fcShpUr.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		fcShpUr.setFileFilter(new ExtensionFileFilter("Archivos .zip", ".zip"));
 		final JFileChooser fcShpRu = new JFileChooser();
-		fcShpRu.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		fcShpRu.setFileFilter(new ExtensionFileFilter("Archivos .zip", ".zip"));
 
 		final JFileChooser fcCatUr = new JFileChooser();
+		fcCatUr.setFileFilter(new ExtensionFileFilter("Archivos .gz", ".gz"));
 		final JFileChooser fcCatRu = new JFileChooser();
-		fcCatUr.setFileFilter(new ExtensionFileFilter("Archivos .cat", ".cat"));
-		fcCatRu.setFileFilter(new ExtensionFileFilter("Archivos .cat", ".cat"));
+		fcCatRu.setFileFilter(new ExtensionFileFilter("Archivos .gz", ".gz"));
 
 		final JFileChooser fcGsb = new JFileChooser();
 		fcGsb.setFileFilter(new ExtensionFileFilter("Archivos .gsb", ".gsb"));
