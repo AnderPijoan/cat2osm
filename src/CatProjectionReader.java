@@ -64,6 +64,7 @@ public class CatProjectionReader {
 		case "ETRS_1989_UTM_Zone_29N": return "25829";
 		case "ETRS_1989_UTM_Zone_30N": return "25830";
 		case "ETRS_1989_UTM_Zone_31N": return "25831";
+		case "WGS_1984_UTM_Zone_28N": return "32628";
 		
 		default: return "";
 		}

@@ -44,7 +44,7 @@ NadgridsPath=./peninsula.gsb
 # 25829 para ETRS_1989/ Zona UTM 29N
 # 25830 para ETRS_1989/ Zona UTM 30N
 # 25831 para ETRS_1989/ Zona UTM 31N
-Proyeccion=32628
+Proyeccion=auto
 
 # Si se quiere delimitar una fecha desde la cual coger los datos de catastro (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
