@@ -25,6 +25,8 @@ public class ShapeParser extends Thread{
 	File file;
 	Cat2OsmUtils utils;
 	HashMap <String, List<Shape>> shapeList;
+	
+	static int num = 0;
 
 	public ShapeParser (String t, File f, Cat2OsmUtils u, HashMap<String, List<Shape>> s){
 		super (f.getName());
@@ -32,6 +34,7 @@ public class ShapeParser extends Thread{
 		this.file = reproyectarWGS84(f, t);
 		this.utils = u;
 		shapeList = s;
+		
 		start();
 	}
 
@@ -62,10 +65,11 @@ public class ShapeParser extends Thread{
 						shapeList.get(shape.getCodigoMasa()).add(mPolygonShapeParser(shape));
 					}
 				}
-			else if (file.getName().toUpperCase().equals(tipo+"PARCELA.SHP"))
+			else if (file.getName().toUpperCase().equals(tipo+"PARCELA.SHP")){
 
 				// Shapes del archivo PARCELA.SHP
 				while (reader.hasNext()) {
+					
 					Shape shape = new ShapeParcela(reader.next(), tipo);
 
 					// Si cumple estar entre las fechas
@@ -76,6 +80,7 @@ public class ShapeParser extends Thread{
 						shapeList.get(shape.getCodigoMasa()).add(mPolygonShapeParser(shape));
 					}
 				}
+			}
 			else if (file.getName().toUpperCase().equals(tipo+"SUBPARCE.SHP"))
 
 				// Shapes del archivo SUBPARCE.SHP
@@ -180,8 +185,7 @@ public class ShapeParser extends Thread{
 	 * @return Shape con todos los valores asignados
 	 */
 	private Shape mPolygonShapeParser(Shape shape){
-
-
+		
 		// Obtenemos las coordenadas de cada punto del shape
 		for (int x = 0; x < shape.getPoligons().size(); x++){
 			Coordinate[] coor = shape.getCoordenadas(x);
@@ -228,7 +232,7 @@ public class ShapeParser extends Thread{
 		List<String> shapeIds = new ArrayList<String>();
 		shapeIds.add(shape.getShapeId());
 		shape.setRelation(utils.generateRelationId(shape.getCodigoMasa(), ids, types, roles, shape.getAttributes(), shapeIds));
-
+		
 		return shape;
 	}
 
@@ -292,7 +296,7 @@ public class ShapeParser extends Thread{
 		List<String> shapeIds = new ArrayList<String>();
 		shapeIds.add(shape.getShapeId());
 		shape.setRelation(utils.generateRelationId(shape.getCodigoMasa(), ids, types, roles, shape.getAttributes(), shapeIds));
-
+		
 		return shape;
 	}
 

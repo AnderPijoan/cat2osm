@@ -35,7 +35,7 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
 public class Cat2Osm {
 
-	public static final String VERSION = "2012-10-17";
+	public static final String VERSION = "2012-11-05";
 	public static Cat2OsmUtils utils;
 
 
@@ -1018,7 +1018,7 @@ public class Cat2Osm {
 				
 				// Obtenemos los shape que coinciden con la referencia catastral de la linea leida
 				List <Shape> matches = buscarRefCat(shapesTotales.get(key), c.getRefCatastral());
-
+				
 				if (matches != null)
 					switch (c.getTipoRegistro()){
 
@@ -1065,7 +1065,7 @@ public class Cat2Osm {
 				if (matches != null)
 					for (Shape shape : matches)
 						if (shape != (null)){
-
+							
 							for (Entry<RelationOsm, Long> e : utils.getTotalRelations().get(key).entrySet())
 								if (e.getValue().equals(shape.getRelationId())){
 									RelationOsm r = e.getKey();

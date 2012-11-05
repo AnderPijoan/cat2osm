@@ -258,10 +258,10 @@ public class Main {
 
 		int pos = 0;
 		for (String key : utils.getTotalNodes().keySet()){
-
+			
 			String folder = key.startsWith("ELEM")? "elementos" : ( key.startsWith("EJES")? "ejes" : "masas" );
 
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Exportando " + Config.get("ResultFileName") + "-" + key + "[" + pos++ +"/" + utils.getTotalNodes().keySet().size() + "]");
+			System.out.println("["+new Timestamp(new Date().getTime())+"] Exportando " + Config.get("ResultFileName") + "-" + key + " [" + pos++ +"/" + utils.getTotalNodes().keySet().size() + "]");
 
 			// Por si acaso si hubiera archivos de un fallo en ejecucion anterior
 			if (new File(Config.get("ResultPath") + "/" + folder + "/" + Config.get("ResultFileName") + key +"tempRelations.osm").exists()
@@ -309,7 +309,7 @@ public class Main {
 
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo el archivo resultado.\r");
 				catastro.juntarFilesTemporales(key, folder, Config.get("ResultFileName") + "-" + key, outOsmGlobal);
-				System.out.println("["+new Timestamp(new Date().getTime())+"]    Terminado " + Config.get("ResultFileName") + "-" + key + "[" + pos++ +"/" + utils.getTotalNodes().keySet().size() + "]\r");
+				System.out.println("["+new Timestamp(new Date().getTime())+"]    Terminado " + Config.get("ResultFileName") + "-" + key + " [" + pos +"/" + utils.getTotalNodes().keySet().size() + "]\r");
 
 			}
 		}
