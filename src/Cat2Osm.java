@@ -2,10 +2,10 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.geotools.geometry.jts.JTSFactoryFinder;
 
@@ -809,11 +811,12 @@ public class Cat2Osm {
 
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
 		new File(path + "/" + folder + "/" + filename +".osm").delete();
+		new File(path + "/" + folder + "/" + filename +".osm.gz").delete();
 
 		// Archivo al que se le concatenan los nodos, ways y relations
-		String fstreamOsm = path + "/" + folder + "/" + filename + ".osm";
+		String fstreamOsm = path + "/" + folder + "/" + filename + ".osm.gz";
 		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outOsm = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
+		BufferedWriter outOsm = new BufferedWriter( new OutputStreamWriter (new GZIPOutputStream(new FileOutputStream(fstreamOsm)), "UTF-8"));
 
 		// Juntamos los archivos en uno, al de los nodos le concatenamos el de ways y el de relations
 		// Cabecera del archivo Osm
@@ -996,8 +999,7 @@ public class Cat2Osm {
 	 */
 	public void catParser(String tipo, File cat, HashMap <String, List<Shape>> shapesTotales) throws IOException{
 
-		BufferedReader bufRdr = 
-				new BufferedReader(new InputStreamReader(new FileInputStream(cat), "ISO-8859-15"));
+		BufferedReader bufRdr = createCatReader(cat);
 		String line = null; // Para cada linea leida del archivo .cat
 
 		int tipoRegistrosBuscar = Integer.parseInt(Config.get("TipoRegistro"));
@@ -1077,6 +1079,7 @@ public class Cat2Osm {
 						}
 			}
 		}
+		bufRdr.close();
 	}
 
 
@@ -1091,7 +1094,7 @@ public class Cat2Osm {
 	 */
 	public void catUsosParser(String tipo, File cat, HashMap <String, List<Shape>> shapesTotales) throws IOException{
 
-		BufferedReader bufRdr  = new BufferedReader(new FileReader(cat));
+		BufferedReader bufRdr  = createCatReader(cat);
 		String line = null; // Para cada linea leida del archivo .cat
 
 		// Lectura del archivo .cat
@@ -1157,6 +1160,7 @@ public class Cat2Osm {
 						}
 			}
 		}
+		bufRdr.close();
 	}
 
 
@@ -1168,7 +1172,7 @@ public class Cat2Osm {
 	 */
 	public List<Cat> catParser(File f) throws IOException{
 
-		BufferedReader bufRdr  = new BufferedReader(new FileReader(f));
+		BufferedReader bufRdr = createCatReader(f);
 		String line = null;
 
 		List<Cat> l = new ArrayList<Cat>();
@@ -1185,6 +1189,14 @@ public class Cat2Osm {
 		}
 		bufRdr.close();
 		return l;
+	}
+	
+	private BufferedReader createCatReader(File archivoCat) throws IOException {
+		InputStream inputStream = new FileInputStream(archivoCat);
+		if (archivoCat.getName().toLowerCase().endsWith(".gz")){
+			inputStream = new GZIPInputStream(inputStream);
+		}
+		return new BufferedReader(new InputStreamReader(inputStream, "ISO-8859-15"));
 	}
 
 

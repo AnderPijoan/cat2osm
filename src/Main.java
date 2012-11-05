@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPOutputStream;
 
 
 public class Main {
@@ -32,7 +33,7 @@ public class Main {
 		else if (args.length ==1 && new File(args[0]).exists()){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando Cat2Osm con el archivo de configuración " + args[0] + ".");
 			// Ruta al fichero de configuracion por parametro
-			new Config(args[0]);
+			Config.loadConfig(args[0]);
 			// Iniciar cat2osm
 			ejecutarCat2Osm("*");
 		}
@@ -48,14 +49,14 @@ public class Main {
 				&& new File(args[0]).exists()){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando Cat2Osm con el archivo de configuración para exportar únicamente "+ args[1].replaceAll("-", "").toUpperCase()+ ".");
 			// Ruta al fichero de configuracion por parametro
-			new Config(args[0]);
+			Config.loadConfig(args[0]);
 			// Iniciar cat2osm
 			ejecutarCat2Osm(args[1].replaceAll("-", "").toUpperCase());
 		}
 		else if (args.length == 2 && args[1].replaceAll("-", "").equals("usos") && new File(args[0]).exists()){
 			System.out.println("["+new Timestamp(new Date().getTime())+"] Iniciando Cat2Osm con el archivo de configuración para exportar únicamente el archivo de destinos a corregir.");
 			// Ruta al fichero de configuracion por parametro
-			new Config(args[0]);
+			Config.loadConfig(args[0]);
 			// Iniciar metodo de creacion de puntos de entrada
 			crearUsos();
 		}
@@ -125,11 +126,12 @@ public class Main {
 		// Archivo global de resultado
 		// Borrar archivo con el mismo nombre si existe, porque sino concatenaria el nuevo
 		new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm").delete();
-
+		new File(Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm.gz").delete();
+		
 		// Archivo al que se le concatenan todos los archivos de nodos, ways y relations
-		String fstreamOsm = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm";
+		String fstreamOsm = Config.get("ResultPath") + "/" + Config.get("ResultFileName") + "/" + Config.get("ResultFileName") + ".osm.gz";
 		// Indicamos que el archivo se codifique en UTF-8
-		BufferedWriter outOsmGlobal = new BufferedWriter( new OutputStreamWriter (new FileOutputStream(fstreamOsm), "UTF-8"));
+		BufferedWriter outOsmGlobal = new BufferedWriter( new OutputStreamWriter (new GZIPOutputStream(new FileOutputStream(fstreamOsm)), "UTF-8"));
 
 		// Cabecera del archivo
 		outOsmGlobal.write("<?xml version='1.0' encoding='UTF-8'?>");outOsmGlobal.newLine();
