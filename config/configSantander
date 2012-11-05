@@ -14,18 +14,14 @@ ResultPath=result
 # Nombre para el archivo resultado
 ResultFileName=Santander
 
-# Ruta a los directorios donde estan los shapefiles urbanos y rusticos de catastro (.SHP)
-# Normalmente suele ser una carpeta con el siguiente formato XX_XXX_UA_XXXX-XX-XX_SHF.
-# Dentro tendrán que estar las subcarpetas extraidas tal cual vienen en catastro,
-# es decir dentro de la carpeta que indicamos debería haber una carpeta CONSTRU, ELEMLIN, ELEMPUN...
-# y dentro de estas (generalmente) 4 archivos.
-UrbanoSHPPath=files/Santander/39_900_UA_2011-09-18_SHF
-RusticoSHPPath=files/Santander/39_900_RA_2011-09-18_SHF
+# Ruta al archivo comprimido con nombre en formato XX_XXX_UA_XXXX-XX-XX_SHF.zip
+# que dentro contiene las geometrias de Catastro.
+UrbanoSHPPath=files/Santander/39_900_UA_2011-09-18_SHF.zip
+RusticoSHPPath=files/Santander/39_900_RA_2011-09-18_SHF.zip
 
-# Ruta a los archivos con los datos Cat de Catastro (.CAT)
-# Tiene que ser el archivo extraido con extensión .CAT
-UrbanoCATFile=files/Santander/39_900_U_2011-09-18.CAT
-RusticoCATFile=files/Santander/39_900_R_2011-09-17.CAT
+# Ruta a los archivos comprimidos de los registros Cat de Catastro (.CAT.gz)
+UrbanoCATFile=files/Santander/39_900_U_2011-09-18.CAT.gz
+RusticoCATFile=files/Santander/39_900_R_2011-09-17.CAT.gz
 
 # Ruta a la carpeta base de FWTools. (No necesario de momento)
 # FWTools debe estar instalado y la consola reconocer el comando ogr2ogr porque sino no podra reproyectar.
@@ -37,6 +33,7 @@ NadgridsPath=./peninsula.gsb
 
 # Proyeccion en la que estan los shapefiles para hacer la reproyeccion. 
 # (Se puede comprobar abriendo con un editor de texto cualquiera de los archivos .PRJ)
+# auto para buscar automaticamente
 # 32628 para WGS84/ Zona UTM 29N
 # 23029 para ED_1950/ Zona UTM 29N
 # 23030 para ED_1950/ Zona UTM 30N
@@ -44,7 +41,7 @@ NadgridsPath=./peninsula.gsb
 # 25829 para ETRS_1989/ Zona UTM 29N
 # 25830 para ETRS_1989/ Zona UTM 30N
 # 25831 para ETRS_1989/ Zona UTM 31N
-Proyeccion=23030
+Proyeccion=auto
 
 # Si se quiere delimitar una fecha desde la cual coger los datos de catastro (Formato AAAAMMDD)
 # Tomara los shapes que se han dado de alta a partir de esta fecha
