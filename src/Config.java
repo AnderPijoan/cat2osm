@@ -1,19 +1,17 @@
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.h2.util.IOUtils;
+
 
 
 public class Config {
@@ -119,49 +117,32 @@ public class Config {
 		}
 		File homeDir = new File(System.getProperty("user.home") + File.separator + ".cat2osm");
 		File archivoRejilla = null;
-		String url = "";
-		if ("auto:peninsula".equals(rejilla)){
-			url = "http://www.01.ign.es/ign/resources/herramientas/PENR2009.zip";
+		String nombreRecursoRejilla = "";
+		if ("auto:peninsula".equals(rejilla) || "auto:peninsula.gsb".equals(rejilla)){
 			archivoRejilla = new File(homeDir, "peninsula.gsb");
+			nombreRecursoRejilla = "peninsula.gsb";
 		}
-		else if ("auto:baleares".equals(rejilla)){
-			url = "http://www.01.ign.es/ign/resources/herramientas/BALR2009.zip";
+		else if ("auto:baleares".equals(rejilla) || "auto:baleares.gsb".equals(rejilla)){
 			archivoRejilla = new File(homeDir, "baleares.gsb");
+			nombreRecursoRejilla = "baleares.gsb";
 		}		
 		configuration.setProperty("NadgridsPath", archivoRejilla.getAbsolutePath());
-		downloadGrid(url, archivoRejilla);
-	}
-	/**
-	 * Descarga el archivo de rejilla y lo descomprime.
-	 * @param url
-	 * @param destino
-	 */
-	private static void downloadGrid(String url, File destino) {
-		if (destino.exists()) {
-			return;
-		}
 		try {
-			File temporal = File.createTempFile("cat2osm", "tmp.zip");
-			System.out.println("["+new Timestamp(new Date().getTime())+"] Descargando rejilla "+url);
-			URL descarga = new URL(url);
-			InputStream inputStream = descarga.openStream();
-			OutputStream outputStream = new FileOutputStream(temporal);
-			IOUtils.copy(inputStream, outputStream);
-			inputStream.close();
-			outputStream.close();
-			
-			ZipInputStream zis = new ZipInputStream(new FileInputStream(temporal));
-			zis.getNextEntry();
-			OutputStream outputStreamDestino = new FileOutputStream(destino);
-			IOUtils.copy(zis, outputStreamDestino);
-			zis.closeEntry();
-			zis.close();
-			outputStreamDestino.close();
-			temporal.delete();
-			
+			extractGrid(nombreRecursoRejilla, archivoRejilla);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+	}
+	private static void extractGrid(String recurso, File destino) throws IOException {
+		if (destino.exists()){
+			return;
+		}
+		InputStream inputStream = Config.class.getClassLoader().getResourceAsStream("cat2osm/grids/"+recurso);
+		OutputStream outputStream = new FileOutputStream(destino);
+		IOUtils.copy(inputStream, outputStream);
+		inputStream.close();
+		outputStream.close();
 	}
 
 	/** Obtiene la opcion de configuracion. Si no existe devuelve "".
