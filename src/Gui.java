@@ -49,7 +49,7 @@ public class Gui extends JFrame {
 				"Ruta al ARCHIVO .CAT.gz URBANO.",
 				"Ruta al ARCHIVO .CAT.gz RÚSTICO.", 
 				//"Ruta al directorio principal de FWTools.\n(De momento no es necesario)", 
-				"Ruta al ARCHIVO de la rejilla de la península (PENR2009.gsb o peninsula.gsb).\n(Necesario para reproyectar, se puede descargar en http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM)",
+				"Zona en la que se encuentra la población (peninsula.gsb para Península + Islas Canarias o baleares.gsb para las Islas Baleares).",
 				"Proyección en la que se encuentran los archivos shapefile." +
 						"\n\"auto\" para que busque automáticamente"+
 						"\n32628 para WGS84/ Zona UTM 29N"+
@@ -90,8 +90,7 @@ public class Gui extends JFrame {
 		final JFileChooser fcCatRu = new JFileChooser();
 		fcCatRu.setFileFilter(new ExtensionFileFilter("Archivos .gz", ".gz"));
 
-		final JFileChooser fcGsb = new JFileChooser();
-		fcGsb.setFileFilter(new ExtensionFileFilter("Archivos .gsb", ".gsb"));
+		final JComboBox<String> fcGsb = new JComboBox<String>();
 
 		final JComboBox<String> proj = new JComboBox<String>();
 
@@ -131,7 +130,7 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 2:{
-				urbanoShpPath = new JButton("Seleccionar archivo comprimido de shapesfiles Urbanos XX_XXX_U_XXXX-XX-XX_SHF.zip ");
+				urbanoShpPath = new JButton("Seleccionar archivo comprimido de shapesfiles Urbanos XX_XXX_UA_XXXX-XX-XX_SHF.zip ");
 				urbanoShpPath.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
 				{ fcShpUr.showOpenDialog(new JFrame()); }  
@@ -140,7 +139,7 @@ public class Gui extends JFrame {
 				break;
 			}
 			case 3:{
-				rusticoShpPath = new JButton("Seleccionar  archivo comprimido de shapefiles Rústicos XX_XXX_R_XXXX-XX-XX_SHF.zip ");
+				rusticoShpPath = new JButton("Seleccionar  archivo comprimido de shapefiles Rústicos XX_XXX_RA_XXXX-XX-XX_SHF.zip ");
 				rusticoShpPath.addActionListener(new ActionListener()  
 				{  public void actionPerformed(ActionEvent e)  
 				{ fcShpRu.showOpenDialog(new JFrame()); }  
@@ -172,13 +171,10 @@ public class Gui extends JFrame {
 //				buttons.add(l);
 //				break;
 //			}
-			case 6:{
-				rejillaFile = new JButton("Seleccionar rejilla (peninsula.gsb)");   
-				rejillaFile.addActionListener(new ActionListener()  
-				{  public void actionPerformed(ActionEvent e)  
-				{ fcGsb.showOpenDialog(new JFrame()); }  
-				});  
-				buttons.add(rejillaFile);
+			case 6:{		
+				fcGsb.addItem("peninsula.gsb");
+				fcGsb.addItem("baleares.gsb");
+				buttons.add(fcGsb);
 				break;
 			}
 			case 7:{
@@ -302,8 +298,8 @@ public class Gui extends JFrame {
 				popupText.append("No ha seleccionado el archivo .CAT rústico. Tiene que ser el archivo extraido con extensión .CAT\n\n");	
 			}
 
-			if (fcGsb.getSelectedFile() == null){
-				popupText.append("No ha seleccionado el archivo de rejilla para la reproyección (PENR2009.gsb o península.gsb). Este archvivo puede encontrarlo en la siguiente dirección: http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM\n\n");	
+			if (fcGsb.getSelectedItem() == null){
+				popupText.append("No ha seleccionado el archivo de rejilla para la reproyección.");	
 			}
 
 			if (fdesde.getText().equals(null)){
@@ -346,7 +342,7 @@ public class Gui extends JFrame {
 					out.write("\nRusticoSHPPath="+fcShpRu.getSelectedFile());
 					out.write("\nUrbanoCATFile="+fcCatUr.getSelectedFile());
 					out.write("\nRusticoCATFile="+fcCatRu.getSelectedFile());
-					out.write("\nNadgridsPath="+fcGsb.getSelectedFile());
+					out.write("\nNadgridsPath=./resources/cat2osm/grids/"+fcGsb.getSelectedItem());
 					out.write("\nProyeccion="+proj.getSelectedItem());
 					out.write("\nFechaDesde="+fdesde.getText());
 					out.write("\nFechaHasta="+fhasta.getText());

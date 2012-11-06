@@ -58,9 +58,9 @@ public class CatProjectionReader {
 		contenido = contenido.replaceAll(".*\"", "");
 		switch(contenido) {
 		// TODO Faltan más casos/codigos
-		case "ED_19950_UTM_Zone_29N": return "23029";
-		case "ED_19950_UTM_Zone_30N": return "23030";
-		case "ED_19950_UTM_Zone_31N": return "23031";
+		case "ED_1950_UTM_Zone_29N": return "23029";
+		case "ED_1950_UTM_Zone_30N": return "23030";
+		case "ED_1950_UTM_Zone_31N": return "23031";
 		case "ETRS_1989_UTM_Zone_29N": return "25829";
 		case "ETRS_1989_UTM_Zone_30N": return "25830";
 		case "ETRS_1989_UTM_Zone_31N": return "25831";
