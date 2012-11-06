@@ -29,7 +29,7 @@ FWToolsPath=C:\Program Files (x86)\FWTools2.4.7
 
 # Ruta a la cuadricula de reproyeccion (peninsula.gsb). Si es una ruta relativa necesita "./" por delante
 # Este archvivo puede encontrarlo en la siguiente dirección: http://www.01.ign.es/ign/layoutIn/herramientas.do#DATUM
-NadgridsPath=./resources/cat2osm/grids/peninsula.gsb
+NadgridsPath=auto:peninsula
 
 # Proyeccion en la que estan los shapefiles para hacer la reproyeccion. 
 # (Se puede comprobar abriendo con un editor de texto cualquiera de los archivos .PRJ)
