@@ -49,7 +49,7 @@ public class Gui extends JFrame {
 				"Ruta al ARCHIVO .CAT.gz URBANO.",
 				"Ruta al ARCHIVO .CAT.gz RÚSTICO.", 
 				//"Ruta al directorio principal de FWTools.\n(De momento no es necesario)", 
-				"Zona en la que se encuentra la población (peninsula.gsb para Península + Islas Canarias o baleares.gsb para las Islas Baleares).",
+				"Zona en la que se encuentra la población (peninsula para Península + Islas Canarias o baleares para las Islas Baleares).",
 				"Proyección en la que se encuentran los archivos shapefile." +
 						"\n\"auto\" para que busque automáticamente"+
 						"\n32628 para WGS84/ Zona UTM 29N"+
@@ -172,8 +172,8 @@ public class Gui extends JFrame {
 //				break;
 //			}
 			case 6:{		
-				fcGsb.addItem("peninsula.gsb");
-				fcGsb.addItem("baleares.gsb");
+				fcGsb.addItem("peninsula");
+				fcGsb.addItem("baleares");
 				buttons.add(fcGsb);
 				break;
 			}
@@ -342,7 +342,7 @@ public class Gui extends JFrame {
 					out.write("\nRusticoSHPPath="+fcShpRu.getSelectedFile());
 					out.write("\nUrbanoCATFile="+fcCatUr.getSelectedFile());
 					out.write("\nRusticoCATFile="+fcCatRu.getSelectedFile());
-					out.write("\nNadgridsPath=./resources/cat2osm/grids/"+fcGsb.getSelectedItem());
+					out.write("\nNadgridsPath=auto:"+fcGsb.getSelectedItem());
 					out.write("\nProyeccion="+proj.getSelectedItem());
 					out.write("\nFechaDesde="+fdesde.getText());
 					out.write("\nFechaHasta="+fhasta.getText());
