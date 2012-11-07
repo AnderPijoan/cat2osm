@@ -1,14 +1,10 @@
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import com.ibm.icu.math.BigDecimal;
 import com.vividsolutions.jts.algorithm.LineIntersector;
 import com.vividsolutions.jts.algorithm.RobustLineIntersector;
 import com.vividsolutions.jts.geom.Coordinate;

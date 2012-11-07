@@ -17,7 +17,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import org.jfree.ui.ExtensionFileFilter;
 
 public class Gui extends JFrame {
 
@@ -73,7 +72,7 @@ public class Gui extends JFrame {
 		buttons.setLayout(new GridLayout(16,1));
 
 
-		JButton resultPath, urbanoShpPath, rusticoShpPath, urbanoCatFile, rusticoCatFile, rejillaFile, rulesFile = null;
+		JButton resultPath, urbanoShpPath, rusticoShpPath, urbanoCatFile, rusticoCatFile, rulesFile = null;
 
 		final JFileChooser fcResult = new JFileChooser();
 		fcResult.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -322,7 +321,6 @@ public class Gui extends JFrame {
 				popupText.append("Para más ayuda o ver como debería ser el árbol de directorios consulte: http://wiki.openstreetmap.org/wiki/Cat2Osm");
 				popup.add(popupText, BorderLayout.CENTER);
 				popup.setVisible(true);
-				popup.show();
 
 			}
 			else {
