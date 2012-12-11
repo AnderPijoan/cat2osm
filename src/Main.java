@@ -285,7 +285,8 @@ public class Main {
 
 
 				// Operacion de simplificacion de relaciones sin tags relevantes
-				if (archivo.equals("*")){
+				// Los EJES hay que dejarlos aunque no tengan tags relevantes
+				if (archivo.equals("*") && !key.startsWith("EJES")){
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Simplificando Relaciones sin tags relevantes.");
 					catastro.simplificarRelationsSinTags(key, shapes.get(key));
 				}
