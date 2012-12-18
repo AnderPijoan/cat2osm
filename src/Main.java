@@ -306,19 +306,6 @@ public class Main {
 					catastro.joinLinearElements(key, shapes.get(key));
 				}
 				
-				
-				// Unir geometrias que compartan tags (SOLO para unir subparcelas rusticas
-				// con los mismos tags que en Catastro si tiene sentido tener divididas pero en OSM no)
-				// La Key de parcelario rustico son 3 digitos, 4 digitos representan inmuebles en zona rustica
-				// y 5 digitos se usan para parcelario urbano
-				Pattern pattern = Pattern.compile("\\d{3}-");
-				Matcher matcher = pattern.matcher(key);
-				if(matcher.matches()){
-					System.out.println("["+new Timestamp(new Date().getTime())+"]    Uniendo geometrias con los mismos tags.");
-					catastro.unionParcelas(key, shapes.get(key));
-				}
-				
-				
 				// Eliminar nodos intermedios en vias rectas
 				System.out.println("["+new Timestamp(new Date().getTime())+"]    Eliminando nodos alineados.");
 				catastro.simplificarNodos(key, shapes.get(key), 0.05);
