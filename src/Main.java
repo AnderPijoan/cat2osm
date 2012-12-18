@@ -290,8 +290,8 @@ public class Main {
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Simplificando Relaciones sin tags relevantes.");
 					catastro.simplificarRelationsSinTags(key, shapes.get(key));
 				}
-
-
+				
+				
 				// Operacion de simplifiacion de vias
 				if (!key.startsWith("ELEMPUN") && !key.startsWith("ELEMTEX") ){
 					System.out.println("["+new Timestamp(new Date().getTime())+"]    Simplificando vias.");
@@ -302,9 +302,26 @@ public class Main {
 				// Si son ELEMLIN o EJES, juntar todos los ways que compartan un node
 				// aunque sean de distintos shapes
 				if (key.startsWith("EJES") || key.startsWith("ELEMLIN") ){
-					System.out.println("["+new Timestamp(new Date().getTime())+"]    Uniendo shapes.");
-					catastro.unirShapes(key, shapes.get(key));
+					System.out.println("["+new Timestamp(new Date().getTime())+"]    Encadenando shapes lineales.");
+					catastro.joinLinearElements(key, shapes.get(key));
 				}
+				
+				
+				// Unir geometrias que compartan tags (SOLO para unir subparcelas rusticas
+				// con los mismos tags que en Catastro si tiene sentido tener divididas pero en OSM no)
+				// La Key de parcelario rustico son 3 digitos, 4 digitos representan inmuebles en zona rustica
+				// y 5 digitos se usan para parcelario urbano
+				Pattern pattern = Pattern.compile("\\d{3}-");
+				Matcher matcher = pattern.matcher(key);
+				if(matcher.matches()){
+					System.out.println("["+new Timestamp(new Date().getTime())+"]    Uniendo geometrias con los mismos tags.");
+					catastro.unionParcelas(key, shapes.get(key));
+				}
+				
+				
+				// Eliminar nodos intermedios en vias rectas
+				System.out.println("["+new Timestamp(new Date().getTime())+"]    Eliminando nodos alineados.");
+				catastro.simplificarNodos(key, shapes.get(key), 0.05);
 				
 				// Escribir los datos en los archivos temporales
 				System.out.print("["+new Timestamp(new Date().getTime())+"]    Escribiendo archivos temporales.\r");

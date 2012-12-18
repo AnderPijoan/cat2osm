@@ -667,20 +667,8 @@ public class Cat2Osm {
 				boolean with_data = false;
 
 				// Si tiene solo 1 id, no sera una relacion y a la hora de imprimir se quedara como un way
-				if (relation.getIds().size() > 1){
-
-					List<String[]> tags = relation.getTags();
-
-					for (int x = 0; x < tags.size() && !with_data; x++)
-						if (!tags.get(x)[0].equals("addr:postcode") && 
-								!tags.get(x)[0].equals("addr:country") && 
-								!tags.get(x)[0].startsWith("CAT2OSMSHAPEID") && 
-								!tags.get(x)[0].equals("source") && 
-								!tags.get(x)[0].equals("source:date") && 
-								!tags.get(x)[0].equals("type"))
-							with_data = true;
-
-				}
+				if (relation.getIds().size() > 1)
+					with_data = Cat2OsmUtils.hasRelevantTags(relation.getTags());
 
 				// Si no tiene tags importantes borramos esa relacion
 				if (!with_data){
@@ -718,7 +706,7 @@ public class Cat2Osm {
 	 * @throws InterruptedException
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Shape> unirShapes(String key, List<Shape> shapes) throws InterruptedException{
+	public List<Shape> joinLinearElements(String key, List<Shape> shapes) throws InterruptedException{
 
 		// Variables para el calculo del tiempo estimado
 		System.out.print("["+new Timestamp(new Date().getTime())+"]    Progreso = 0%. Estimando tiempo restante...\r");
@@ -990,22 +978,22 @@ public class Cat2Osm {
 						outWays.write(relation.printRelation(key, shape.getRelationId(), utils));
 					}
 				}
-				
+
 				break;
 			}
-				
+
 			case "ShapeElempun":
 			case "ShapeElemtex":{
-				
+
 				// Estos elementos no tienen relation ni way,
 				// solamente son un unico punto
-				
+
 				NodeOsm node = (NodeOsm) utils.getKeyFromValue( (Map<String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, shape.getNodesIds(0).get(0));
-				
+
 				if (node != null){
 					outNodes.write(node.printNode(shape.getNodesIds(0).get(0))); outNodes.newLine();
 				}
-				
+
 				break;
 			}
 
@@ -1174,7 +1162,7 @@ public class Cat2Osm {
 							}
 
 							// Anadimos la referencia catastral
-							tags.add(new String[] {"catastro:ref", c.getRefCatastral() + line.substring(44,48)});
+							//tags.add(new String[] {"catastro:ref", c.getRefCatastral() + line.substring(44,48)});
 
 							tags.add(new String[] {"addr:floor", line.substring(64,67).trim() });
 
@@ -3340,5 +3328,139 @@ public class Cat2Osm {
 			}
 		}			
 	}
+	
+	/** Simplifica los nodos que esten en "linea recta" o con un margen indicado por
+	 * la variable threshold (siendo 0 que esten completamente en linea)
+	 * @param key
+	 * @param shapes
+	 */
+	public void simplificarNodos(String key, List<Shape> shapes, double threshold) {
+		
+		// Recorremos todos los shapes
+		for(Shape shape : shapes){
+			// Todos sus poligonos
+			for(int pos = 0; pos < shape.getPoligons().size(); pos++)
+				// De cada poligono todos sus ways
+				for(WayOsm way : utils.getWays(key, shape.getWaysIds(pos))){
+						// Recorrer todos los nodos en grupos de 3
+						for(int nodePos = 0; nodePos < way.getNodes().size()-2; nodePos++){
+							
+							// Nodo intermedio
+							long nodeId = way.getNodes().get(nodePos+1);
+							NodeOsm b = 
+									((NodeOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, nodeId));
+							
+							// Si existe el nodo y no tiene tags (o solo tiene las de source=catastro y fecha)
+								if(b != null && !Cat2OsmUtils.hasRelevantTags(b.getTags())){
 
+									// Coger su anterior y siguiente
+									NodeOsm a = 
+											((NodeOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, way.getNodes().get(nodePos)));
+									NodeOsm c = 
+											((NodeOsm) utils.getKeyFromValue((Map< String, Map <Object, Long>>) ((Object)utils.getTotalNodes()), key, way.getNodes().get(nodePos+2)));
+
+									if (a != null && c != null){
+										// Calcular si estan en linea recta
+										double result = (b.getX()-a.getX())/(c.getX()-b.getX()) - (b.getY()-a.getY())/(c.getY()-b.getY());
+
+										// Si se cumple, eliminar el nodo intermedio
+										if(Math.abs(result) <= threshold){
+											// nodeId tiene el ID del nodo b
+											way.getNodes().remove(nodeId);
+											nodePos = 0;
+										}
+									}
+									else
+										System.out.println(a + " " + c);
+							}
+						}
+				}
+		}
+	}
+
+	/** Unir los shapes con los mismos tags en uno solo
+	 * @param key
+	 * @param shapes
+	 */
+	public void unionParcelas(String key, List<Shape> shapes){
+		
+		// Creamos la factoria para crear objetos de GeoTools (hay otra factoria pero falla)
+		com.vividsolutions.jts.geom.GeometryFactory factory = JTSFactoryFinder.getGeometryFactory(null);
+		
+			for(int pos = 0; pos < shapes.size(); pos++){
+				Shape shape1 = (Shape) shapes.get(pos);
+ 				RelationOsm relation1 = (RelationOsm) utils.getKeyFromValue( (Map< String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape1.getRelationId());
+				
+ 				Iterator<Shape> it2 = shapes.iterator();
+ 				
+				while(it2.hasNext()){
+					
+					Shape shape2 = (Shape) it2.next();
+					RelationOsm relation2 = (RelationOsm) utils.getKeyFromValue( (Map< String, Map <Object, Long>>) ((Object)utils.getTotalRelations()), key, shape2.getRelationId());
+				
+				if(relation1 != null && relation2 != null && relation1 != relation2){
+					
+						if(relation1.isNextTo(relation2) && relation1.sameTags(relation2)){
+							
+							//Creamos las geometrias para crear su union
+							
+							// Creamos los poligonos
+							if (shape1.getPoligons().get(0) != null && shape2.getPoligons().get(0) != null){
+								
+								// Geometria exterior shape1
+								LinearRing outer1 = new LinearRing(
+										shape1.getPoligons().get(0).getCoordinateSequence(), factory);
+								
+								// En caso de que haya agujeros
+								LinearRing[] holes1 = new LinearRing[shape1.getPoligons().size()-1];
+								
+								for(int x = 1 ; x < shape1.getPoligons().size(); x++)
+									holes1[x-1] = new LinearRing(
+											shape1.getPoligons().get(x).getCoordinateSequence(), factory);
+								
+								Polygon polygon1 = new Polygon(outer1,holes1,factory);
+								
+								
+								// Geometria exterior shape2
+								LinearRing outer2 = new LinearRing(
+										shape2.getPoligons().get(0).getCoordinateSequence(), factory);
+								
+								// En caso de que haya agujeros
+								LinearRing[] holes2 = new LinearRing[shape2.getPoligons().size()-1];
+								
+								for(int x = 1 ; x < shape2.getPoligons().size(); x++)
+									holes2[x-1] = new LinearRing(
+											shape2.getPoligons().get(x).getCoordinateSequence(), factory);
+								
+								Polygon polygon2 = new Polygon(outer2,holes2,factory);
+								
+								Geometry newPolygon = polygon1.union(polygon2);
+								
+								// Guardamos los nuevos datos en el shape1
+//								RelationOsm
+								
+//								// Eliminamos el shape2
+//								it2.remove();
+							}
+							
+//							Long newRelationID = utils.joinRelations(key, shape1.getRelationId(), relation1, shape2.getRelationId(), relation2);
+//							
+//							if(newRelationID != null){
+//							
+//								// Modificamos el shape1
+//								shape1.setRelation(newRelationID);
+//								shape1.
+//								
+//								shape1.getNodesIds(pos)
+//								
+//								// Eliminamos el shape2
+//								it2.remove();
+//							}
+						}
+				}
+			}
+		}
+		
+	}
+	
 }

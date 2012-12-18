@@ -114,6 +114,10 @@ public abstract class Shape {
 	public abstract void deleteWay(int pos, long wayId);
 
 	public abstract void setRelation(long relationId);
+	
+	public abstract void setWays(List<List<Long>> waysId);
+	
+	public abstract void setNodes(List<List<Long>> nodesId);
 
 	public abstract List<Long> getNodesIds(int pos);
 

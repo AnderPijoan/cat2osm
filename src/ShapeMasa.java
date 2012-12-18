@@ -202,5 +202,16 @@ public class ShapeMasa extends Shape {
 	public boolean shapeValido (){
 		return true;
 	}
+
+	@Override
+	public void setWays(List<List<Long>> waysId) {
+		ways = waysId;
+	}
+
+
+	@Override
+	public void setNodes(List<List<Long>> nodesId) {
+		nodes = nodesId;
+	}
 	
 }

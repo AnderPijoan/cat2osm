@@ -702,6 +702,18 @@ public class ShapeConstru extends Shape {
 		return l;
 	}
 
+	
+	@Override
+	public void setWays(List<List<Long>> waysId) {
+		ways = waysId;
+	}
+
+
+	@Override
+	public void setNodes(List<List<Long>> nodesId) {
+		nodes = nodesId;
+	}
+	
 }
 
 

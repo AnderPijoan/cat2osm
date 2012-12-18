@@ -39,7 +39,6 @@ public class ShapeSubparce extends Shape {
 
 
 	/** Constructor
-	 * @param f Linea del archivo shp
 	 * @throws IOException 
 	 */
 	public ShapeSubparce(SimpleFeature f, String tipo) throws IOException {
@@ -208,11 +207,11 @@ public class ShapeSubparce extends Shape {
 		List <String[]> l = new ArrayList<String[]>();
 		String[] s = new String[2];
 
-		if (refCatastral != null){
-			s = new String[2];
-			s[0] = "catastro:ref"; s[1] = refCatastral;
-			l.add(s);
-		}
+//		if (refCatastral != null){
+//			s = new String[2];
+//			s[0] = "catastro:ref"; s[1] = refCatastral;
+//			l.add(s);
+//		}
 
 		if (cultivo != null){
 			l.addAll(cultivoParser(cultivo));
@@ -1849,5 +1848,17 @@ public class ShapeSubparce extends Shape {
 
 	public void setArea(long area) {
 		this.area = area;
+	}
+
+
+	@Override
+	public void setWays(List<List<Long>> waysId) {
+		ways = waysId;
+	}
+
+
+	@Override
+	public void setNodes(List<List<Long>> nodesId) {
+		nodes = nodesId;
 	}
 }

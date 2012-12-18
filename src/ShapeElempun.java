@@ -214,4 +214,14 @@ public class ShapeElempun extends Shape {
 		return coor;
 	}
 
+	@Override
+	public void setWays(List<List<Long>> waysId) {
+	}
+
+
+	@Override
+	public void setNodes(List<List<Long>> nodesId) {
+		nodo = nodesId.get(0).get(0);
+	}
+	
 }

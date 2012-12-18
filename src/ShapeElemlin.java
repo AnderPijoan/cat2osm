@@ -220,4 +220,14 @@ public class ShapeElemlin extends Shape {
 		return null;
 	}  
 
+	@Override
+	public void setWays(List<List<Long>> waysId) {
+		ways = waysId.get(0);
+	}
+
+	@Override
+	public void setNodes(List<List<Long>> nodesId) {
+		nodes = nodesId.get(0);
+	}
+	
 }

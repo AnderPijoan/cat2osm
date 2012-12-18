@@ -88,6 +88,10 @@ public class RelationOsm {
 	public String getRefCat(){
 		return refCatastral;
 	}
+	
+	public void setRefCat(String refCat){
+		this.refCatastral = refCat;
+	}
 
 
 	public List<String[]> getTags() {
@@ -277,9 +281,6 @@ public class RelationOsm {
 					s += ("<nd ref=\""+ nodeId +"\"/>\n");
 			}
 			
-			if (way.getNodes().get(0) != way.getNodes().get(way.getNodes().size()-1) && refCatastral != null)
-				System.out.println(refCatastral);
-			
 			// Mostrar los shapes que usan ese way, para debugging
 			if (way.getShapes() != null && Config.get("PrintShapeIds").equals("1"))
 				for (int x = 0; x < way.getShapes().size(); x++)
@@ -317,9 +318,12 @@ public class RelationOsm {
 		else {
 
 			// Variable para comprobar si una relacion tiene datos relevantes
-			// 	Ya se ha hecho este proceso en un punto anterior de la ejecucion pero ahora se comprueban
+			// Ya se ha hecho este proceso en un punto anterior de la ejecucion pero ahora se comprueban
 			// algunos tags mas que no son relevantes a no ser que sean en parcelas
 			boolean with_data = false;
+			
+			if (Cat2OsmUtils.hasRelevantTags(tags))
+				with_data = true;
 
 			s = ("<relation id=\""+ id +"\" timestamp=\""+new Timestamp(new Date().getTime())+"\" visible=\"true\"  version=\"6\">\n");
 
@@ -331,9 +335,6 @@ public class RelationOsm {
 				
 				// Filtramos para que no salgan todos los tags, abajo se explica el porque
 				if (!tags.get(x)[0].equals("addr:housenumber") && !tags.get(x)[0].equals("addr:postcode") && !tags.get(x)[0].equals("addr:country") && !tags.get(x)[0].equals("addr:street") && !tags.get(x)[0].equals("name") && !tags.get(x)[0].startsWith("CAT2OSMSHAPEID")) {
-
-					if (!with_data && !tags.get(x)[0].equals("source") && !tags.get(x)[0].equals("source:date") && !tags.get(x)[0].equals("type") && !tags.get(x)[0].equals("catastro:ref"))
-						with_data = true;
 
 					s += "<tag k=\""+tags.get(x)[0]+"\" v=\""+tags.get(x)[1]+"\"/>\n";
 				}
@@ -374,6 +375,68 @@ public class RelationOsm {
 		return s;
 	}
 	
+	/** Comprueba si dos relaciones tienen los mismos tags.
+	 * Se usa para hacer la union de relaciones (principalmente en subparcelas).
+	 * @param relation
+	 * @return
+	 */
+	public boolean sameTags(RelationOsm relation){
+		
+		boolean tagsCoinciden = true;
+		
+		for(String[] tag : relation.getTags()){
+			
+			boolean tagEncontrado = false;
+			
+			if(!tag[0].equals("catastro:ref") && !tag[0].equals("CAT2OSMSHAPEID") &&
+					!tag[0].equals("addr:street") && !tag[0].equals("addr:housenumber") &&
+					!tag[0].equals("unible")){
+				for(String[] tag2 : this.tags){
+					if (tag[0].trim().equals(tag2[0].trim()) && tag[1].trim().equals(tag2[1].trim()))
+						tagEncontrado = true;
+				}
+				tagsCoinciden = tagsCoinciden && tagEncontrado;
+			}
+			
+			if(!tagsCoinciden)
+				return false;
+		}
+		
+			for(String[] tag : this.tags){
+			
+			boolean tagEncontrado = false;
+			
+			if(!tag[0].equals("catastro:ref") && !tag[0].equals("CAT2OSMSHAPEID") &&
+					!tag[0].equals("addr:street") && !tag[0].equals("addr:housenumber") &&
+					!tag[0].equals("unible")){
+				for(String[] tag2 : relation.getTags()){
+					if (tag[0].equals(tag2[0]) && tag[1].equals(tag2[1]))
+						tagEncontrado = true;
+				}
+
+				tagsCoinciden = tagsCoinciden && tagEncontrado;
+			}
+			
+			if(!tagsCoinciden)
+				return false;
+		}
+			
+		return tagsCoinciden;
+	}
+	
+	/** Comprueba si dos relations estan una al lado de la otra.
+	 * De ser asi el ID de uno de sus ways debe ser compartido por las dos.
+	 * @param relation
+	 * @return
+	 */
+	public boolean isNextTo(RelationOsm relation){
+		
+		for(Long wayId : relation.getIds())
+			if(this.ids.contains(wayId))
+				return true;
+		
+		return false;
+	}
 
 	public List<String> getShapes() {
 		return shapes;
@@ -382,6 +445,10 @@ public class RelationOsm {
 
 	public void setShapes(List<String> shapes) {
 		this.shapes = shapes;
+	}
+	
+	public void addShapes(List<String> shapes) {
+		this.shapes.addAll(shapes);
 	}
 
 

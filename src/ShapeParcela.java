@@ -314,4 +314,15 @@ public class ShapeParcela extends Shape {
 			destinos.put(cod, a);
 		}
 	}
+	
+	@Override
+	public void setWays(List<List<Long>> waysId) {
+		ways = waysId;
+	}
+
+
+	@Override
+	public void setNodes(List<List<Long>> nodesId) {
+		nodes = nodesId;
+	}
 }
